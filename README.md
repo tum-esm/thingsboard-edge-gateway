@@ -1,18 +1,18 @@
 # ACROPOLIS edge
 
-<br/>
-
-## 🎯 Main goals
+## Project Description
 
 <br/>
 
-## 📦 Practical usage
+## Main goals
 
 <br/>
 
-## 🔨 Sensor System
+## Repository Overview
 
-![](docs/main-loop.png)
+<br/>
+
+## Software Architecture
 
 <br/>
 
