@@ -6,7 +6,7 @@ from typing import Optional
 ENV = os.environ.copy()
 ENV["PATH"] = "/home/pi/bin:/home/pi/.local/bin:" + ENV["PATH"]
 ENV["PYTHON_KEYRING_BACKEND"] = "keyring.backends.null.Keyring"
-AUTOMATION_DIR = "/home/pi/Documents/hermes"
+AUTOMATION_DIR = "/home/pi/Documents/acropolis"
 
 
 def run_shell_command(

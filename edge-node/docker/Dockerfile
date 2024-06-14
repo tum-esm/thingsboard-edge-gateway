@@ -24,7 +24,7 @@ RUN poetry install --no-root
 COPY config ./config
 COPY config/config.template.json ./config/config.json
 
-RUN echo 'HERMES_HARDWARE_LOCKFILE_PATH="/root/hermes_hardware.lock"' > ./config/.env
+RUN echo 'ACROPOLIS_HARDWARE_LOCKFILE_PATH="/root/acropolis_hardware.lock"' > ./config/.env
 
 FROM python:3.9-slim
 

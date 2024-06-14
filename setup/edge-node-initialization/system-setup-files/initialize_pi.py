@@ -55,14 +55,14 @@ run_shell_command("curl -sSL https://install.python-poetry.org | python3 -")
 
 
 # =============================================================================
-# SETUP HERMES
+# SETUP ACROPOLIS NODE
 
-print("SETTING UP HERMES")
+print("SETTING UP NODE")
 
 # download release using the github cli
 print("downloading code from GitHub")
 run_shell_command(
-    f"wget https://github.com/tum-esm/hermes/archive/refs/tags/v{AUTOMATION_VERSION}.tar.gz"
+    f"wget https://github.com/tum-esm/ACROPOLIS-edge/archive/refs/tags/v{AUTOMATION_VERSION}.tar.gz"
 )
 
 # extract code archive
@@ -81,10 +81,10 @@ except OSError as error:
     print(error)
 
 run_shell_command(
-    f"cp -r hermes-{AUTOMATION_VERSION}/sensor/* {AUTOMATION_DIR}/{AUTOMATION_VERSION}"
+    f"cp -r acropolis-{AUTOMATION_VERSION}/edge-node/* {AUTOMATION_DIR}/{AUTOMATION_VERSION}"
 )
 run_shell_command(f"rm v{AUTOMATION_VERSION}.tar.gz")
-run_shell_command(f"rm -r hermes-{AUTOMATION_VERSION}")
+run_shell_command(f"rm -r acropolis-{AUTOMATION_VERSION}")
 
 # set up .venv
 print(f"\tsetting up .venv")
@@ -105,15 +105,15 @@ shutil.copyfile(
 
 print(f"\tcopying .env")
 shutil.copyfile(
-    f"/boot/firmware/hermes-templates/.env",
+    f"/boot/firmware/templates/.env",
     f"{AUTOMATION_DIR}/{AUTOMATION_VERSION}/config/.env",
 )
 
 print(f"\tmaking CLI point to release version")
-with open("/boot/firmware/hermes-templates/hermes-cli.template.sh") as f:
+with open("/boot/firmware/templates/edge-cli.template.sh") as f:
     cli_file_content = f.read()
 cli_file_content = cli_file_content.replace("%VERSION%", AUTOMATION_VERSION)
-with open(f"{AUTOMATION_DIR}/hermes-cli.sh", "w") as f:
+with open(f"{AUTOMATION_DIR}/edge-cli.sh", "w") as f:
     f.write(cli_file_content)
 
 # =============================================================================

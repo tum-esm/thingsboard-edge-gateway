@@ -42,8 +42,8 @@ class HardwareInterface:
         simulate: bool = False,
     ) -> None:
         global_hw_lock["lock"] = filelock.FileLock(
-            os.environ.get("HERMES_HARDWARE_LOCKFILE_PATH")
-            or "/home/pi/Documents/hermes/hermes-hardware.lock",
+            os.environ.get("ACROPOLIS_HARDWARE_LOCKFILE_PATH")
+            or "/home/pi/Documents/acropolis/acropolis-hardware.lock",
             timeout=5,
         )
         self.config = config

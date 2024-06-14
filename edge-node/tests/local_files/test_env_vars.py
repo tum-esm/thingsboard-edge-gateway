@@ -17,10 +17,10 @@ def test_env_vars() -> None:
 
     dotenv.load_dotenv(env_file_path)
     custom_types.MQTTConfig(
-        station_identifier=os.environ.get("HERMES_MQTT_IDENTIFIER"),
-        mqtt_url=os.environ.get("HERMES_MQTT_URL"),
-        mqtt_port=os.environ.get("HERMES_MQTT_PORT"),
-        mqtt_username=os.environ.get("HERMES_MQTT_USERNAME"),
-        mqtt_password=os.environ.get("HERMES_MQTT_PASSWORD"),
-        mqtt_base_topic=os.environ.get("HERMES_MQTT_BASE_TOPIC"),
+        station_identifier=os.environ.get("THINGSBOARD_MQTT_IDENTIFIER"),
+        mqtt_url=os.environ.get("THINGSBOARD_MQTT_URL"),
+        mqtt_port=os.environ.get("THINGSBOARD_MQTT_PORT"),
+        mqtt_username=os.environ.get("THINGSBOARD_MQTT_USERNAME"),
+        mqtt_password=os.environ.get("THINGSBOARD_MQTT_PASSWORD"),
+        mqtt_base_topic=os.environ.get("THINGSBOARD_MQTT_BASE_TOPIC"),
     )

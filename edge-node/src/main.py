@@ -26,7 +26,7 @@ def run() -> None:
     - Procedure: Measurements (CO2, Wind)
     - Check for configuration update
     """
-    simulate = os.environ.get("HERMES_MODE") == "simulate"
+    simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
 
     logger = utils.Logger(origin="main", print_to_console=simulate)
     logger.horizontal_line()

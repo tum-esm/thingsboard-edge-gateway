@@ -1,4 +1,5 @@
 # Table of contents
+
 1. [Clone existing system setup](#paragraph1)
    1. [Copy from SD Card to MacOS](#subparagraph1)
    2. [Copy From MacOS to SD Card](#subparagraph2)
@@ -13,27 +14,30 @@
 
 ## Clone existing system setup <a name="paragraph1"></a>
 
-
 ### Copy from SD Card to MacOS <a name="subparagraph1"></a>
 
 - Set current_revision to 0
+
 ```
-/home/pi/Documents/hermes/%VERSION%/config/state.json 
+/home/pi/Documents/acropolis/%VERSION%/config/state.json
 ```
 
 - Identify the correct volume
+
 ```
 diskutil list
 ```
 
 - Dismount volume
+
 ```
 diskutil umount /dev/disk*
 ```
 
 - Start image creation from SD Card
+
 ```
-sudo dd if=/dev/disk4 of=/.../hermes-version.img bs=4M status=progress
+sudo dd if=/dev/disk4 of=/.../acropolis-version.img bs=4M status=progress
 ```
 
 <br/>
@@ -41,29 +45,33 @@ sudo dd if=/dev/disk4 of=/.../hermes-version.img bs=4M status=progress
 ### Copy From MacOS to SD Card <a name="subparagraph2"></a>
 
 - Identify the correct volume
+
 ```
 diskutil list
 ```
 
 - Dismount volume
+
 ```
 diskutil umount /dev/disk*
 ```
 
 - Transfer existing image to SD Card
+
 ```
-sudo dd of=/dev/disk4 if=/.../hermes-version.img bs=4M status=progress
+sudo dd of=/dev/disk4 if=/.../acropolis-version.img bs=4M status=progress
 ```
 
 Insert the SD Card into the new node system. Connect to the RaspberryPi over SSH:
 
-- Set the HERMES_MQTT_IDENTIFIER for the new node
+- Set the THINGSBOARD_MQTT_IDENTIFIER for the new node
+
 ```
-/home/pi/Documents/hermes/%VERSION%/config/.env 
+/home/pi/Documents/acropolis/%VERSION%/config/.env
 ```
 
 - RaspberryPi Hostname
-  
+
 ```
 sudo raspi-config
 1 System Options / S4 Hostname
@@ -74,28 +82,28 @@ reboot
 
 ## Initial system setup <a name="paragraph2"></a>
 
-
 ### Inital System Setup <a name="subparagraph3"></a>
 
-
 #### Raspberry Pi OS Setup
-- Download **Raspberry Pi Imager** (https://www.raspberrypi.com/software/) 
+
+- Download **Raspberry Pi Imager** (https://www.raspberrypi.com/software/)
 - Flash the **Raspberry Pi OS 64-Bit** on a SD card
 - In settings set hostname, set ssh key access, timezone, wifi (optional)
 
 <br/>
 
-#### Hermes Setup
+#### Node Setup
 
-- Open `hermes-template/.env.template`, fill and rename to `.env` 
-- Copy everything in `/sensor-node-initialization/` on the SD card (`bootfs`) 
+- Open `template/.env.template`, fill and rename to `.env`
+- Copy everything in `/sensor-node-initialization/` on the SD card (`bootfs`)
 - Confirm that the files are present at `/boot/firmware`
+
 ```
 📁 /boot/firmware/
 
-    📁 hermes-templates/
+    📁 templates/
         📄 .env.
-        📄 hermes-cli.template.sh
+        📄 edge-cli.template.sh
 
     📁 system-setup-files/
         📄 .bashrc
@@ -107,6 +115,7 @@ reboot
 
     📄 config.txt
 ```
+
 - Insert SD Card into RaspberryPi
 - Confirm the SSH access
 - Execute via terminal
@@ -135,34 +144,33 @@ sudo reboot
 
 <br/>
 
-#### Test Hermes Setup
+#### Test Node Setup
 
 ```
 python3 /boot/firmware/system-setup-files/run_node_tests.py
 ```
 
-
 <br/>
 
 ### How the Raspberry Pi runs this code <a name="subparagraph4"></a>
 
-- The sensor code is at `~/Documents/hermes/%VERSION%` 
+- The sensor code is at `~/Documents/acropolis/%VERSION%`
 - Note: Only the files from /sensor directory are kept on the RaspberryPi.
 - The _crontab_ starts the automation every 2 minutes via the CLI
-- Note: `~/Documents/hermes/hermes-cli.sh` always points to the latest version of Hermes
+- Note: `~/Documents/acropolis/edge-cli.sh` always points to the latest version
 
 ```bash
 #!/bin/bash
 
 set -o errexit
 
-/home/pi/Documents/hermes/%VERSION%/.venv/bin/python /home/pi/Documents/hermes/%VERSION%/cli/main.py $*
+/home/pi/Documents/acropolis/%VERSION%/.venv/bin/python /home/pi/Documents/acropolis/%VERSION%/cli/main.py $*
 ```
 
 The `~/.bashrc` file contains an alias for the CLI:
 
 ```bash
-alias hermes-cli="bash /home/pi/Documents/hermes/hermes-cli.sh"
+alias edge-cli="bash /home/pi/Documents/acropolis/edge-cli.sh"
 ```
 
 <br/>
@@ -175,9 +183,9 @@ alias hermes-cli="bash /home/pi/Documents/hermes/hermes-cli.sh"
 # open modem interface
 sudo minicom -D /dev/ttyS0
 # check modem functionality
-AT 
+AT
 # see terminal input
-ATE1 
+ATE1
 # switch to RNDIS
 AT+CUSBPIDSWITCH=9001,1,1
 
@@ -201,8 +209,8 @@ sudo minicom -D /dev/ttyUSB2
 # commands to check modem status
 AT+CSQ # antenna signal strength
 AT+CPIN?
-AT+COPS? 
-AT+CGREG?  
+AT+COPS?
+AT+CGREG?
 AT+CPSI? #return IMEI
 ```
 
@@ -233,16 +241,9 @@ Add lines to rc.local
 
 `sudo /home/pi/SIM8200_for_RPI/Goonline/simcom-cm &` <br/>
 `sudo udhcpc -i wwan0`
+
 ```
 sudo nano /etc/rc.local
 ```
 
-
-
-
-
 <br/>
-
-
-
-
