@@ -12,7 +12,7 @@
 
 ## 🔨 Sensor System
 
-![](docs/hermes-main-py.png)
+![](docs/main-loop.png)
 
 <br/>
 
