@@ -127,12 +127,17 @@ ping -c 3 www.google.com
 #create user directories
 xdg-user-dirs-update
 
-#install python3.9
-sudo wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz
-sudo tar xzf Python-3.9.16.tgz
-cd /home/pi/Python-3.9.16
-sudo ./configure --enable-optimizations --with-openssl
+#install python3.12
+#acknowledgement to https://stackoverflow.com/questions/64718274/how-to-update-python-in-raspberry-pi
+sudo apt-get update
+sudo apt-get install -y build-essential tk-dev libncurses5-dev libncursesw5-dev libreadline6-dev libdb5.3-dev libgdbm-dev libsqlite3-dev libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev
+wget https://www.python.org/ftp/python/3.12.4/Python-3.12.4.tgz
+sudo tar zxf Python-3.12.4.tgz
+cd Python-3.12.4
+sudo ./configure --enable-optimizations
+sudo make -j 4
 sudo make altinstall
+echo "alias python=/usr/local/bin/python3.12" >> ~/.bashrc
 
 # initialize the node
 sudo python3 /boot/firmware/system-setup-files/initialize_root.py
