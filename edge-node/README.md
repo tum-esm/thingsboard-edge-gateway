@@ -33,7 +33,7 @@ poetry install --with=dev
 
 ### Automation
 
-![](../docs//hermes-main-py.png)
+![](../docs//main-loop.png)
 
 ### Main Loop
 

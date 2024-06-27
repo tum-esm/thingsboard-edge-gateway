@@ -12,21 +12,27 @@ class MQTTConnection:
 
     def __init__(self) -> None:
         self.config = custom_types.MQTTConfig(
-            station_identifier=os.environ.get("HERMES_MQTT_IDENTIFIER"),
-            mqtt_url=os.environ.get("HERMES_MQTT_URL"),
-            mqtt_port=os.environ.get("HERMES_MQTT_PORT"),
-            mqtt_username=os.environ.get("HERMES_MQTT_USERNAME"),
-            mqtt_password=os.environ.get("HERMES_MQTT_PASSWORD"),
-            mqtt_base_topic=os.environ.get("HERMES_MQTT_BASE_TOPIC"),
+            station_identifier=os.environ.get("THINGSBOARD_MQTT_IDENTIFIER"),
+            mqtt_url=os.environ.get("THINGSBOARD_MQTT_URL"),
+            mqtt_port=os.environ.get("THINGSBOARD_MQTT_PORT"),
+            mqtt_username=os.environ.get("THINGSBOARD_MQTT_USERNAME"),
+            mqtt_password=os.environ.get("THINGSBOARD_MQTT_PASSWORD"),
+            mqtt_base_topic=os.environ.get("THINGSBOARD_MQTT_BASE_TOPIC"),
         )
 
         self.client = paho.mqtt.client.Client(client_id=self.config.station_identifier)
         self.client.username_pw_set(
             self.config.mqtt_username, self.config.mqtt_password
         )
-        # HERMES_MQTT_CERT_REQUIREMENTS = none (default), verify
-        ssl_cert_requirements = ssl.CERT_NONE if ((os.environ.get("HERMES_MQTT_CERT_REQUIREMENTS") or "none") == "none") \
+        # THINGSBOARD_MQTT_CERT_REQUIREMENTS = none (default), verify
+        ssl_cert_requirements = (
+            ssl.CERT_NONE
+            if (
+                (os.environ.get("THINGSBOARD_MQTT_CERT_REQUIREMENTS") or "none")
+                == "none"
+            )
             else ssl.CERT_REQUIRED
+        )
 
         self.client.tls_set(
             certfile=None,
@@ -62,10 +68,10 @@ class MQTTConnection:
         variables required for running an MQTT client"""
 
         custom_types.MQTTConfig(
-            station_identifier=os.environ.get("HERMES_MQTT_IDENTIFIER"),
-            mqtt_url=os.environ.get("HERMES_MQTT_URL"),
-            mqtt_port=os.environ.get("HERMES_MQTT_PORT"),
-            mqtt_username=os.environ.get("HERMES_MQTT_USERNAME"),
-            mqtt_password=os.environ.get("HERMES_MQTT_PASSWORD"),
-            mqtt_base_topic=os.environ.get("HERMES_MQTT_BASE_TOPIC"),
+            station_identifier=os.environ.get("THINGSBOARD_MQTT_IDENTIFIER"),
+            mqtt_url=os.environ.get("THINGSBOARD_MQTT_URL"),
+            mqtt_port=os.environ.get("THINGSBOARD_MQTT_PORT"),
+            mqtt_username=os.environ.get("THINGSBOARD_MQTT_USERNAME"),
+            mqtt_password=os.environ.get("THINGSBOARD_MQTT_PASSWORD"),
+            mqtt_base_topic=os.environ.get("THINGSBOARD_MQTT_BASE_TOPIC"),
         )

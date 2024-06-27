@@ -6,7 +6,7 @@ PATH="/home/pi/bin:/home/pi/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:
 # line format: minute | hour | day-of-month | month | day-of-week | command
 
 # start automation (if not already running)
-*/2 * * * * bash /home/pi/Documents/hermes/hermes-cli.sh start > /home/pi/Documents/hermes/hermes-cli.log
+*/2 * * * * bash /home/pi/Documents/acropolis/edge-cli.sh start > /home/pi/Documents/acropolis/edge-cli.log
 
 # restart automation at midnight on mondays and thursdays
-0 0 * * 1,4 bash /home/pi/Documents/hermes/hermes-cli.sh restart > /home/pi/Documents/hermes/hermes-cli.log
+0 0 * * 1,4 bash /home/pi/Documents/acropolis/edge-cli.sh restart > /home/pi/Documents/acropolis/edge-cli.log

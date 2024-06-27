@@ -120,10 +120,10 @@ def mqtt_client_environment() -> Any:
     dotenv.load_dotenv(join(PROJECT_DIR, "config", ".env.testing"))
 
     timestamp = round(time.time())
-    os.environ["HERMES_MQTT_IDENTIFIER"] = "".join(
+    os.environ["THINGSBOARD_MQTT_IDENTIFIER"] = "".join(
         random.choices([chr(a) for a in range(ord("a"), ord("z") + 1)], k=20)
     )
-    os.environ["HERMES_MQTT_BASE_TOPIC"] = f"development/test-{timestamp}/"
+    os.environ["THINGSBOARD_MQTT_BASE_TOPIC"] = f"development/test-{timestamp}/"
 
     yield
 

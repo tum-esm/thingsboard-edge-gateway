@@ -10,8 +10,8 @@ if version upgrade
 3. Install new dependencies
 4. Run tests
 5. if tests unsuccessful: send errors per mqtt, keep old config, exit
-6. Update the `insert-name-here-cli.sh` to point to the new version
-7. Call `insert-name-here-cli start` using the `at in 1 minute` command
+6. Update the `edge-cli.sh` to point to the new version
+7. Call `edge-cli start` using the `at in 1 minute` command
 8. Call `sys.exit()`
 """
 
@@ -24,10 +24,10 @@ from typing import Callable, Literal
 
 from src import custom_types, utils, hardware
 
-NAME = "hermes"
+NAME = "acropolis"
 REPOSITORY = f"tum-esm/{NAME}"
 ROOT_PATH = os.environ.get(
-    "HERMES_DEPLOYMENT_ROOT_PATH", f"{os.environ['HOME']}/Documents/{NAME}"
+    "ACROPOLIS_DEPLOYMENT_ROOT_PATH", f"{os.environ['HOME']}/Documents/{NAME}"
 )
 
 tarball_name: Callable[[str], str] = lambda version: f"v{version}.tar.gz"
@@ -201,7 +201,7 @@ class ConfigurationProcedure:
         # download release using the GitHub cli
         self.logger.info("downloading code from GitHub")
         utils.run_shell_command(
-            f"wget https://github.com/tum-esm/hermes/archive/refs/tags/{tarball_name(version)}"
+            f"wget https://github.com/tum-esm/ACROPOLIS-edge/archive/refs/tags/{tarball_name(version)}"
         )
 
         # extract code archive

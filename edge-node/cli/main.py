@@ -13,6 +13,7 @@ import commands
 def cli() -> None:
     pass
 
+
 cli.add_command(commands.info, name="info")
 cli.add_command(commands.start, name="start")
 cli.add_command(commands.is_running, name="is-running")
@@ -20,4 +21,4 @@ cli.add_command(commands.stop, name="stop")
 cli.add_command(commands.restart, name="restart")
 
 if __name__ == "__main__":
-    cli.main(prog_name="hermes-cli")
+    cli.main(prog_name="edge-cli")
