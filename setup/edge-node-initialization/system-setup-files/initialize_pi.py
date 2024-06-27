@@ -48,7 +48,7 @@ run_shell_command(f'git config --global user.email "{GIT_EMAIL}"')
 run_shell_command("git config --global pull.ff only")
 
 # =============================================================================
-# INSTALL POETRY
+# INSTALL POETRY >1.8.3
 
 print("INSTALLING POETRY")
 run_shell_command("curl -sSL https://install.python-poetry.org | python3 -")
@@ -88,7 +88,7 @@ run_shell_command(f"rm -r acropolis-{AUTOMATION_VERSION}")
 
 # set up .venv
 print(f"\tsetting up .venv")
-run_shell_command(f"python3.9 -m venv {AUTOMATION_DIR}/{AUTOMATION_VERSION}/.venv")
+run_shell_command(f"python3.12 -m venv {AUTOMATION_DIR}/{AUTOMATION_VERSION}/.venv")
 
 # install poetry dependencies
 print(f"\tinstalling dependencies")
