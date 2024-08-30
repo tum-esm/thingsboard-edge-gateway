@@ -4,6 +4,9 @@ from time import sleep
 from args import parse_args
 import ssl
 
+from self_provisioning import self_provisioning_get_access_token
+
+
 class GatewayMqttClient(Client):
     def __init__(self):
         super().__init__()
@@ -28,9 +31,10 @@ class GatewayMqttClient(Client):
 
 if __name__ == '__main__':
     args = parse_args()
+    access_token = self_provisioning_get_access_token(args)
 
     client = GatewayMqttClient()
     client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
-    client.username_pw_set("provision", "")
+    client.username_pw_set(access_token, "")
     client.connect(args.tb_host, args.tb_port)
     client.loop_forever()
