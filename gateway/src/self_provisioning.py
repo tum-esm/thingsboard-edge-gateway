@@ -7,14 +7,20 @@ from time import sleep
 
 from paho.mqtt.client import Client
 
+# global variable to contain the reply from the self-provisioning request
+provision_reply = None
+
 # Perform self-provisioning if needed to get an access-token for the gateway
 def self_provisioning_get_access_token(args):
+    global provision_reply
     # check if access token exists
     access_token_path_env_var = os.environ.get("THINGSBOARD_GATEWAY_ACCESS_TOKEN") or "./tb_access_token"
 
     if os.path.exists(access_token_path_env_var):
         with open(access_token_path_env_var, "r") as f:
             access_token = f.read()
+            if access_token is not None and len(access_token) > 3:
+                print("Access token found in file ", access_token_path_env_var)
             return access_token
 
     # else, perform self-provisioning
@@ -24,10 +30,17 @@ def self_provisioning_get_access_token(args):
     mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
     mqtt_client.on_connect = (lambda client, userdata, flags, rc: print(f"Connected to ThingsBoard for self-provisioning with result code {rc}"))
     mqtt_client.connect(args.tb_host, args.tb_port)
-    mqtt_client.on_message = (lambda client, userdata, message: print(f"Received message: {message.payload}"))
+
+    # set up the callback to receive the reply from the self-provisioning request
+    def on_message_callback(client, userdata, message):
+        global provision_reply
+        provision_reply = message.payload
+    mqtt_client.on_message = on_message_callback
     mqtt_client.subscribe("/provision/response", qos=1)
+
     mqtt_client.loop_start()
     sleep(0.1)
+
     mqtt_client.publish("/provision/request",
                         payload=json.dumps({
                             "deviceName": get_device_name(args),
@@ -36,11 +49,35 @@ def self_provisioning_get_access_token(args):
                         }), qos=1 )
 
     for _ in range(100):
+        if provision_reply is not None:
+            break
         sleep(0.1)
     mqtt_client.loop_stop()
     mqtt_client.disconnect()
 
-    return "x"#access_token
+    if provision_reply is not None:
+        # parse string to json
+        provision_reply = json.loads(provision_reply)
+
+        # check for error
+        status = provision_reply.get("status")
+        if status is not None and status == "FAILURE":
+            print("Self-provisioning failed with error: ", provision_reply.get("errorMsg"))
+            exit(1)
+
+        credentials_type = provision_reply.get("credentialsType")
+        if credentials_type is not None and credentials_type == "ACCESS_TOKEN":
+            credentials_value = provision_reply.get("credentialsValue")
+            if credentials_value is not None:
+                print("Self-provisioning successful.")
+                print("Writing access token to file: ", access_token_path_env_var)
+                with open(access_token_path_env_var, "w") as f:
+                    f.write(credentials_value)
+                return credentials_value
+
+    print("Self-provisioning failed")
+    print("Reply: ", provision_reply)
+    exit(1)
 
 
 def get_device_name(args):
