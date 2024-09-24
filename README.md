@@ -1,6 +1,6 @@
 # ACROPOLIS CO<sub>2</sub> Sensor Network
 
-This repository contains the software and hardware blueprints for the measurement systems deployed at the edge of the **ACROPOLIS** (Autonomous and Calibrated Roof-top Observatory for MetroPOLItan Sensing) CO<sub>2</sub> sensor network. This initial network consists of twenty prototype systems evenly distributed across the city of Munich. The project is part of the **ICOS Cities** project, funded by the European Union's Horizon 2020 Research and Innovation Programme under grant agreement No. **101037319**.
+This repository contains the software and hardware blueprints for the measurement systems deployed at the edge of the **ACROPOLIS** (Autonomous and Calibrated Roof-top Observatory for MetroPOLItan Sensing) CO<sub>2</sub> sensor network. This initial network consists of twenty prototype systems evenly distributed across the city of Munich. The project is part of [**ICOS Cities**](https://www.icos-cp.eu/projects/icos-cities), funded by the European Union's Horizon 2020 Research and Innovation Programme under grant agreement No. **101037319**.
 
 <br/>
 
