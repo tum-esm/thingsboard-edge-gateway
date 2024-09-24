@@ -11,7 +11,7 @@ This repository contains the software and hardware blueprints for the measuremen
 - **Remote Software and Configuration Update**: Supports remote updates for software and configuration, ensuring continuous improvement and easy deployment of changes.
 - **Dockerized Edge Software**: The edge software runs within a Docker container for isolated and consistent deployment.
 - **Edge Agent**: A standalone process managing the Dockerized edge software, controlling the active container version and acting as the endpoint for remote commands. It implements an MQTT client for communication with the ThingsBoard backend.
-- **ThingsBoard Integration**: All measurements are transmitted via MQTT to the hosted ThingsBoard instance for centralized data collection and analysis.
+- **ThingsBoard Integration**: All measurements are transmitted via MQTT to a hosted ThingsBoard instance for centralized data collection and analysis.
 - **Offline Data Backup**: SQLite implementation serves as a local backup for measurement data.
 
 <br/>
