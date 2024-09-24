@@ -1,10 +1,8 @@
 # ACROPOLIS CO<sub>2</sub> Sensor Network
 
-This repository contains the software and hardware blueprints for the measurement systems deployed at the edge of the **ACROPOLIS** (Autonomous and Calibrated Roof-top Observatory for MetroPOLItan Sensing) CO<sub>2</sub> sensor network. This initial network consists of twenty prototype systems evenly distributed across the city of Munich. The project is part of the **ICOS Cities** project, funded by the European Union's Horizon 2020 Research and Innovation Programme under grant agreement No. 101037319.
+This repository contains the software and hardware blueprints for the measurement systems deployed at the edge of the **ACROPOLIS** (Autonomous and Calibrated Roof-top Observatory for MetroPOLItan Sensing) CO<sub>2</sub> sensor network. This initial network consists of twenty prototype systems evenly distributed across the city of Munich. The project is part of the **ICOS Cities** project, funded by the European Union's Horizon 2020 Research and Innovation Programme under grant agreement No. **101037319**.
 
-## System Overview
-
-Each edge system is managed by a Raspberry Pi 4, utilizing an LTE hat (NB-IoT) for internet connectivity. The primary sensor is the Vaisala GMP343 CO<sub>2</sub> sensor, accompanied by auxiliary BME280 and SHT45 sensors for environmental monitoring. Airflow is regulated by a brushless membrane pump and 2/2 valves, which switch between the sampling head and calibration tanks. Additionally, a Vaisala WXT-532 wind sensor is co-located with the sampling head to monitor wind conditions. The system includes a UPS and battery backup to ensure uninterrupted operation.
+<br/>
 
 ## Key Features
 
@@ -16,11 +14,17 @@ Each edge system is managed by a Raspberry Pi 4, utilizing an LTE hat (NB-IoT) f
 - **ThingsBoard Integration**: All measurements are transmitted via MQTT to the hosted ThingsBoard instance for centralized data collection and analysis.
 - **Offline Data Backup**: SQLite implementation serves as a local backup for measurement data.
 
+<br/>
+
 ## Repository Overview
 
 - Software
 - Hardware
 - Setup
+
+## System Overview
+
+Each edge system is managed by a Raspberry Pi 4, utilizing an LTE hat (NB-IoT) for internet connectivity. The primary sensor is the Vaisala GMP343 CO<sub>2</sub> sensor, accompanied by auxiliary BME280 and SHT45 sensors for environmental monitoring. Airflow is regulated by a brushless membrane pump and 2/2 valves, which switch between the sampling head and calibration tanks. Additionally, a Vaisala WXT-532 wind sensor is co-located with the sampling head to monitor wind conditions. The system includes a UPS and battery backup to ensure uninterrupted operation.
 
 <br/>
 
