@@ -30,4 +30,8 @@ Each edge system is managed by a Raspberry Pi 4, utilizing an LTE hat (NB-IoT) f
 
 ## Software Architecture
 
+First Draft
+
+<img src="docs/Software-Architecture.svg">
+
 <br/>
