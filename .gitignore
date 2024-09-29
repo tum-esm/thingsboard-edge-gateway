@@ -405,3 +405,5 @@ $RECYCLE.BIN/
 
 
 tb_access_token
+
+*.db

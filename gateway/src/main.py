@@ -1,40 +1,38 @@
-from paho.mqtt.client import Client
+import queue
+import threading
 from time import sleep
 
 from args import parse_args
-import ssl
-
+from data_connections import mqtt, sqlite
 from self_provisioning import self_provisioning_get_access_token
 
 
-class GatewayMqttClient(Client):
-    def __init__(self):
-        super().__init__()
-        self.on_connect = self.__on_connect
-        self.on_message = self.__on_message
-
-
-    def __on_connect(self, _client, _userdata, _flags, _result_code, *_extra_params):
-        print("Connected to ThingsBoard")
-        self.subscribe("v1/devices/me/attributes/response/+")
-        self.subscribe("v1/devices/me/attributes")
-        self.subscribe("v2/fw/response/+")
-
-    def __on_message(self, _client, _userdata, msg):
-        print(f"Received message from topic: {msg.topic}")
-        print(f"Message: {msg.payload}")
-
-    def __update_thread(self):
-        while True:
-            sleep(1)
-
-
 if __name__ == '__main__':
+    # setup
+    mqtt_message_queue = queue.Queue()
     args = parse_args()
     access_token = self_provisioning_get_access_token(args)
 
-    client = GatewayMqttClient()
-    client.tls_set(tls_version=ssl.PROTOCOL_TLSv1_2)
-    client.username_pw_set(access_token, "")
-    client.connect(args.tb_host, args.tb_port)
-    client.loop_forever()
+    archive_sqlite_db = sqlite.SqliteConnection("archive.db")
+    communication_sqlite_db = sqlite.SqliteConnection("communication.db")
+
+    # create and run the mqtt client in a separate thread
+    mqtt_client = mqtt.GatewayMqttClient(mqtt_message_queue, access_token)
+    mqtt_client.connect(args.tb_host, args.tb_port)
+    mqtt_client_thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
+    mqtt_client_thread.start()
+
+    while True:
+        if not mqtt_client_thread.is_alive():
+            print("MQTT client thread died, exiting in 30 seconds...")
+            sleep(30)
+            exit()
+
+        # check if there are any new mqtt messages in the queue
+        if not mqtt_message_queue.empty():
+            print("Got message: " + str(mqtt_message_queue.get()))
+            continue
+
+        # if nothing happened this iteration, sleep for a while
+        sleep(1)
+

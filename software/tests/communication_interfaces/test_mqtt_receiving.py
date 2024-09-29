@@ -33,7 +33,7 @@ def test_mqtt_receiving(
 
     mqtt_connection = utils.MQTTConnection()
     mqtt_config = mqtt_connection.config
-    mqtt_client = mqtt_connection.client
+    mqtt_client = mqtt_connection.mqtt_client
 
     config_topic = (
         f"{mqtt_config.mqtt_base_topic}configurations/{mqtt_config.station_identifier}"

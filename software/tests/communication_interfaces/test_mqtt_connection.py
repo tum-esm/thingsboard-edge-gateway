@@ -15,7 +15,7 @@ from src import utils
 def test_mqtt_connection(mqtt_client_environment: None) -> None:
     mqtt_connection = utils.MQTTConnection()
     mqtt_config = mqtt_connection.config
-    mqtt_client = mqtt_connection.client
+    mqtt_client = mqtt_connection.mqtt_client
 
     # testing setup
     assert mqtt_config.station_identifier == os.environ["THINGSBOARD_MQTT_IDENTIFIER"]

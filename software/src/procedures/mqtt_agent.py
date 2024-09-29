@@ -69,7 +69,7 @@ class MQTTAgent:
         try:
             mqtt_connection = utils.MQTTConnection()
             mqtt_config = mqtt_connection.config
-            mqtt_client = mqtt_connection.client
+            mqtt_client = mqtt_connection.mqtt_client
             message_queue = utils.MessageQueue()
         except Exception as e:
             logger.exception(
