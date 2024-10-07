@@ -14,7 +14,8 @@ class SystemCheckProcedure:
         hardware_interface: hardware.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = utils.Logger(origin="system-check-procedure"), config
+        self.logger, self.config = utils.Logger(
+            origin="system-check-procedure"), config
         self.hardware_interface = hardware_interface
         self.message_queue = utils.MessageQueue()
         self.simulate = simulate
@@ -27,24 +28,21 @@ class SystemCheckProcedure:
         - check whether mainboard/CPU temperature is above 70°C
         - log CPU/disk/memory usage
         - check whether CPU/disk/memory usage is above 80%
-        - send system data via MQTT
         - check hardware interfaces for errors
-        - check messaging agent for errors
         """
 
-        mainboard_bme280_data = self.hardware_interface.mainboard_sensor.get_data()
+        mainboard_bme280_data = self.hardware_interface.mainboard_sensor.get_data(
+        )
         mainboard_temperature = mainboard_bme280_data.temperature
         cpu_temperature = utils.get_cpu_temperature(self.simulate)
+        self.logger.debug(f"mainboard temp. = {mainboard_temperature} °C, " +
+                          f"raspi cpu temp. = {cpu_temperature} °C")
         self.logger.debug(
-            f"mainboard temp. = {mainboard_temperature} °C, "
-            + f"raspi cpu temp. = {cpu_temperature} °C"
-        )
-        self.logger.debug(
-            f"enclosure humidity = {mainboard_bme280_data.humidity} % rH, "
-            + f"enclosure pressure = {mainboard_bme280_data.pressure} hPa"
-        )
+            f"enclosure humidity = {mainboard_bme280_data.humidity} % rH, " +
+            f"enclosure pressure = {mainboard_bme280_data.pressure} hPa")
 
-        if (mainboard_temperature is not None) and (mainboard_temperature > 70):
+        if (mainboard_temperature is not None) and (mainboard_temperature
+                                                    > 70):
             self.logger.warning(
                 f"mainboard temperature is very high ({mainboard_temperature} °C)",
                 config=self.config,
@@ -60,8 +58,7 @@ class SystemCheckProcedure:
         disk_usage = psutil.disk_usage("/")
         self.logger.debug(
             f"{round(disk_usage.used/1_000_000)}/{round(disk_usage.total/1_000_000)} "
-            + f"MB disk space used (= {disk_usage.percent} %)"
-        )
+            + f"MB disk space used (= {disk_usage.percent} %)")
         if disk_usage.percent > 80:
             self.logger.warning(
                 f"disk space usage is very high ({disk_usage.percent} %)",
@@ -73,8 +70,8 @@ class SystemCheckProcedure:
         self.logger.debug(f"{cpu_usage_percent} % total CPU usage")
         if cpu_usage_percent > 80:
             self.logger.warning(
-                f"CPU usage is very high ({cpu_usage_percent} %)", config=self.config
-            )
+                f"CPU usage is very high ({cpu_usage_percent} %)",
+                config=self.config)
 
         memory_usage_percent = psutil.virtual_memory().percent
         self.logger.debug(f"{memory_usage_percent} % total memory usage")
@@ -83,7 +80,7 @@ class SystemCheckProcedure:
                 f"memory usage is very high ({memory_usage_percent} %)",
                 config=self.config,
             )
-            
+
         # read UPS status
         self.hardware_interface.ups.update_ups_status()
 
@@ -102,10 +99,17 @@ class SystemCheckProcedure:
                     raspi_disk_usage=round(disk_usage.percent / 100, 4),
                     raspi_cpu_usage=round(cpu_usage_percent / 100, 4),
                     raspi_memory_usage=round(memory_usage_percent / 100, 4),
-                    ups_powered_by_grid=1.0 if self.hardware_interface.ups.powered_by_grid else 0.0,
-                    ups_battery_is_fully_charged=1.0 if self.hardware_interface.ups.battery_is_fully_charged else 0.0,
-                    ups_battery_error_detected=1.0 if self.hardware_interface.ups.battery_error_detected else 0.0,
-                    ups_battery_above_voltage_threshold=1.0 if self.hardware_interface.ups.battery_above_voltage_threshold else 0.0,
+                    ups_powered_by_grid=1.0
+                    if self.hardware_interface.ups.powered_by_grid else 0.0,
+                    ups_battery_is_fully_charged=1.0
+                    if self.hardware_interface.ups.battery_is_fully_charged
+                    else 0.0,
+                    ups_battery_error_detected=1.0
+                    if self.hardware_interface.ups.battery_error_detected else
+                    0.0,
+                    ups_battery_above_voltage_threshold=1.0 if
+                    self.hardware_interface.ups.battery_above_voltage_threshold
+                    else 0.0,
                 ),
             ),
         )
