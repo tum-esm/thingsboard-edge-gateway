@@ -1,16 +1,7 @@
 from .config import Config, CalibrationGasConfig
-)
-from .mqtt_sending import (
-    # data types
-    MQTTMeasurementData,
-    MQTTCalibrationData,
-    MQTTSystemData,
-    MQTTWindData,
-    MQTTWindSensorInfo,
-    # different message bodies
-    MQTTLogMessageBody,
-    MQTTMeasurementMessageBody,
-)
+
+from .mqtt_sending import (MQTTCO2Data, MQTTCO2CalibrationData, MQTTSystemData,
+                           MQTTWindData, MQTTWindSensorInfo, MQTTLogMessage)
 from .sensor_answers import (
     CO2SensorData,
     BME280SensorData,

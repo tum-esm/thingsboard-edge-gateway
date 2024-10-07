@@ -1,27 +1,18 @@
-from typing import Literal, Optional, Union
+import dataclasses
+from typing import Optional, Literal
 import pydantic
 
-# -----------------------------------------------------------------------------
-# MQTT Log Message
 
-
-class MQTTLogMessageBody(pydantic.BaseModel):
+@dataclasses.dataclass
+class MQTTLogMessage():
     """message body which is sent to server"""
 
     severity: Literal["info", "warning", "error"]
-    revision: int = pydantic.Field(..., ge=0)
-    timestamp: float = pydantic.Field(..., ge=1_640_991_600)
     message: str = pydantic.Field(..., min_length=0)
 
-    class Config:
-        extra = "forbid"
 
-
-# -----------------------------------------------------------------------------
-# MQTT Data Message
-
-
-class MQTTMeasurementData(pydantic.BaseModel):
+@dataclasses.dataclass
+class MQTTCO2Data():
     gmp343_raw: float
     gmp343_compensated: float
     gmp343_filtered: float
@@ -33,7 +24,8 @@ class MQTTMeasurementData(pydantic.BaseModel):
     sht45_humidity: Optional[float]
 
 
-class MQTTCalibrationData(pydantic.BaseModel):
+@dataclasses.dataclass
+class MQTTCO2CalibrationData():
     cal_bottle_id: float
     cal_gmp343_raw: float
     cal_gmp343_compensated: float
@@ -46,7 +38,8 @@ class MQTTCalibrationData(pydantic.BaseModel):
     cal_sht45_humidity: Optional[float]
 
 
-class MQTTSystemData(pydantic.BaseModel):
+@dataclasses.dataclass
+class MQTTSystemData():
     enclosure_bme280_temperature: Optional[float]
     enclosure_bme280_humidity: Optional[float]
     enclosure_bme280_pressure: Optional[float]
@@ -60,7 +53,8 @@ class MQTTSystemData(pydantic.BaseModel):
     ups_battery_above_voltage_threshold: float
 
 
-class MQTTWindData(pydantic.BaseModel):
+@dataclasses.dataclass
+class MQTTWindData():
     wxt532_direction_min: float
     wxt532_direction_avg: float
     wxt532_direction_max: float
@@ -70,26 +64,10 @@ class MQTTWindData(pydantic.BaseModel):
     wxt532_last_update_time: float
 
 
-class MQTTWindSensorInfo(pydantic.BaseModel):
+@dataclasses.dataclass
+class MQTTWindSensorInfo():
     wxt532_temperature: float
     wxt532_heating_voltage: float
     wxt532_supply_voltage: float
     wxt532_reference_voltage: float
     wxt532_last_update_time: float
-
-
-class MQTTMeasurementMessageBody(pydantic.BaseModel):
-    """message body which is sent to server"""
-
-    revision: int = pydantic.Field(..., ge=0)
-    timestamp: float = pydantic.Field(..., ge=1_640_991_600)
-    value: Union[
-        MQTTMeasurementData,
-        MQTTCalibrationData,
-        MQTTSystemData,
-        MQTTWindData,
-        MQTTWindSensorInfo,
-    ]
-
-    class Config:
-        extra = "forbid"
