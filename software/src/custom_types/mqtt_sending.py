@@ -1,27 +1,5 @@
 from typing import Literal, Optional, Union
-
 import pydantic
-
-
-# -----------------------------------------------------------------------------
-# MQTT Config (read from env variables)
-
-
-class MQTTConfig(pydantic.BaseModel):
-    """fixed params loaded from the environment"""
-
-    station_identifier: str = pydantic.Field(..., min_length=3, max_length=256)
-    mqtt_url: str = pydantic.Field(..., min_length=3, max_length=256)
-    mqtt_port: int = pydantic.Field(..., ge=1, le=65535)
-    mqtt_username: str = pydantic.Field(..., min_length=4, max_length=256)
-    mqtt_password: str = pydantic.Field(..., min_length=4, max_length=256)
-    mqtt_base_topic: str = pydantic.Field(
-        ..., max_length=256, regex=r"^([a-z0-9_-]+\/)*$"
-    )
-
-    class Config:
-        extra = "forbid"
-
 
 # -----------------------------------------------------------------------------
 # MQTT Log Message
@@ -112,83 +90,6 @@ class MQTTMeasurementMessageBody(pydantic.BaseModel):
         MQTTWindData,
         MQTTWindSensorInfo,
     ]
-
-    class Config:
-        extra = "forbid"
-
-
-# -----------------------------------------------------------------------------
-# MQTT Acknowledgment Message
-
-
-class MQTTAcknowledgmentMessageBody(pydantic.BaseModel):
-    """message body which is sent to server"""
-
-    revision: int = pydantic.Field(..., ge=0)
-    timestamp: float = pydantic.Field(..., ge=1_640_991_600)
-    success: bool
-
-    class Config:
-        extra = "forbid"
-
-
-# -----------------------------------------------------------------------------
-# MQTT Message Types: Status + Data
-
-
-class MQTTMessageHeader(pydantic.BaseModel):
-    mqtt_topic: Optional[str]
-    sending_skipped: bool
-
-    class Config:
-        extra = "forbid"
-
-
-class MQTTLogMessage(pydantic.BaseModel):
-    """element in local message queue"""
-
-    header: MQTTMessageHeader
-    body: MQTTLogMessageBody
-
-    class Config:
-        extra = "forbid"
-
-
-class MQTTMeasurementMessage(pydantic.BaseModel):
-    """element in local message queue"""
-
-    header: MQTTMessageHeader
-    body: MQTTMeasurementMessageBody
-
-    class Config:
-        extra = "forbid"
-
-
-class MQTTAcknowledgmentMessage(pydantic.BaseModel):
-    """element in local message queue"""
-
-    header: MQTTMessageHeader
-    body: MQTTAcknowledgmentMessageBody
-
-    class Config:
-        extra = "forbid"
-
-
-MQTTMessageBody = Union[
-    MQTTLogMessageBody, MQTTMeasurementMessageBody, MQTTAcknowledgmentMessageBody
-]
-MQTTMessage = Union[MQTTLogMessage, MQTTMeasurementMessage, MQTTAcknowledgmentMessage]
-
-# -----------------------------------------------------------------------------
-# SQL
-
-# TODO: the record object is typed too strictly, and should allow for arbitrary messages.
-#   Type verification is not useful here, as the codebase is not shared with other projects where
-#   type checking would make sense to ensure consistency between different projects.
-class SQLMQTTRecord(pydantic.BaseModel):
-    internal_id: int
-    status: Literal["pending", "in-progress"]
-    content: MQTTMessage
 
     class Config:
         extra = "forbid"
