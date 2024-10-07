@@ -44,39 +44,30 @@ class MessageQueue:
     def __write_sql(
             self,
             sql_statement: str,
-            parameters: Optional[list[tuple]] = None,  # type: ignore
+            parameters: Optional[list[str]] = None,  # type: ignore
     ) -> None:
-        with self.connection:
-            if parameters is not None:
-                self.connection.executemany(sql_statement, parameters)
-            else:
-                self.connection.execute(sql_statement)
+        # with self.connection:
+        #     if parameters is not None:
+        #         self.connection.executemany(sql_statement, parameters)
+        #     else:
+        #         self.connection.execute(sql_statement)
+        pass
 
-    def __add_row(
-        self,
-        message: str,
-    ) -> None:
-        """add a new message to the active queue db and message archive"""
-
-        # add pending messages to active queue
-        self.__write_sql(
-            f"""
-                INSERT INTO QUEUE (status, content)
-                VALUES (
-                    ?,
-                    ?
-                );
-            """,
-            parameters=[(json.dumps(message.dict()))],
-        )
-
-    def enqueue_message(self, timestamp: float, data: MQTT_PAYLOADS) -> None:
-
-        values: json = dataclasses.asdict(data)
+    def enqueue_message(self, timestamp: int, payload: MQTT_PAYLOADS) -> None:
 
         new_message = {
             "ts": timestamp,
-            "values": values,
+            "values": dataclasses.asdict(payload),
         }
 
-        self.__add_row(new_message)
+        # add pending messages to active queue
+        # self.__write_sql(
+        #     f"""
+        #         INSERT INTO QUEUE (status, content)
+        #         VALUES (
+        #             ?,
+        #             ?
+        #         );
+        #     """,
+        #     parameters=[(json.dumps(new_message.dict()))],
+        # )
