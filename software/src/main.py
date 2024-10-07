@@ -15,7 +15,6 @@ def run() -> None:
 
     - State Interface
     - Timeouts
-    - MQTT Agent
     - Initialize Hardware Interface (e)
     - Initialize Config Procedure (e)
     - Initialize Procedures (e) (System Checks, Calibration, Measurement)
@@ -62,18 +61,6 @@ def run() -> None:
 
     # Exponential backoff time
     ebo = utils.ExponentialBackOff()
-
-    # -------------------------------------------------------------------------
-    # initialize mqtt receiver, archiver, and sender (sending is optional)
-
-    try:
-        procedures.MQTTAgent.init(config)
-    except Exception as e:
-        logger.exception(
-            e,
-            label="Could not start messaging agent.",
-            config=config,
-        )
 
     # -------------------------------------------------------------------------
     # initialize all hardware interfaces
@@ -184,9 +171,7 @@ def run() -> None:
             utils.set_alarm(max_config_update_time, "config update")
 
             logger.info("Checking for new config messages.")
-            new_config_message: Optional[custom_types.MQTTConfigurationRequest] = (
-                procedures.MQTTAgent.get_config_message()
-            )
+            new_config_message = #TODO: Read from queue 
 
             if new_config_message is not None:
                 # run config update procedure
@@ -202,63 +187,9 @@ def run() -> None:
                     hardware_interface.reinitialize(config)
 
             # -----------------------------------------------------------------
-            # MQTT Agent Checks
-
-            if config.active_components.send_messages_over_mqtt:
-                procedures.MQTTAgent.check_errors()
-
-            # -----------------------------------------------------------------
 
             logger.info("Finished mainloop iteration.")
             last_successful_mainloop_iteration_time = time.time()
-
-            # update state config
-            state = utils.StateInterface.read()
-            if state.offline_since:
-                state.offline_since = None
-                # utils.StateInterface.write(state)
-
-        except procedures.MQTTAgent.CommunicationOutage as e:
-            logger.exception(e, label="exception in mainloop", config=config)
-
-            # cancel the alarm for too long mainloops
-            signal.alarm(0)
-
-            # update state config if first raise
-            state = utils.StateInterface.read()
-            if not state.offline_since:
-                state.offline_since = time.time()
-                utils.StateInterface.write(state)
-
-            # reboot if exception lasts longer than 24 hours
-            if (time.time() - state.offline_since) >= 86400:
-                logger.info(
-                    "Rebooting because no successful MQTT connect for 24 hours.",
-                    config=config,
-                )
-                os.system("sudo reboot")
-
-            try:
-                # check timer with exponential backoff
-                if time.time() > ebo.next_try_timer():
-                    ebo.set_next_timer()
-                    # try to establish mqtt connection
-                    logger.info(
-                        f"Restarting messaging agent.",
-                        config=config,
-                    )
-                    procedures.MQTTAgent.deinit()
-                    procedures.MQTTAgent.init(config)
-                    logger.info(
-                        f"Successfully restarted messaging agent.",
-                        config=config,
-                    )
-            except Exception as e:
-                logger.exception(
-                    e,
-                    label="Failed to restart messaging agent.",
-                    config=config,
-                )
 
         except Exception as e:
             logger.exception(e, label="exception in mainloop", config=config)
@@ -276,7 +207,7 @@ def run() -> None:
                     os.system("sudo reboot")
                 else:
                     logger.info(
-                        "System is offline. Last reboot is less than 24h ago. No action."
+                        "Persistent issue present. Last reboot is less than 24h ago. No action."
                     )
 
             try:
