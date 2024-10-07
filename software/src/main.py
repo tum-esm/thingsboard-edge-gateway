@@ -16,7 +16,6 @@ def run() -> None:
     - State Interface
     - Timeouts
     - Initialize Hardware Interface (e)
-    - Initialize Config Procedure (e)
     - Initialize Procedures (e) (System Checks, Calibration, Measurement)
 
     RUN INFINITE MAIN LOOP
@@ -48,14 +47,12 @@ def run() -> None:
 
     # define timeouts for parts of the automation
     max_setup_time = 180
-    max_config_update_time = 1200
     max_system_check_time = 180
-    max_calibration_time = (
-        (len(config.calibration.gas_cylinders) + 1)
-        * config.calibration.sampling_per_cylinder_seconds
-        + 300  # flush time
-        + 180  # extra time
-    )
+    max_calibration_time = ((len(config.calibration.gas_cylinders) + 1) *
+                            config.calibration.sampling_per_cylinder_seconds +
+                            300  # flush time
+                            + 180  # extra time
+                            )
     max_measurement_time = config.measurement.procedure_seconds + 180  # extra time
     utils.set_alarm(max_setup_time, "setup")
 
@@ -69,13 +66,12 @@ def run() -> None:
     logger.info("Initializing hardware interfaces.", config=config)
 
     try:
-        hardware_interface = hardware.HardwareInterface(
-            config=config, simulate=simulate
-        )
+        hardware_interface = hardware.HardwareInterface(config=config,
+                                                        simulate=simulate)
     except Exception as e:
-        logger.exception(
-            e, label="Could not initialize hardware interface.", config=config
-        )
+        logger.exception(e,
+                         label="Could not initialize hardware interface.",
+                         config=config)
         raise e
 
     # tear down hardware on program termination
@@ -94,11 +90,6 @@ def run() -> None:
     # -------------------------------------------------------------------------
     # initialize procedures
 
-    # initialize config procedure
-    configuration_procedure = procedures.ConfigurationProcedure(
-        config, simulate=simulate
-    )
-
     # initialize procedures interacting with hardware:
     #   system_check:   logging system statistics and reporting hardware/system errors
     #   calibration:    using the two reference gas bottles to calibrate the CO2 sensor
@@ -108,25 +99,24 @@ def run() -> None:
 
     try:
         system_check_procedure = procedures.SystemCheckProcedure(
-            config, hardware_interface, simulate=simulate
-        )
+            config, hardware_interface, simulate=simulate)
         calibration_procedure = procedures.CalibrationProcedure(
-            config, hardware_interface, simulate=simulate
-        )
+            config, hardware_interface, simulate=simulate)
         wind_measurement_procedure = procedures.WindMeasurementProcedure(
-            config, hardware_interface, simulate=simulate
-        )
+            config, hardware_interface, simulate=simulate)
         co2_measurement_procedure = procedures.CO2MeasurementProcedure(
-            config, hardware_interface, simulate=simulate
-        )
+            config, hardware_interface, simulate=simulate)
     except Exception as e:
-        logger.exception(e, label="could not initialize procedures", config=config)
+        logger.exception(e,
+                         label="could not initialize procedures",
+                         config=config)
         raise e
 
     # -------------------------------------------------------------------------
     # infinite mainloop
 
-    logger.info("Successfully finished setup, starting mainloop.", config=config)
+    logger.info("Successfully finished setup, starting mainloop.",
+                config=config)
 
     last_successful_mainloop_iteration_time = 0.0
     while True:
@@ -148,7 +138,8 @@ def run() -> None:
 
             if config.active_components.run_calibration_procedures:
                 if calibration_procedure.is_due():
-                    logger.info("Running calibration procedure.", config=config)
+                    logger.info("Running calibration procedure.",
+                                config=config)
                     calibration_procedure.run()
                 else:
                     logger.info("Calibration procedure is not due.")
@@ -166,27 +157,6 @@ def run() -> None:
             co2_measurement_procedure.run()
 
             # -----------------------------------------------------------------
-            # CONFIGURATION
-
-            utils.set_alarm(max_config_update_time, "config update")
-
-            logger.info("Checking for new config messages.")
-            new_config_message = #TODO: Read from queue 
-
-            if new_config_message is not None:
-                # run config update procedure
-                logger.info("Running configuration procedure.", config=config)
-                try:
-                    configuration_procedure.run(new_config_message)
-                    # -> Exit, Restarts via Cron Job to load new config
-                except Exception:
-                    # reinitialize hardware if configuration failed
-                    logger.info(
-                        "Exception during configuration procedure.", config=config
-                    )
-                    hardware_interface.reinitialize(config)
-
-            # -----------------------------------------------------------------
 
             logger.info("Finished mainloop iteration.")
             last_successful_mainloop_iteration_time = time.time()
@@ -198,7 +168,8 @@ def run() -> None:
             signal.alarm(0)
 
             # reboot if exception lasts longer than 12 hours
-            if (time.time() - last_successful_mainloop_iteration_time) >= 86400:
+            if (time.time() -
+                    last_successful_mainloop_iteration_time) >= 86400:
                 if utils.read_os_uptime() >= 86400:
                     logger.info(
                         "Rebooting because no successful mainloop iteration for 24 hours.",
@@ -218,7 +189,8 @@ def run() -> None:
                     logger.info("Performing hardware reset.", config=config)
                     hardware_interface.teardown()
                     hardware_interface.reinitialize(config)
-                    logger.info("Hardware reset was successful.", config=config)
+                    logger.info("Hardware reset was successful.",
+                                config=config)
 
             except Exception as e:
                 logger.exception(
