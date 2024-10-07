@@ -15,5 +15,4 @@ from .functions import (
 from .logger import Logger
 from .message_queue import MessageQueue
 from .moving_average_queue import RingBuffer
-from .mqtt_connection import MQTTConnection
 from .state_interface import StateInterface
