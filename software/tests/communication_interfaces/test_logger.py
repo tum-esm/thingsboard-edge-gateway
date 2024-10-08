@@ -43,7 +43,7 @@ def test_very_long_exception_cutting(log_files: None) -> None:
         required_content_blocks=[expected_log_file_content])
 
 
-def _test_logger(log_files: None) -> None:
+def _test_logger() -> None:
 
     generated_log_lines = [
         "pytests                 - DEBUG         - some message a",
