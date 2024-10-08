@@ -42,4 +42,6 @@ class MessageQueue:
 
         with self.con:
             sql_statement: str = "INSERT INTO queue_out (type, message) VALUES(?, ?)"
-            self.con.executemany(sql_statement, ["MQTT_message", new_message])
+            self.con.executemany(
+                sql_statement,
+                ["MQTT_message", str(new_message)])
