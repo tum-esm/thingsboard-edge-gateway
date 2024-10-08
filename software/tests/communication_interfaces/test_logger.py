@@ -41,10 +41,11 @@ def _test_logger() -> None:
         "pytests                 - EXCEPTION     - customlabel, ZeroDivisionError: division by zero",
     ]
 
+    # verify log lines to not exist yet
     expect_log_file_contents(forbidden_content_blocks=generated_log_lines)
 
     # -------------------------------------------------------------------------
-    # check whether logs lines were written correctly
+    # check whether logs lines are written correctly
 
     logger = utils.Logger(origin="pytests")
     logger.debug("some message a")
