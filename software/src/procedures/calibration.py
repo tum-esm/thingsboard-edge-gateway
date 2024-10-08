@@ -106,7 +106,7 @@ class CalibrationProcedure:
         calibration_time = datetime.utcnow().timestamp()
         self.logger.info(
             f"starting calibration procedure at timestamp {calibration_time}",
-            config=self.config,
+            forward=True,
         )
 
         # log the current CO2 sensor device info
@@ -197,7 +197,7 @@ class CalibrationProcedure:
         self.logger.debug("updating state")
         self.logger.info(
             f"finished calibration procedure at timestamp {datetime.utcnow().timestamp()}",
-            config=self.config,
+            forward=True,
         )
         state = utils.StateInterface.read()
         state.last_calibration_time = calibration_time

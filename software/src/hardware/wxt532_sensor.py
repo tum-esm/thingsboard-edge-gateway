@@ -13,12 +13,12 @@ measurement_pattern = (
 ) = r"Dn=([0-9.]+)D,Dm=([0-9.]+)D,Dx=([0-9.]+)D,Sn=([0-9.]+)M,Sm=([0-9.]+)M,Sx=([0-9.]+)M"
 device_status_pattern = r"Th=([0-9.]+)C,Vh=([0-9.]+)N,Vs=([0-9.]+)V,Vr=([0-9.]+)V"
 
-
 WIND_SENSOR_POWER_PIN_OUT = 21
 WIND_SENSOR_SERIAL_PORT = "/dev/ttySC1"
 
 
 class WindSensorInterface:
+
     class DeviceFailure(Exception):
         """raised when the wind sensor either reports
         low voltage or has not sent any data in a while"""
@@ -116,17 +116,19 @@ class WindSensorInterface:
                 f"{self.config.measurement.procedure_seconds} seconds interval."
             )
             self.wind_measurement = custom_types.WindSensorData(
-                direction_min=min([m.direction_min for m in wind_measurements]),
+                direction_min=min([m.direction_min
+                                   for m in wind_measurements]),
                 direction_avg=utils.functions.avg_list(
-                    [m.direction_avg for m in wind_measurements], 1
-                ),
-                direction_max=max([m.direction_max for m in wind_measurements]),
+                    [m.direction_avg for m in wind_measurements], 1),
+                direction_max=max([m.direction_max
+                                   for m in wind_measurements]),
                 speed_min=min([m.speed_min for m in wind_measurements]),
                 speed_avg=utils.functions.avg_list(
-                    [m.speed_avg for m in wind_measurements], 1
-                ),
+                    [m.speed_avg for m in wind_measurements], 1),
                 speed_max=max([m.speed_max for m in wind_measurements]),
-                last_update_time=[m.last_update_time for m in wind_measurements][-1],
+                last_update_time=[
+                    m.last_update_time for m in wind_measurements
+                ][-1],
             )
         else:
             self.wind_measurement = None
@@ -134,29 +136,29 @@ class WindSensorInterface:
     def get_current_sensor_measurement(
         self,
     ) -> Tuple[
-        Optional[custom_types.WindSensorData],
-        Optional[custom_types.WindSensorStatus],
+            Optional[custom_types.WindSensorData],
+            Optional[custom_types.WindSensorStatus],
     ]:
         if self.simulate:
-            wind_dir = 60 + random.random()*120
-            wind_speed = 3 + random.random()*8
+            wind_dir = 60 + random.random() * 120
+            wind_speed = 3 + random.random() * 8
             return (
                 custom_types.WindSensorData(
                     # generate random wind data
                     direction_min=wind_dir - 30,
                     direction_avg=wind_dir,
                     direction_max=wind_dir + 30,
-                    speed_min=wind_speed-3,
+                    speed_min=wind_speed - 3,
                     speed_avg=wind_speed,
-                    speed_max=wind_speed+3,
+                    speed_max=wind_speed + 3,
                     last_update_time=round(time.time()),
                 ),
                 custom_types.WindSensorStatus(
                     # generate random device status
-                    temperature=20 + random.random()*10,
-                    heating_voltage=24 + random.random()*2,
-                    supply_voltage=24 + random.random()*2,
-                    reference_voltage=3.6 + random.random()*0.4,
+                    temperature=20 + random.random() * 10,
+                    heating_voltage=24 + random.random() * 2,
+                    supply_voltage=24 + random.random() * 2,
+                    reference_voltage=3.6 + random.random() * 0.4,
                     last_update_time=round(time.time()),
                 ),
             )
@@ -173,26 +175,25 @@ class WindSensorInterface:
             # only consider values less than 5 minutes old
             if (now - self.device_status.last_update_time) < 300:
                 if self.simulate:
-                    self.logger.info("the wind sensor check doesn't report any errors")
+                    self.logger.info(
+                        "the wind sensor check doesn't report any errors")
                     return
 
                 if not (22 <= self.device_status.heating_voltage <= 26):
                     raise WindSensorInterface.DeviceFailure(
-                        "the heating voltage is off by more than 2 volts"
-                        + f" ({self.device_status})"
-                    )
+                        "the heating voltage is off by more than 2 volts" +
+                        f" ({self.device_status})")
                 if not (22 <= self.device_status.supply_voltage <= 26):
                     raise WindSensorInterface.DeviceFailure(
-                        "the supply voltage is off by more than 2 volts"
-                        + f" ({self.device_status})"
-                    )
+                        "the supply voltage is off by more than 2 volts" +
+                        f" ({self.device_status})")
                 if not (3.2 <= self.device_status.reference_voltage <= 4.0):
                     raise WindSensorInterface.DeviceFailure(
-                        "the reference voltage is off by more than 0.4 volts"
-                        + f" ({self.device_status})"
-                    )
+                        "the reference voltage is off by more than 0.4 volts" +
+                        f" ({self.device_status})")
 
-                self.logger.info("the wind sensor check doesn't report any errors")
+                self.logger.info(
+                    "the wind sensor check doesn't report any errors")
         else:
             self.logger.info("no wind sensor seems to be connected")
 
@@ -200,7 +201,7 @@ class WindSensorInterface:
         """ends all hardware/system connections"""
         if self.simulate:
             return
-        
+
         self.power_pin.off()
         self.pin_factory.close()
 

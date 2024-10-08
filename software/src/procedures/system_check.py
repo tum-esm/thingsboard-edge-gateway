@@ -45,13 +45,13 @@ class SystemCheckProcedure:
                                                     > 70):
             self.logger.warning(
                 f"mainboard temperature is very high ({mainboard_temperature} °C)",
-                config=self.config,
+                forward=True,
             )
 
         if (cpu_temperature is not None) and (cpu_temperature > 70):
             self.logger.warning(
                 f"CPU temperature is very high ({cpu_temperature} °C)",
-                config=self.config,
+                forward=True,
             )
 
         # evaluate disk usage
@@ -62,7 +62,7 @@ class SystemCheckProcedure:
         if disk_usage.percent > 80:
             self.logger.warning(
                 f"disk space usage is very high ({disk_usage.percent} %)",
-                config=self.config,
+                forward=True,
             )
 
         # evaluate CPU usage
@@ -70,15 +70,14 @@ class SystemCheckProcedure:
         self.logger.debug(f"{cpu_usage_percent} % total CPU usage")
         if cpu_usage_percent > 80:
             self.logger.warning(
-                f"CPU usage is very high ({cpu_usage_percent} %)",
-                config=self.config)
+                f"CPU usage is very high ({cpu_usage_percent} %)", forward=True)
 
         memory_usage_percent = psutil.virtual_memory().percent
         self.logger.debug(f"{memory_usage_percent} % total memory usage")
         if memory_usage_percent > 80:
             self.logger.warning(
                 f"memory usage is very high ({memory_usage_percent} %)",
-                config=self.config,
+                forward=True,
             )
 
         # read UPS status

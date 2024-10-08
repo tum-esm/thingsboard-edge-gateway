@@ -22,8 +22,6 @@ def test_logger_without_sending() -> None:
 @pytest.mark.remote_update
 @pytest.mark.github_action
 def test_very_long_exception_cutting() -> None:
-    config = utils.ConfigInterface.read()
-    config.active_components.send_messages_over_mqtt = True
     message_queue = utils.MessageQueue()
 
     logger = utils.Logger(origin="pytests")
@@ -44,14 +42,13 @@ def test_very_long_exception_cutting() -> None:
     expect_log_file_contents(
         forbidden_content_blocks=[expected_log_file_content])
 
-    logger.error(message=message, config=config, details=details)
+    logger.error(message=message, forward=True, details=details)
 
     expect_log_file_contents(
         required_content_blocks=[expected_log_file_content])
 
 
 def _test_logger() -> None:
-    config = utils.ConfigInterface.read()
     message_queue = utils.MessageQueue()
 
     generated_log_lines = [
@@ -71,12 +68,12 @@ def _test_logger() -> None:
     logger = utils.Logger(origin="pytests")
     logger.debug("some message a")
     logger.info("some message b")
-    logger.warning("some message c", config=config)
-    logger.error("some message d", config=config)
+    logger.warning("some message c", forward=True)
+    logger.error("some message d", forward=True)
     try:
         30 / 0
     except Exception as e:
-        logger.exception(e, config=config)
-        logger.exception(e, label="customlabel", config=config)
+        logger.exception(e, forward=True)
+        logger.exception(e, label="customlabel", forward=True)
 
     expect_log_file_contents(required_content_blocks=generated_log_lines)

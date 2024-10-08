@@ -47,7 +47,7 @@ class SHT45SensorInterface:
                 self.logger.exception(
                     e,
                     label="Could not initialize SHT45 sensor",
-                    config=self.config,
+                    forward=True,
                 )
 
             time.sleep(1)
@@ -55,7 +55,7 @@ class SHT45SensorInterface:
         if not self.sensor_connected:
             self.logger.warning(
                 "Could not connect to SHT45 sensor.",
-                config=self.config,
+                forward=True,
             )
 
         self.logger.info("finished initialization.")
@@ -93,14 +93,14 @@ class SHT45SensorInterface:
             except Exception:
                 self.logger.warning(
                     "Problem during sensor readout. Reinitialising sensor communication",
-                    config=self.config,
+                    forward=True,
                 )
                 self._reset_sensor()
 
         # returns None if sensor could not be read
         self.logger.warning(
             "Could not read SHT45 measurement values. Device is not connected.",
-            config=self.config,
+            forward=True,
         )
         return output
 

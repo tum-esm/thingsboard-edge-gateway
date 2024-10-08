@@ -54,18 +54,16 @@ class Logger:
     def info(
         self,
         message: str,
-        config: Optional[custom_types.Config] = None,
+        forward: bool = False,
         details: str = "",
     ) -> None:
-        """writes an info log line, sends the message via
-        MQTT when config is passed (required for revision number)"""
+        """Writes an info log line. Forwards to MQTT client when set to True."""
         if len(details) == 0:
             self._write_log_line("INFO", message)
         else:
             self._write_log_line("INFO", f"{message}, details: {details}")
-        if config is not None:
+        if forward:
             self._write_mqtt_message(
-                config,
                 level="info",
                 subject=message,
                 details=details,
@@ -74,7 +72,7 @@ class Logger:
     def warning(
         self,
         message: str,
-        config: Optional[custom_types.Config] = None,
+        forward: bool = False,
         details: str = "",
     ) -> None:
         """writes a warning log line, sends the message via
@@ -84,9 +82,8 @@ class Logger:
             self._write_log_line("WARNING", message)
         else:
             self._write_log_line("WARNING", f"{message}, details: {details}")
-        if config is not None:
+        if forward:
             self._write_mqtt_message(
-                config,
                 level="warning",
                 subject=message,
             )
@@ -94,7 +91,7 @@ class Logger:
     def error(
         self,
         message: str,
-        config: Optional[custom_types.Config] = None,
+        forward: bool = False,
         details: str = "",
     ) -> None:
         """writes an error log line, sends the message via
@@ -112,9 +109,8 @@ class Logger:
                     "------------------------------",
                 ]),
             )
-        if config is not None:
-            self._write_mqtt_message(config,
-                                     level="error",
+        if forward:
+            self._write_mqtt_message(level="error",
                                      subject=message,
                                      details=details)
 
@@ -122,7 +118,7 @@ class Logger:
         self,
         e: Exception,
         label: Optional[str] = None,
-        config: Optional[custom_types.Config] = None,
+        forward: bool = False,
     ) -> None:
         """logs the traceback of an exception, sends the message via
         MQTT when config is passed (required for revision number).
@@ -155,9 +151,8 @@ class Logger:
 
         self._write_log_line("EXCEPTION",
                              f"{subject_string}\n{details_string}")
-        if config is not None:
+        if forward:
             self._write_mqtt_message(
-                config,
                 level="error",
                 subject=subject_string,
                 details=details_string,
@@ -187,14 +182,12 @@ class Logger:
 
     def _write_mqtt_message(
         self,
-        config: custom_types.Config,
         level: Literal["info", "warning", "error"],
         subject: str,
         details: str = "",
     ) -> None:
         subject = f"{self.origin} - {subject}"
 
-        # TODO: refactor the split of subject and detail to only one message
         if len(subject) > 256:
             extension_message_subject = f" ... CUT ({len(subject)} -> 256)"
             subject = (subject[:(256 - len(extension_message_subject))] +
@@ -204,8 +197,6 @@ class Logger:
             extension_message_details = f" ... CUT ({len(details)} -> 16384)"
             details = (details[:(16384 - len(extension_message_details))] +
                        extension_message_details)
-
-        state = utils.StateInterface.read()
 
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),

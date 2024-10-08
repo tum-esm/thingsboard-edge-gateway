@@ -16,13 +16,12 @@ def run() -> None:
     - State Interface
     - Timeouts
     - Initialize Hardware Interface (e)
-    - Initialize Procedures (e) (System Checks, Calibration, Measurement)
+    - Initialize Procedures (e) (System Checks, Measurement, Calibration)
 
     RUN INFINITE MAIN LOOP
     - Procedure: System Check
     - Procedure: Calibration
     - Procedure: Measurements (CO2, Wind)
-    - Check for configuration update
     """
     simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
 
@@ -37,7 +36,7 @@ def run() -> None:
 
     logger.info(
         f"Started new automation process with SW version {config.version} and PID {os.getpid()}.",
-        config=config,
+        forward=True,
     )
 
     # -------------------------------------------------------------------------
@@ -63,7 +62,7 @@ def run() -> None:
     # initialize all hardware interfaces
     # tear down hardware on program termination
 
-    logger.info("Initializing hardware interfaces.", config=config)
+    logger.info("Initializing hardware interfaces.", forward=True)
 
     try:
         hardware_interface = hardware.HardwareInterface(config=config,
@@ -71,7 +70,7 @@ def run() -> None:
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",
-                         config=config)
+                         forward=True)
         raise e
 
     # tear down hardware on program termination
@@ -95,7 +94,7 @@ def run() -> None:
     #   calibration:    using the two reference gas bottles to calibrate the CO2 sensor
     #   measurements:   do regular measurements for x minutes
 
-    logger.info("Initializing procedures.", config=config)
+    logger.info("Initializing procedures.", forward=True)
 
     try:
         system_check_procedure = procedures.SystemCheckProcedure(
@@ -109,14 +108,14 @@ def run() -> None:
     except Exception as e:
         logger.exception(e,
                          label="could not initialize procedures",
-                         config=config)
+                         forward=True)
         raise e
 
     # -------------------------------------------------------------------------
     # infinite mainloop
 
     logger.info("Successfully finished setup, starting mainloop.",
-                config=config)
+                forward=True)
 
     last_successful_mainloop_iteration_time = 0.0
     while True:
@@ -138,8 +137,7 @@ def run() -> None:
 
             if config.active_components.run_calibration_procedures:
                 if calibration_procedure.is_due():
-                    logger.info("Running calibration procedure.",
-                                config=config)
+                    logger.info("Running calibration procedure.", forward=True)
                     calibration_procedure.run()
                 else:
                     logger.info("Calibration procedure is not due.")
@@ -162,7 +160,7 @@ def run() -> None:
             last_successful_mainloop_iteration_time = time.time()
 
         except Exception as e:
-            logger.exception(e, label="exception in mainloop", config=config)
+            logger.exception(e, label="exception in mainloop", forward=True)
 
             # cancel the alarm for too long mainloops
             signal.alarm(0)
@@ -173,7 +171,7 @@ def run() -> None:
                 if utils.read_os_uptime() >= 86400:
                     logger.info(
                         "Rebooting because no successful mainloop iteration for 24 hours.",
-                        config=config,
+                        forward=True,
                     )
                     os.system("sudo reboot")
                 else:
@@ -186,16 +184,15 @@ def run() -> None:
                 if time.time() > ebo.next_try_timer():
                     ebo.set_next_timer()
                     # reinitialize all hardware interfaces
-                    logger.info("Performing hardware reset.", config=config)
+                    logger.info("Performing hardware reset.", forward=True)
                     hardware_interface.teardown()
                     hardware_interface.reinitialize(config)
-                    logger.info("Hardware reset was successful.",
-                                config=config)
+                    logger.info("Hardware reset was successful.", forward=True)
 
             except Exception as e:
                 logger.exception(
                     e,
                     label="exception during hard reset of hardware",
-                    config=config,
+                    forward=True,
                 )
                 exit(1)
