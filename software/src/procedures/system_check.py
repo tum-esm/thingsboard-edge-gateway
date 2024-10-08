@@ -70,7 +70,8 @@ class SystemCheckProcedure:
         self.logger.debug(f"{cpu_usage_percent} % total CPU usage")
         if cpu_usage_percent > 80:
             self.logger.warning(
-                f"CPU usage is very high ({cpu_usage_percent} %)", forward=True)
+                f"CPU usage is very high ({cpu_usage_percent} %)",
+                forward=True)
 
         memory_usage_percent = psutil.virtual_memory().percent
         self.logger.debug(f"{memory_usage_percent} % total memory usage")
