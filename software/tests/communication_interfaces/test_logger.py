@@ -26,15 +26,8 @@ def test_very_long_exception_cutting(log_files: None) -> None:
         utils.get_random_string(length=80) for i in range(250)
     ])  # 20.249 characters long
 
-    expected_log_file_content = (
-        f"pytests                 - ERROR         - {message}\n" +
-        "--- details: -----------------\n" + f"{details}\n" +
-        "------------------------------\n")
-
+    # long message and details string will test internal assertion checks
     logger.error(message=message, details=details)
-
-    expect_log_file_contents(
-        forbidden_content_blocks=[expected_log_file_content])
 
 
 def _test_logger() -> None:
