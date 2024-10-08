@@ -31,9 +31,7 @@ def test_very_long_exception_cutting(log_files: None) -> None:
         "--- details: -----------------\n" + f"{details}\n" +
         "------------------------------\n")
 
-    expected_mqtt_message = (
-        f"pytests - {message[: (256 - 31)]} ... CUT (310 -> 256)" + " " +
-        f"{details[: (16384 - 25)]} ... CUT (20249 -> 16384)")
+    logger.error(message=message, details=details)
 
     expect_log_file_contents(
         forbidden_content_blocks=[expected_log_file_content])
