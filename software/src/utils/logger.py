@@ -63,7 +63,7 @@ class Logger:
         else:
             self._write_log_line("INFO", f"{message}, details: {details}")
         if forward:
-            self._write_mqtt_message(
+            self._enqueue_message(
                 level="info",
                 subject=message,
                 details=details,
@@ -83,7 +83,7 @@ class Logger:
         else:
             self._write_log_line("WARNING", f"{message}, details: {details}")
         if forward:
-            self._write_mqtt_message(
+            self._enqueue_message(
                 level="warning",
                 subject=message,
             )
@@ -110,9 +110,9 @@ class Logger:
                 ]),
             )
         if forward:
-            self._write_mqtt_message(level="error",
-                                     subject=message,
-                                     details=details)
+            self._enqueue_message(level="error",
+                                  subject=message,
+                                  details=details)
 
     def exception(
         self,
@@ -152,7 +152,7 @@ class Logger:
         self._write_log_line("EXCEPTION",
                              f"{subject_string}\n{details_string}")
         if forward:
-            self._write_mqtt_message(
+            self._enqueue_message(
                 level="error",
                 subject=subject_string,
                 details=details_string,
@@ -180,7 +180,7 @@ class Logger:
                 with open(join(LOGS_ARCHIVE_DIR, log_file_name), "a") as f1:
                     f1.write(log_string)
 
-    def _write_mqtt_message(
+    def _enqueue_message(
         self,
         level: Literal["info", "warning", "error"],
         subject: str,
@@ -197,6 +197,9 @@ class Logger:
             extension_message_details = f" ... CUT ({len(details)} -> 16384)"
             details = (details[:(16384 - len(extension_message_details))] +
                        extension_message_details)
+
+        assert (len(subject) <= 256)
+        assert (len(details) <= 16384)
 
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),
