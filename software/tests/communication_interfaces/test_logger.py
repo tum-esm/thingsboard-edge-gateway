@@ -15,13 +15,13 @@ from src import utils
 
 @pytest.mark.remote_update
 @pytest.mark.github_action
-def test_logger_without_sending() -> None:
+def test_logger_without_sending(log_files: None) -> None:
     _test_logger()
 
 
 @pytest.mark.remote_update
 @pytest.mark.github_action
-def test_very_long_exception_cutting() -> None:
+def test_very_long_exception_cutting(log_files: None) -> None:
     message_queue = utils.MessageQueue()
 
     logger = utils.Logger(origin="pytests")
@@ -68,12 +68,12 @@ def _test_logger() -> None:
     logger = utils.Logger(origin="pytests")
     logger.debug("some message a")
     logger.info("some message b")
-    logger.warning("some message c", forward=True)
-    logger.error("some message d", forward=True)
+    logger.warning("some message c")
+    logger.error("some message d")
     try:
         30 / 0
     except Exception as e:
-        logger.exception(e, forward=True)
-        logger.exception(e, label="customlabel", forward=True)
+        logger.exception(e)
+        logger.exception(e, label="customlabel")
 
     expect_log_file_contents(required_content_blocks=generated_log_lines)
