@@ -6,7 +6,7 @@ from typing import Literal, Optional
 
 import filelock
 
-from src import custom_types, utils
+from src import custom_types
 from .functions import CommandLineException
 from .message_queue import MessageQueue
 

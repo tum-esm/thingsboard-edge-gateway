@@ -89,19 +89,3 @@ def log_files() -> Any:
     print("*** LOGS AFTER TEST:")
     print(logs_after_test, end="")
     print("***")
-
-
-@pytest.fixture
-def sqlite_live_queue():
-    """Fixture to set up live queue"""
-    ACTIVE_QUEUE_FILE = join(PROJECT_DIR, "data", "SQLite-Live-Queue.db")
-    con = sqlite3.connect(ACTIVE_QUEUE_FILE)
-
-    con.execute("""
-            CREATE TABLE IF NOT EXISTS queue_out (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type text,
-                message text
-            );
-        """)
-    yield con

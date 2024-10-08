@@ -1,10 +1,6 @@
-from datetime import datetime
-import json
-import os
-import time
 import pytest
 from ..pytest_utils import expect_log_file_contents
-from os.path import dirname, abspath, join
+from os.path import dirname, abspath
 import sys
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
@@ -47,7 +43,7 @@ def test_very_long_exception_cutting(log_files: None) -> None:
         required_content_blocks=[expected_log_file_content])
 
 
-def _test_logger(sqlite_live_queue: None) -> None:
+def _test_logger(log_files: None) -> None:
 
     generated_log_lines = [
         "pytests                 - DEBUG         - some message a",
