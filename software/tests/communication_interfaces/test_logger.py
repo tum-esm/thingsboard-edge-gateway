@@ -10,25 +10,18 @@ import sys
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 sys.path.append(PROJECT_DIR)
 
-from src import utils, custom_types
+from src import utils
 
 
 @pytest.mark.remote_update
 @pytest.mark.github_action
-def test_logger_without_sending(messaging_agent_without_sending: None) -> None:
-    _test_logger(mqtt_communication_enabled=False)
+def test_logger_without_sending() -> None:
+    _test_logger()
 
 
 @pytest.mark.remote_update
 @pytest.mark.github_action
-def test_logger_with_sending(messaging_agent_with_sending: None) -> None:
-    _test_logger(mqtt_communication_enabled=True)
-
-
-@pytest.mark.remote_update
-@pytest.mark.github_action
-def test_very_long_exception_cutting(
-        messaging_agent_with_sending: None) -> None:
+def test_very_long_exception_cutting() -> None:
     config = utils.ConfigInterface.read()
     config.active_components.send_messages_over_mqtt = True
     message_queue = utils.MessageQueue()
@@ -57,10 +50,8 @@ def test_very_long_exception_cutting(
         required_content_blocks=[expected_log_file_content])
 
 
-def _test_logger(mqtt_communication_enabled: bool) -> None:
+def _test_logger() -> None:
     config = utils.ConfigInterface.read()
-    config.active_components.send_messages_over_mqtt = mqtt_communication_enabled
-
     message_queue = utils.MessageQueue()
 
     generated_log_lines = [

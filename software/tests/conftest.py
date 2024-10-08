@@ -1,13 +1,10 @@
 from datetime import datetime
 import json
 import os
-import random
-import time
 from typing import Any, Optional
 import pytest
-import dotenv
 from os.path import dirname, abspath, join, isfile
-from src import custom_types, utils, procedures
+from src import custom_types
 
 PROJECT_DIR = dirname(dirname(abspath(__file__)))
 
