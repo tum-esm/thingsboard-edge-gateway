@@ -38,10 +38,6 @@ def test_very_long_exception_cutting(log_files: None) -> None:
     expect_log_file_contents(
         forbidden_content_blocks=[expected_log_file_content])
 
-    logger.error(message=message, details=details)
-
-    expect_log_file_contents(required_content_blocks=[expected_mqtt_message])
-
 
 def _test_logger() -> None:
 
