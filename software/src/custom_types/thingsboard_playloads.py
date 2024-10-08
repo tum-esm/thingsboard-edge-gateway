@@ -1,6 +1,5 @@
 import dataclasses
 from typing import Optional, Literal
-import pydantic
 
 
 @dataclasses.dataclass
@@ -8,7 +7,7 @@ class MQTTLogMessage():
     """message body which is sent to server"""
 
     severity: Literal["info", "warning", "error"]
-    message: str = pydantic.Field(..., min_length=0)
+    message: str
 
 
 @dataclasses.dataclass
