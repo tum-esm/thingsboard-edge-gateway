@@ -52,7 +52,7 @@ class BME280SensorInterface:
                 self.logger.exception(
                     e,
                     label=f"Could not initialize BME280 sensor (variant: {self.variant})",
-                    config=self.config,
+                    forward=True,
                 )
 
             time.sleep(1)
@@ -60,7 +60,7 @@ class BME280SensorInterface:
         if not self.sensor_connected:
             self.logger.warning(
                 f"Could not connect to BME280 sensor (variant: {self.variant}).",
-                config=self.config,
+                forward=True,
             )
 
         self.logger.info("Finished initialization")
@@ -108,14 +108,14 @@ class BME280SensorInterface:
             except Exception:
                 self.logger.warning(
                     "Problem during sensor readout. Reinitialising sensor communication.",
-                    config=self.config,
+                    forward=True,
                 )
                 self._reset_sensor()
 
         # returns None if sensor could not be read
         self.logger.warning(
             "Could not read BME280 measurement values. Device is not connected.",
-            config=self.config,
+            forward=True,
         )
         return output
 

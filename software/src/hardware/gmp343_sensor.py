@@ -130,7 +130,7 @@ class CO2SensorInterface:
             self.logger.exception(
                 e,
                 label="Exception during CO2 sensor measurement request - restarting sensor",
-                config=self.config,
+                forward=True,
             )
             self._reset_sensor()
             sensor_data = (0.0, 0.0, 0.0, 0.0)
@@ -375,7 +375,7 @@ class CO2SensorInterface:
         if not ("OK: No errors detected." in answer):
             self.logger.warning(
                 f"The CO2 sensor reported errors: {answer}",
-                config=self.config,
+                forward=True,
             )
 
         self.logger.info("The CO2 sensor check doesn't report any errors.")

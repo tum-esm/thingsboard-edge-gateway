@@ -10,6 +10,7 @@ STATE_PATH = os.path.join(PROJECT_DIR, "config", "state.json")
 
 
 class StateInterface:
+
     @staticmethod
     def init() -> None:
         """create state file if it does not exist yet,
@@ -36,7 +37,6 @@ class StateInterface:
             last_upgrade_time=None,
             last_calibration_time=None,
             current_config_revision=0,
-            offline_since=None,
             next_calibration_cylinder=0,
         )
         StateInterface.write(new_empty_state)
