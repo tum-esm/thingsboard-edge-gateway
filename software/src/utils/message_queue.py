@@ -31,7 +31,7 @@ class MessageQueue:
             """)
 
     def enqueue_message(self, timestamp: int,
-                        payload: MEASUREMENT_PAYLOADS) -> None:
+                        payload: THINGSBOARD_PAYLOADS) -> None:
 
         new_message = {
             "ts": timestamp,
