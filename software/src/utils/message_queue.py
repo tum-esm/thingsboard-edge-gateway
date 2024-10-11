@@ -4,14 +4,12 @@ from os.path import dirname
 import dataclasses
 from typing import Union
 
-import filelock
-
 from src import custom_types
 
 PROJECT_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))
 ACTIVE_QUEUE_FILE = os.path.join(PROJECT_DIR, "data", "SQLite-Live-Queue.db")
 
-MEASUREMENT_PAYLOADS = Union[custom_types.MQTTCO2Data,
+THINGSBOARD_PAYLOADS = Union[custom_types.MQTTCO2Data,
                              custom_types.MQTTCO2CalibrationData,
                              custom_types.MQTTSystemData,
                              custom_types.MQTTWindData,
