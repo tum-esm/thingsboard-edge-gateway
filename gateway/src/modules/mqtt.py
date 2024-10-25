@@ -33,6 +33,8 @@ class GatewayMqttClient(Client):
         self.subscribe("v1/devices/me/attributes")
         self.subscribe("v2/fw/response/+")
 
+        self.publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+
     def __on_disconnect(self, _client, _userdata, _rc):
         print(f"Disconnected from ThingsBoard with result code: {_rc}")
         self.graceful_exit()
