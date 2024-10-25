@@ -3,13 +3,14 @@ import threading
 from time import sleep
 
 from args import parse_args
-from data_connections import mqtt, sqlite
+from modules import mqtt, sqlite, docker_client
 from self_provisioning import self_provisioning_get_access_token
 
 
 if __name__ == '__main__':
     # setup
     mqtt_message_queue = queue.Queue()
+    docker_client = docker_client.GatewayDockerClient()
     args = parse_args()
     access_token = self_provisioning_get_access_token(args)
 
