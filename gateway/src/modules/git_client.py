@@ -5,6 +5,20 @@ class GatewayGitClient:
     def __init__(self):
         self.git_repo_path = "./.git"
 
+    # Singleton pattern
+    def __new__(cls):
+        if not hasattr(cls, 'instance') or cls.instance is None:
+            print("[GIT-CLIENT] Initializing GatewayGitClient")
+            cls.instance = super(GatewayGitClient, cls).__new__(cls)
+        return cls.instance
+    instance = None
+
+    def get_commit_from_hash_or_tag(self, hash_or_tag):
+        if self.verify_commit_hash(hash_or_tag):
+            return hash_or_tag
+        else:
+            return self.get_commit_for_tag(hash_or_tag)
+
     def get_current_commit(self):
         try:
             return subprocess.check_output("git --git-dir='" + self.git_repo_path + "' rev-parse HEAD", shell=True)
