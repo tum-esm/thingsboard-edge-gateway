@@ -82,7 +82,10 @@ class GatewayDockerClient:
                 "acropolis-edge-" + version,
                 detach=True,
                 name="acropolis_edge",
-                restart="unless-stopped",
+                restart_policy={
+                    "Name": "always",
+                    "MaximumRetryCount": 0
+                },
                 privileged=True,
                 network_mode="host",
                 volumes={

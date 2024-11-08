@@ -33,8 +33,6 @@ if __name__ == '__main__':
         # check if there are any new mqtt messages in the queue
         if not mqtt_message_queue.empty():
             msg = mqtt_message_queue.get()
-            print("Got message: " + str(msg))
-
             sw_title = get_maybe(msg, "payload", "shared", "sw_title")
             sw_url = get_maybe(msg, "payload", "shared", "sw_url")
             sw_version = get_maybe(msg, "payload", "shared", "sw_version")
@@ -50,7 +48,8 @@ if __name__ == '__main__':
                     print("Launching latest edge-software: " + sw_version + " (" + sw_title + ")")
                     docker_client.start_edge(sw_version)
             else:
-                print("Invalid message, skipping")
+                print("Got message: " + str(msg))
+                print("Invalid message, skipping...")
             continue
 
         # if nothing happened this iteration, sleep for a while
