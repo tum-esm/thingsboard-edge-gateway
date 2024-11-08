@@ -60,43 +60,47 @@ class GatewayDockerClient:
                 self.start_edge(version)
             else:
                 print("[DOCKER-CLIENT] Software already running with version " + version)
-        else:
-            if not self.is_image_available("acropolis-edge-" + version + ":latest"):
-                print("[DOCKER-CLIENT] Image not available, building image first...")
-                GatewayGitClient().execute_fetch()
-                commit_hash = GatewayGitClient().get_commit_from_hash_or_tag(version)
-                if commit_hash is None:
-                    print("[DOCKER-CLIENT][FATAL] Unable to get commit hash for version " + version)
-                    return
-                print("[DOCKER-CLIENT] Building image for commit " + commit_hash)
-                GatewayGitClient().execute_reset_to_commit(commit_hash)
-                self.docker_client.images.build(
-                    path="./software",
-                    dockerfile="./docker/Dockerfile",
-                    tag="acropolis-edge-" + version + ":latest"
-                )
-                print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag acropolis-edge-" + version)
+            return
 
-            self.prune_containers()
-            self.docker_client.containers.run(
-                "acropolis-edge-" + version,
-                detach=True,
-                name="acropolis_edge",
-                restart_policy={
-                    "Name": "always",
-                    "MaximumRetryCount": 0
-                },
-                privileged=True,
-                network_mode="host",
-                volumes={
-                    "/bin/vcgencmd": {
-                        "bind": "/bin/vcgencmd",
-                        "mode": "rw"
-                    },
-                    "/bin/uptime": {
-                        "bind": "/bin/uptime",
-                        "mode": "rw"
-                    }
-                }
+        # edge container is not running
+        # check if the image is available already, if not build it
+        if not self.is_image_available("acropolis-edge-" + version + ":latest"):
+            print("[DOCKER-CLIENT] Image not available, building image first...")
+            GatewayGitClient().execute_fetch()
+            commit_hash = GatewayGitClient().get_commit_from_hash_or_tag(version)
+            if commit_hash is None:
+                print("[DOCKER-CLIENT][FATAL] Unable to get commit hash for version " + version)
+                return
+            print("[DOCKER-CLIENT] Building image for commit " + commit_hash)
+            GatewayGitClient().execute_reset_to_commit(commit_hash)
+            self.docker_client.images.build(
+                path="./software",
+                dockerfile="./docker/Dockerfile",
+                tag="acropolis-edge-" + version + ":latest"
             )
-            print("[DOCKER-CLIENT] Started Acropolis Edge container with version " + version)
+            print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag acropolis-edge-" + version)
+
+        # remove old containers and start the new one
+        self.prune_containers()
+        self.docker_client.containers.run(
+            "acropolis-edge-" + version,
+            detach=True,
+            name="acropolis_edge",
+            restart_policy={
+                "Name": "always",
+                "MaximumRetryCount": 0
+            },
+            privileged=True,
+            network_mode="host",
+            volumes={
+                "/bin/vcgencmd": {
+                    "bind": "/bin/vcgencmd",
+                    "mode": "rw"
+                },
+                "/bin/uptime": {
+                    "bind": "/bin/uptime",
+                    "mode": "rw"
+                }
+            }
+        )
+        print("[DOCKER-CLIENT] Started Acropolis Edge container with version " + version)
