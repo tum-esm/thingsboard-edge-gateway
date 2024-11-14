@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "temperature-control"
+version = "0.1.0"
+description = ""
+authors = ["Patrick Aigner <patrick.aigner@tum.de>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+gpiozero = "^2.0.1"
+rpi-gpio = {version = "^0.7.1", markers = "platform_machine == 'aarch64' and platform_system == 'Linux'"}
+pigpio = "^1.78"
+simple-pid = "^2.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
