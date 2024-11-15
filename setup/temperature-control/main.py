@@ -1,54 +1,107 @@
 import time
+import logging
+from datetime import datetime, timezone
 from simple_pid import PID
+import signal
+import sys
+import os
 
 from utils.read_temperature import read_sensor_temperature
-from utils.set_ventilator import set_venitlation_on, set_venitlation_off
-from utils.set_heater import set_heater_pwm
-  
+from utils.set_ventilator import VentilationControl
+from utils.set_heater import HeaterControl
+
+# Set up logging
+base_path = os.path.dirname(os.path.abspath(__file__))
+
+# Define the logfile path in the same directory as the script
+logfile_path = os.path.join(base_path, 'log', 'temperature_control.log')
+
+# Set up logging
+logging.basicConfig(filename=logfile_path,
+                    encoding='utf-8',
+                    level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(filename='temperature_control.log',
+                    encoding='utf-8',
+                    level=logging.DEBUG)
+
+
 # Define the simulated system (the plant)
 class HeaterSystem:
+
     def __init__(self):
-        self.temperature = read_sensor_temperature() 
+        self.temperature = read_sensor_temperature()
 
     def update(self, control_signal):
-        """
-        Updates the pwm duty cycle based on the temperature.
-        A larger control signal (more power) increases the temperature more quickly.
-        """
-        # Simple model: increase temperature proportional to control signal
-        set_heater_pwm(control_signal)
+        """Update the PWM duty cycle based on the temperature."""
+        HC.set_heater_pwm(control_signal)
         self.temperature = read_sensor_temperature()
-        
         return self.temperature
 
-# Initialize the system
+
+# Initialize components
+VC = VentilationControl()
+HC = HeaterControl()
 system = HeaterSystem()
-
-# Create PID controller with desired gains
 pid = PID(1, 0.1, 0.05, setpoint=40)
-pid.output_limits = (0, 1) 
+pid.output_limits = (0, 1)
 
-temp = system.update(0)
+# Activate ventilation at the start
+VC.set_venitlation_on()
+logging.info(
+    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Ventilation started"
+)
 
-try: 
-    set_venitlation_on()
+
+# Set up signal handling for safe shutdown
+def shutdown_handler(signal, frame):
+    """Handle program exit safely by shutting down heater and ventilation."""
+    logging.info(
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Shutting down..."
+    )
+    HC.set_heater_pwm(0)
+    VC.set_venitlation_off()
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, shutdown_handler)
+signal.signal(signal.SIGTERM, shutdown_handler)
+
+try:
+    # Set initial values and logging interval
+    temp = system.update(0)
     print_frequency = time.time()
-    
-    while True:
-        # Compute new output from the PID according to the systems current temp
-        control = pid(temp)
-        #print(control)
 
-        # Feed the PID output to the system and get its current value
-        temp = system.update(control)
-        
-        time.sleep(0.1)
-         
-        if time.time() - print_frequency > 5:
-            print_frequency = time.time()
-            print("Box Temperature: ",round(system.temperature, 2))
-            print("PWM Duty Cycle:   ", round(control,2))
+    while True:
+        try:
+            # Calculate control output and update system state
+            control = pid(temp)
+            temp = system.update(control)
+
+            # Check if logging interval has passed
+            if time.time() - print_frequency > 5:
+                logging.info(
+                    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: "
+                    f"Temperature: {round(system.temperature, 2)}, Control: {round(control, 2)}"
+                )
+                print_frequency = time.time()
+
+            # Control loop sleep
+            time.sleep(0.1)
+
+        except Exception as e:
+            logging.error(
+                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Error - {e}"
+            )
+            # Reinitialize interfaces to ensure that GPIO pins are available
+            VC = VentilationControl()
+            HC = HeaterControl()
+
 finally:
-    print("powering of pins")
-    set_heater_pwm(0)
-    set_venitlation_off()
+    # Final cleanup in case of an unexpected exit
+    HC.set_heater_pwm(0)
+    VC.set_venitlation_off()
+    logging.info(
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Heater and ventilation powered off."
+    )
