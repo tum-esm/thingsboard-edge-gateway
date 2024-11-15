@@ -48,20 +48,16 @@ pid = PID(1, 0.1, 0.05, setpoint=40)
 pid.output_limits = (0, 1)
 
 # Activate ventilation at the start
-VC.set_venitlation_on()
-logging.info(
-    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Ventilation started"
-)
-
+VC.set_ventilation_on()
 
 # Set up signal handling for safe shutdown
 def shutdown_handler(signal, frame):
     """Handle program exit safely by shutting down heater and ventilation."""
     logging.info(
-        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Shutting down..."
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Signal received, shutting down gracefully..."
     )
     HC.set_heater_pwm(0)
-    VC.set_venitlation_off()
+    VC.set_ventilation_off()
     sys.exit(0)
 
 
@@ -82,7 +78,7 @@ try:
             # Check if logging interval has passed
             if time.time() - print_frequency > 5:
                 logging.info(
-                    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: "
+                    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: "
                     f"Temperature: {round(system.temperature, 2)}, Control: {round(control, 2)}"
                 )
                 print_frequency = time.time()
@@ -92,16 +88,13 @@ try:
 
         except Exception as e:
             logging.error(
-                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Error - {e}"
+                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Error - {e}"
             )
-            # Reinitialize interfaces to ensure that GPIO pins are available
-            VC = VentilationControl()
-            HC = HeaterControl()
 
 finally:
     # Final cleanup in case of an unexpected exit
     HC.set_heater_pwm(0)
-    VC.set_venitlation_off()
+    VC.set_ventilation_off()
     logging.info(
-        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M %Z')}: Heater and ventilation powered off."
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Heater and ventilation powered off."
     )

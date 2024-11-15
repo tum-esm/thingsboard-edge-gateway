@@ -13,13 +13,7 @@ sensor/data/
 data/**/*.json
 heated_enclosure.ino.*
 config.h
-*.lock
 state.json
-
-# code download artifacts
-insert-name-here-*/
-insert-name-here-*.tar.gz
-insert-name-here-cli.sh
 
 # ssh stuff
 authorized_keys
