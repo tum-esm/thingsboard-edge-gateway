@@ -1,3 +1,4 @@
+import os
 import queue
 import threading
 from time import sleep
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     access_token = self_provisioning_get_access_token(args)
 
     archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-    communication_sqlite_db = sqlite.SqliteConnection("communication.db")
+    communication_sqlite_db = sqlite.SqliteConnection(os.environ.get("ACROPOLIS_COMMUNICATION_DB_PATH") or "communication.db")
 
     # create and run the mqtt client in a separate thread
     mqtt_client = mqtt.GatewayMqttClient(mqtt_message_queue, access_token)
@@ -30,7 +31,7 @@ if __name__ == '__main__':
             sleep(30)
             exit()
 
-        # check if there are any new mqtt messages in the queue
+        # check if there are any new incoming mqtt messages in the queue
         if not mqtt_message_queue.empty():
             msg = mqtt_message_queue.get()
             sw_title = get_maybe(msg, "payload", "shared", "sw_title")
@@ -50,6 +51,17 @@ if __name__ == '__main__':
             else:
                 print("Got message: " + str(msg))
                 print("Invalid message, skipping...")
+            continue
+
+        # check if there are any new outgoing mqtt messages in the sqlite db
+        if not communication_sqlite_db.is_table_empty(sqlite.SqliteTables.QUEUE_OUT.value):
+            # fetch the next message (lowest `id) from the queue and send it
+            message = communication_sqlite_db.execute(
+                f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")
+            if len(message) > 0:
+                print("Sending message: " + str(message[0]))
+                mqtt_client.publish_message(message[0][1])
+                communication_sqlite_db.execute(f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
             continue
 
         # if nothing happened this iteration, sleep for a while

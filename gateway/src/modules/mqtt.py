@@ -1,5 +1,6 @@
 import json
 import ssl
+import struct
 
 from paho.mqtt.client import Client
 
@@ -44,3 +45,6 @@ class GatewayMqttClient(Client):
             "topic": msg.topic,
             "payload": json.loads(msg.payload)
         })
+
+    def publish_message(self, message):
+        self.publish("v1/devices/me/telemetry", message)

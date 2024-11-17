@@ -2,7 +2,7 @@ import sqlite3
 from enum import Enum
 
 class SqliteTables(Enum):
-    MESSAGES = "messages"
+    QUEUE_OUT = "queue_out"
     STATE = "state"
 
 
