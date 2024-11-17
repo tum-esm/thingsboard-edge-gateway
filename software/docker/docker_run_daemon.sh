@@ -6,7 +6,7 @@ GLOBAL_ACROPOLIS_DEPLOYMENT_ROOT_PATH=${ACROPOLIS_DEPLOYMENT_ROOT_PATH}
 ACROPOLIS_DEPLOYMENT_ROOT_PATH=/root/deployment
 
 # Run the docker image
-docker run -d --restart unless-stopped --name ACROPOLIS_edge_$ACROPOLIS_MQTT_IDENTIFIER \
+docker run -d --restart unless-stopped --name acropolis_edge \
   -e ACROPOLIS_DEPLOYMENT_ROOT_PATH="$ACROPOLIS_DEPLOYMENT_ROOT_PATH" \
   --env-file .env \
   -v "$GLOBAL_ACROPOLIS_DEPLOYMENT_ROOT_PATH":"$ACROPOLIS_DEPLOYMENT_ROOT_PATH" \
