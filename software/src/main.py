@@ -25,7 +25,7 @@ def run() -> None:
     """
     simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
 
-    logger = utils.Logger(origin="main", print_to_console=simulate)
+    logger = utils.Logger(origin="main", print_to_console=simulate or os.environ.get("ACROPOLIS_LOG_TO_CONSOLE"))
     logger.horizontal_line()
 
     try:
