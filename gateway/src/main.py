@@ -31,7 +31,7 @@ def shutdown_handler(sig, frame):
     sys.exit(sig)
 
 # Set up signal handling for forced shutdown in case graceful shutdown fails
-def forced_shutdown_handler():
+def forced_shutdown_handler(sig, frame):
     print("FORCEFUL SHUTDOWN")
     sys.stdout.flush()
     os._exit()
