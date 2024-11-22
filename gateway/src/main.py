@@ -16,8 +16,11 @@ archive_sqlite_db = None
 communication_sqlite_db = None
 
 # Set up signal handling for safe shutdown
-def shutdown_handler(signal, frame):
+def shutdown_handler(sig, frame):
     """Handle program exit gracefully"""
+    # Set a timer to force exit if graceful shutdown fails
+    signal.setitimer(signal.ITIMER_REAL, 20)
+
     if mqtt_client is not None:
         mqtt_client.graceful_exit()
     if archive_sqlite_db is not None:
@@ -25,9 +28,7 @@ def shutdown_handler(signal, frame):
     if communication_sqlite_db is not None:
         communication_sqlite_db.close()
 
-    # Set a timer to force exit if graceful shutdown fails
-    signal.setitimer(signal.ITIMER_REAL, 20)
-    sys.exit(signal)
+    sys.exit(sig)
 
 # Set up signal handling for forced shutdown in case graceful shutdown fails
 def forced_shutdown_handler():
