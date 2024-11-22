@@ -34,7 +34,7 @@ def shutdown_handler(sig, frame):
 def forced_shutdown_handler(sig, frame):
     print("FORCEFUL SHUTDOWN")
     sys.stdout.flush()
-    os._exit()
+    os._exit(1)
 signal.signal(signal.SIGALRM, forced_shutdown_handler)
 
 
