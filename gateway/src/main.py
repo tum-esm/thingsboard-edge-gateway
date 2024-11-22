@@ -1,3 +1,4 @@
+import inspect
 import os
 import queue
 import signal
@@ -24,7 +25,16 @@ def shutdown_handler(signal, frame):
     if communication_sqlite_db is not None:
         communication_sqlite_db.close()
 
+    # Set a timer to force exit if graceful shutdown fails
+    signal.setitimer(signal.ITIMER_REAL, 20)
     sys.exit(signal)
+
+# Set up signal handling for forced shutdown in case graceful shutdown fails
+def forced_shutdown_handler():
+    print("FORCEFUL SHUTDOWN")
+    sys.stdout.flush()
+    os._exit()
+signal.signal(signal.SIGALRM, forced_shutdown_handler)
 
 
 signal.signal(signal.SIGINT, shutdown_handler)
@@ -91,4 +101,4 @@ try:
             sleep(1)
 except Exception as e:
     print(f"An error occurred in gateway main loop: {e}")
-    exit(1)
+    shutdown_handler(1, inspect.currentframe())
