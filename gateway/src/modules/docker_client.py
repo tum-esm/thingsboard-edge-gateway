@@ -55,7 +55,7 @@ class GatewayDockerClient:
     def start_edge(self, version):
         if self.is_edge_running():
             current_version = self.get_edge_version()
-            if current_version is not None and current_version != version:
+            if current_version is None or current_version != version:
                 self.stop_edge()
                 self.start_edge(version)
             else:
