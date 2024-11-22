@@ -88,7 +88,8 @@ try:
                 continue
 
             # check if there are any new outgoing mqtt messages in the sqlite db
-            if not communication_sqlite_db.is_table_empty(sqlite.SqliteTables.QUEUE_OUT.value):
+            if (communication_sqlite_db.does_table_exist(sqlite.SqliteTables.QUEUE_OUT.value)
+                    and not communication_sqlite_db.is_table_empty(sqlite.SqliteTables.QUEUE_OUT.value)):
                 # fetch the next message (lowest `id) from the queue and send it
                 message = communication_sqlite_db.execute(
                     f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")

@@ -10,6 +10,11 @@ class SqliteConnection:
     def __init__(self, path):
         self.conn = sqlite3.connect(path)
 
+    def does_table_exist(self, table):
+        cursor = self.conn.cursor()
+        cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+        return cursor.fetchone() is not None
+
     def is_table_empty(self, table):
         cursor = self.conn.cursor()
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
