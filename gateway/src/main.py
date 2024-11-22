@@ -1,6 +1,7 @@
 import os
 import queue
 import signal
+import sys
 import threading
 from time import sleep
 
@@ -8,6 +9,26 @@ from args import parse_args
 from modules import mqtt, sqlite, docker_client, git_client
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
+
+mqtt_client = None
+archive_sqlite_db = None
+communication_sqlite_db = None
+
+# Set up signal handling for safe shutdown
+def shutdown_handler(signal, frame):
+    """Handle program exit gracefully"""
+    if mqtt_client is not None:
+        mqtt_client.graceful_exit()
+    if archive_sqlite_db is not None:
+        archive_sqlite_db.close()
+    if communication_sqlite_db is not None:
+        communication_sqlite_db.close()
+
+    sys.exit(signal)
+
+
+signal.signal(signal.SIGINT, shutdown_handler)
+signal.signal(signal.SIGTERM, shutdown_handler)
 
 try:
     if __name__ == '__main__':
@@ -70,4 +91,4 @@ try:
             sleep(1)
 except Exception as e:
     print(f"An error occurred in gateway main loop: {e}")
-    signal.raise_signal(signal.SIGINT)
+    exit(1)
