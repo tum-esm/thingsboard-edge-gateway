@@ -75,8 +75,8 @@ try:
                 if sw_title is not None and sw_url is not None and sw_version is not None:
                     if docker_client.is_edge_running():
                         current_version = docker_client.get_edge_version()
-                        if current_version is not None and current_version != sw_version:
-                            print("Software update available: " + sw_title + " from " + current_version + " to " + sw_version)
+                        if current_version is None or current_version != sw_version:
+                            print("Software update available: " + sw_title + " from " + (current_version or "UNKNOWN") + " to " + sw_version)
                             docker_client.start_edge(sw_version)
                         else:
                             print("Software is up to date")
