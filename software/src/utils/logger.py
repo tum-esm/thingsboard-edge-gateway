@@ -3,6 +3,7 @@ import traceback
 from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
+import sys
 
 import filelock
 
@@ -173,6 +174,7 @@ class Logger:
             f"- {_pad_str_right(level, min_width=13)} " + f"- {message}\n")
         if self.print_to_console:
             print(log_string, end="")
+            sys.stdout.flush()
         if self.write_to_file:
             # YYYY-MM-DD.log
             log_file_name = str(now)[:10] + ".log"
