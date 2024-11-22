@@ -27,23 +27,9 @@ logging.basicConfig(filename='temperature_control.log',
                     level=logging.DEBUG)
 
 
-# Define the simulated system (the plant)
-class HeaterSystem:
-
-    def __init__(self):
-        self.temperature = read_sensor_temperature()
-
-    def update(self, control_signal):
-        """Update the PWM duty cycle based on the temperature."""
-        HC.set_heater_pwm(control_signal)
-        self.temperature = read_sensor_temperature()
-        return self.temperature
-
-
 # Initialize components
 VC = VentilationControl()
 HC = HeaterControl()
-system = HeaterSystem()
 pid = PID(1, 0.1, 0.05, setpoint=40)
 pid.output_limits = (0, 1)
 
@@ -65,32 +51,31 @@ signal.signal(signal.SIGINT, shutdown_handler)
 signal.signal(signal.SIGTERM, shutdown_handler)
 
 try:
-    # Set initial values and logging interval
-    temp = system.update(0)
-    print_frequency = time.time()
+    # Set initial heater state to 0 (off) and read initial temperature
+    HC.set_heater_pwm(0)
+    last_log_timestamp = 0
 
     while True:
-        try:
-            # Calculate control output and update system state
-            control = pid(temp)
-            temp = system.update(control)
+        # Calculate control output and update system state
+        temp = read_sensor_temperature()
+        control = pid(temp)
+        HC.set_heater_pwm(control)
 
-            # Check if logging interval has passed
-            if time.time() - print_frequency > 5:
-                logging.info(
-                    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: "
-                    f"Temperature: {round(system.temperature, 2)}, Control: {round(control, 2)}"
-                )
-                print_frequency = time.time()
-
-            # Control loop sleep
-            time.sleep(0.1)
-
-        except Exception as e:
-            logging.error(
-                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Error - {e}"
+        # Check if logging interval has passed
+        if time.time() - last_log_timestamp > 5:
+            logging.info(
+                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: "
+                f"Temperature: {round(temp, 2)}, Control: {round(control, 2)}"
             )
+            last_log_timestamp = time.time()
 
+        # Control loop sleep
+        time.sleep(0.1)
+
+except Exception as e:
+    logging.error(
+        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Error - {e}"
+    )
 finally:
     # Final cleanup in case of an unexpected exit
     HC.set_heater_pwm(0)
