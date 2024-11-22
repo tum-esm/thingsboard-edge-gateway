@@ -1,9 +1,10 @@
+import os
 import subprocess
 
 
 class GatewayGitClient:
     def __init__(self):
-        self.git_repo_path = "./.git"
+        self.git_repo_path = os.environ.get("ACROPOLIS_GATEWAY_GIT_PATH") or "./.git"
 
 
     # Singleton pattern
