@@ -1,5 +1,6 @@
 import os
 import queue
+import signal
 import threading
 from time import sleep
 
@@ -69,4 +70,4 @@ try:
             sleep(1)
 except Exception as e:
     print(f"An error occurred in gateway main loop: {e}")
-    exit(1)
+    signal.raise_signal(signal.SIGINT)
