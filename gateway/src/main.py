@@ -68,9 +68,10 @@ try:
             # check if there are any new incoming mqtt messages in the queue
             if not mqtt_message_queue.empty():
                 msg = mqtt_message_queue.get()
-                sw_title = get_maybe(msg, "payload", "shared", "sw_title")
-                sw_url = get_maybe(msg, "payload", "shared", "sw_url")
-                sw_version = get_maybe(msg, "payload", "shared", "sw_version")
+                msg_payload = get_maybe(msg, "payload", "shared") or get_maybe(msg, "payload")
+                sw_title = get_maybe(msg_payload, "sw_title")
+                sw_url = get_maybe(msg_payload, "sw_url")
+                sw_version = get_maybe(msg_payload, "sw_version")
                 if sw_title is not None and sw_url is not None and sw_version is not None:
                     if docker_client.is_edge_running():
                         current_version = docker_client.get_edge_version()
