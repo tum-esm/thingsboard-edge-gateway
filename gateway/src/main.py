@@ -4,6 +4,7 @@ import queue
 import signal
 import sys
 import threading
+import traceback
 from time import sleep
 
 from args import parse_args
@@ -104,4 +105,5 @@ try:
             sleep(1)
 except Exception as e:
     print(f"An error occurred in gateway main loop: {e}")
+    print(traceback.format_exc())
     shutdown_handler(1, inspect.currentframe())
