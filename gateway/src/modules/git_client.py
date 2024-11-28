@@ -30,7 +30,7 @@ class GatewayGitClient:
 
     def get_commit_for_tag(self, tag):
         try:
-            return subprocess.check_output(["git", f"--git-dir={self.git_repo_path}", "rev-list", "-n 1", "tags/" + tag])
+            return subprocess.check_output(["git", f"--git-dir={self.git_repo_path}", "rev-list", "-n 1", "tags/" + tag], encoding='utf-8').strip()
         except subprocess.CalledProcessError as e:
             print("[GIT-CLIENT] Unable to find commit hash for tag '" + tag + "': ", e, e.stderr, e.stdout)
             return None
