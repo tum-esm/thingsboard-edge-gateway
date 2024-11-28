@@ -18,6 +18,7 @@ class SqliteConnection:
 
     def is_table_empty(self, table):
         cursor = self.conn.cursor()
+        cursor.execute("PRAGMA wal_checkpoint(PASSIVE);")
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         return cursor.fetchone()[0] == 0
 
@@ -28,6 +29,7 @@ class SqliteConnection:
 
     def execute(self, query):
         cursor = self.conn.cursor()
+        cursor.execute("PRAGMA wal_checkpoint(PASSIVE);")
         cursor.execute(query)
         return cursor.fetchall()
 
