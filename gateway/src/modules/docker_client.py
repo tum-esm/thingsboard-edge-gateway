@@ -100,7 +100,7 @@ class GatewayDockerClient:
             privileged=True,
             network_mode="host",
             environment={
-                "ACROPOLIS_COMMUNICATION_DB_PATH': '/root/data/acropolis_comm_db.db",
+                "ACROPOLIS_COMMUNICATION_DB_PATH": "/root/data/acropolis_comm_db.db",
             },
             volumes={
                 "/bin/vcgencmd": {
