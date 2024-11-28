@@ -5,6 +5,7 @@ import signal
 import sys
 import threading
 import traceback
+from os.path import dirname
 from time import sleep
 
 from args import parse_args
@@ -12,7 +13,8 @@ from modules import mqtt, sqlite, docker_client, git_client
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
-ACROPOLIS_COMMUNICATION_DB_PATH = os.environ.get("ACROPOLIS_COMMUNICATION_DB_PATH") or "acropolis_comm_db.db"
+PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
+ACROPOLIS_COMMUNICATION_DB_PATH = os.environ.get("ACROPOLIS_COMMUNICATION_DB_PATH") or os.path.join(dirname(PROJECT_DIR), "acropolis_comm_db.db")
 mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
