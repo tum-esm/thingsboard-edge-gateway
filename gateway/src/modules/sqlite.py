@@ -8,7 +8,7 @@ class SqliteTables(Enum):
 
 class SqliteConnection:
     def __init__(self, path):
-        self.conn = sqlite3.connect(path)
+        self.conn = sqlite3.connect(path, cached_statements=0, isolation_level=None)
         self.conn.execute("PRAGMA journal_mode=WAL;")
 
     def does_table_exist(self, table):
