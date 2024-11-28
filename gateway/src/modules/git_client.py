@@ -16,14 +16,14 @@ class GatewayGitClient:
     instance = None
 
     def get_commit_from_hash_or_tag(self, hash_or_tag):
-        if self.verify_commit_hash(hash_or_tag):
+        if self.verify_commit_hash_exists(hash_or_tag):
             return hash_or_tag
         else:
             return self.get_commit_for_tag(hash_or_tag)
 
     def get_current_commit(self):
         try:
-            return subprocess.check_output(["git", f"--git-dir={self.git_repo_path}", "rev-parse", "HEAD"])
+            return subprocess.check_output(["git", f"--git-dir={self.git_repo_path}", "rev-parse", "HEAD"], encoding='utf-8').strip()
         except subprocess.CalledProcessError as e:
             print("[GIT-CLIENT] Unable to determine current commit hash: ", e, e.stderr, e.stdout)
             return None
@@ -35,7 +35,7 @@ class GatewayGitClient:
             print("[GIT-CLIENT] Unable to find commit hash for tag '" + tag + "': ", e, e.stderr, e.stdout)
             return None
 
-    def verify_commit_hash(self, commit_hash):
+    def verify_commit_hash_exists(self, commit_hash):
         try:
             return (subprocess.check_output(["git", f"--git-dir={self.git_repo_path}", "cat-file", "-t", commit_hash])
                     .strip() == b'commit')
