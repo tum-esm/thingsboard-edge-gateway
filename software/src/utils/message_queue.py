@@ -21,7 +21,7 @@ class MessageQueue:
     """Uses an SQLite database to store messages to be forwarded to the ThingsBoard server by the gateway"""
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(ACROPOLIS_COMMUNICATION_DB_PATH)
+        self.con = sqlite3.connect(ACROPOLIS_COMMUNICATION_DB_PATH, isolation_level=None)
         self.con.execute("PRAGMA journal_mode=WAL;")
         self.con.execute("""
                 CREATE TABLE IF NOT EXISTS queue_out (
