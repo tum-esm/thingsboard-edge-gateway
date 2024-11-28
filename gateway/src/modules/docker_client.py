@@ -1,6 +1,7 @@
 import docker
 
 from modules.git_client import GatewayGitClient
+from utils.message_queue import ACROPOLIS_COMMUNICATION_DB_PATH
 
 
 class GatewayDockerClient:
@@ -97,6 +98,9 @@ class GatewayDockerClient:
             },
             privileged=True,
             network_mode="host",
+            environment={
+                "ACROPOLIS_COMMUNICATION_DB_PATH': '/root/data/acropolis_comm_db.db",
+            },
             volumes={
                 "/bin/vcgencmd": {
                     "bind": "/bin/vcgencmd",
@@ -105,7 +109,11 @@ class GatewayDockerClient:
                 "/bin/uptime": {
                     "bind": "/bin/uptime",
                     "mode": "rw"
-                }
+                },
+                "/root/data/acropolis_comm_db.db": {
+                    "bind": ACROPOLIS_COMMUNICATION_DB_PATH,
+                    "mode": "rw"
+                },
             }
         )
         print("[DOCKER-CLIENT] Started Acropolis Edge container with version " + version)
