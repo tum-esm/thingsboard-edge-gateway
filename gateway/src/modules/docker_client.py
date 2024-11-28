@@ -106,11 +106,11 @@ class GatewayDockerClient:
             volumes={
                 "/bin/vcgencmd": {
                     "bind": "/bin/vcgencmd",
-                    "mode": "r"
+                    "mode": "ro"
                 },
                 "/bin/uptime": {
                     "bind": "/bin/uptime",
-                    "mode": "r"
+                    "mode": "ro"
                 },
                 "/root/data/acropolis_comm_db.db": {
                     "bind": ACROPOLIS_COMMUNICATION_DB_PATH,
