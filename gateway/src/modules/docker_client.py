@@ -1,7 +1,8 @@
 import docker
 
+from main import ACROPOLIS_COMMUNICATION_DB_PATH
 from modules.git_client import GatewayGitClient
-from utils.message_queue import ACROPOLIS_COMMUNICATION_DB_PATH
+
 
 
 class GatewayDockerClient:

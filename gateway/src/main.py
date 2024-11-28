@@ -11,6 +11,7 @@ from modules import mqtt, sqlite, docker_client, git_client
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
+ACROPOLIS_COMMUNICATION_DB_PATH = os.environ.get("ACROPOLIS_COMMUNICATION_DB_PATH") or "acropolis_comm_db.db"
 mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
@@ -37,7 +38,6 @@ def forced_shutdown_handler(sig, frame):
     os._exit(1)
 signal.signal(signal.SIGALRM, forced_shutdown_handler)
 
-
 signal.signal(signal.SIGINT, shutdown_handler)
 signal.signal(signal.SIGTERM, shutdown_handler)
 
@@ -51,7 +51,7 @@ try:
         access_token = self_provisioning_get_access_token(args)
 
         archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-        communication_sqlite_db = sqlite.SqliteConnection(os.environ.get("ACROPOLIS_COMMUNICATION_DB_PATH") or "communication.db")
+        communication_sqlite_db = sqlite.SqliteConnection(ACROPOLIS_COMMUNICATION_DB_PATH)
 
         # create and run the mqtt client in a separate thread
         mqtt_client = mqtt.GatewayMqttClient(mqtt_message_queue, access_token)
