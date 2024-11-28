@@ -22,6 +22,7 @@ class MessageQueue:
 
     def __init__(self) -> None:
         self.con = sqlite3.connect(ACROPOLIS_COMMUNICATION_DB_PATH)
+        self.con.execute("PRAGMA journal_mode=WAL;")
         self.con.execute("""
                 CREATE TABLE IF NOT EXISTS queue_out (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
