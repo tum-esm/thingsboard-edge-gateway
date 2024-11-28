@@ -112,8 +112,8 @@ class GatewayDockerClient:
                     "bind": "/bin/uptime",
                     "mode": "ro"
                 },
-                "/root/data/acropolis_comm_db.db": {
-                    "bind": ACROPOLIS_COMMUNICATION_DB_PATH,
+                ACROPOLIS_COMMUNICATION_DB_PATH: {
+                    "bind": "/root/data/acropolis_comm_db.db",
                     "mode": "rw"
                 },
             }
