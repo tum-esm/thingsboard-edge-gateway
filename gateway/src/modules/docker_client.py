@@ -73,6 +73,11 @@ class GatewayDockerClient:
                 return
             print("[DOCKER-CLIENT] Building image for commit " + commit_hash)
             GatewayGitClient().execute_reset_to_commit(commit_hash)
+            if GatewayGitClient().get_current_commit() != commit_hash:
+                print("[DOCKER-CLIENT][FATAL] Unable to reset to commit " + commit_hash)
+                return
+            else:
+                print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
             self.docker_client.images.build(
                 path="./software",
                 dockerfile="./docker/Dockerfile",
