@@ -101,15 +101,16 @@ class GatewayDockerClient:
             network_mode="host",
             environment={
                 "ACROPOLIS_COMMUNICATION_DB_PATH": "/root/data/acropolis_comm_db.db",
+                "ACROPOLIS_LOG_TO_CONSOLE": 1
             },
             volumes={
                 "/bin/vcgencmd": {
                     "bind": "/bin/vcgencmd",
-                    "mode": "rw"
+                    "mode": "r"
                 },
                 "/bin/uptime": {
                     "bind": "/bin/uptime",
-                    "mode": "rw"
+                    "mode": "r"
                 },
                 "/root/data/acropolis_comm_db.db": {
                     "bind": ACROPOLIS_COMMUNICATION_DB_PATH,
