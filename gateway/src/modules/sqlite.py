@@ -8,8 +8,9 @@ class SqliteTables(Enum):
 
 class SqliteConnection:
     def __init__(self, path):
-        self.conn = sqlite3.connect(path, cached_statements=0, isolation_level=None)
-        self.conn.execute("PRAGMA journal_mode=WAL;")
+        self.conn = sqlite3.connect(path, cached_statements=0, isolation_level=None, autocommit=True)
+        self.conn.execute("PRAGMA journal_mode=WAL;")       # enable write-ahead logging
+        self.conn.execute("PRAGMA busy_timeout = 5000;")    # 5 seconds timeout for when the db is locked
 
     def does_table_exist(self, table):
         cursor = self.conn.cursor()
@@ -18,7 +19,6 @@ class SqliteConnection:
 
     def is_table_empty(self, table):
         cursor = self.conn.cursor()
-        cursor.execute("PRAGMA wal_checkpoint(PASSIVE);")
         cursor.execute(f"SELECT COUNT(*) FROM {table}")
         return cursor.fetchone()[0] == 0
 
@@ -29,8 +29,8 @@ class SqliteConnection:
 
     def execute(self, query):
         cursor = self.conn.cursor()
-        cursor.execute("PRAGMA wal_checkpoint(PASSIVE);")
         cursor.execute(query)
+        cursor.execute("PRAGMA wal_checkpoint(PASSIVE);")
         return cursor.fetchall()
 
     def close(self):
