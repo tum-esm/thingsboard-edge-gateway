@@ -21,7 +21,9 @@ class MessageQueue:
     """Uses an SQLite database to store messages to be forwarded to the ThingsBoard server by the gateway"""
 
     def __init__(self) -> None:
-        self.con = sqlite3.connect(os.path.join(ACROPOLIS_COMMUNICATION_DATA_PATH, "acropolis_comm_db.db"), isolation_level=None, autocommit=True)
+        db_path = os.path.join(ACROPOLIS_COMMUNICATION_DATA_PATH, "acropolis_comm_db.db")
+        print(f"DB path: {db_path}")
+        self.con = sqlite3.connect(db_path, isolation_level=None, autocommit=True)
         self.con.execute("""
                 CREATE TABLE IF NOT EXISTS queue_out (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,6 +40,6 @@ class MessageQueue:
             "values": dataclasses.asdict(payload),
         }
         with self.con:
-            sql_statement: str = "INSERT INTO queue_out (type, message) VALUES(?, ?)"
+            sql_statement: str = "INSERT INTO queue_out (type, message) VALUES(?, ?);"
             self.con.execute(sql_statement,("MQTT_message", str(new_message)))
             self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
