@@ -14,7 +14,7 @@ from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
 PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
-ACROPOLIS_COMMUNICATION_DB_PATH = os.environ.get("ACROPOLIS_COMMUNICATION_DB_PATH") or os.path.join(dirname(PROJECT_DIR), "acropolis_comm_db.db")
+ACROPOLIS_COMMUNICATION_DATA_PATH = str(os.environ.get("ACROPOLIS_COMMUNICATION_DATA_PATH")) or os.path.join(dirname(PROJECT_DIR))
 mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
@@ -54,7 +54,7 @@ try:
         access_token = self_provisioning_get_access_token(args)
 
         archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-        communication_sqlite_db = sqlite.SqliteConnection(ACROPOLIS_COMMUNICATION_DB_PATH)
+        communication_sqlite_db = sqlite.SqliteConnection(os.path.join(ACROPOLIS_COMMUNICATION_DATA_PATH, "acropolis_comm_db.db"))
 
         # create and run the mqtt client in a separate thread
         mqtt_client = mqtt.GatewayMqttClient(mqtt_message_queue, access_token)

@@ -1,6 +1,6 @@
 import docker
 
-from main import ACROPOLIS_COMMUNICATION_DB_PATH
+from main import ACROPOLIS_COMMUNICATION_DATA_PATH
 from modules.git_client import GatewayGitClient
 
 
@@ -100,7 +100,7 @@ class GatewayDockerClient:
             privileged=True,
             network_mode="host",
             environment={
-                "ACROPOLIS_COMMUNICATION_DB_PATH": "/root/data/acropolis_comm_db.db",
+                "ACROPOLIS_COMMUNICATION_DATA_PATH": "/root/data",
                 "ACROPOLIS_LOG_TO_CONSOLE": 1
             },
             volumes={
@@ -112,8 +112,8 @@ class GatewayDockerClient:
                     "bind": "/bin/uptime",
                     "mode": "ro"
                 },
-                ACROPOLIS_COMMUNICATION_DB_PATH: {
-                    "bind": "/root/data/acropolis_comm_db.db",
+                ACROPOLIS_COMMUNICATION_DATA_PATH: {
+                    "bind": "/root/data",
                     "mode": "rw"
                 },
             }
