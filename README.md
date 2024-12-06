@@ -9,10 +9,15 @@ This repository contains the software and hardware blueprints for the measuremen
 - **Non-Expert Setup**: The software is designed for easy deployment, requiring minimal technical expertise for setup and operation.
 - **Scalability**: The network infrastructure allows for seamless scaling, enabling easy expansion to a larger number of devices and locations.
 - **Remote Software and Configuration Update**: Supports remote updates for software and configuration, ensuring continuous improvement and easy deployment of changes.
-- **Dockerized Edge Software**: The edge software runs within a Docker container for isolated and consistent deployment.
-- **Edge Agent**: A standalone process managing the Dockerized edge software, controlling the active container version and acting as the endpoint for remote commands. It implements a MQTT client to act as a communication gateway.
-- **ThingsBoard Integration**: All measurements are transmitted via MQTT to a hosted ThingsBoard instance for centralized data collection and analysis.
 - **Offline Data Backup**: SQLite implementation serves as a local backup for measurement data.
+- **ThingsBoard Integration**: All measurements are transmitted via MQTT to a hosted ThingsBoard instance for centralized data collection and analysis.
+
+<br/>
+
+## Software Components
+
+- **Edge Controller**: An autonumous software managing sensors and actors and running within a Docker container for isolated and consistent deployment.
+- **Edge Gateway**: A standalone process managing the active edge controller container version, implementing a MQTT client to act as a communication gateway, and acting as the endpoint for remote commands.
 
 <br/>
 
