@@ -3,7 +3,8 @@ import docker
 from main import ACROPOLIS_COMMUNICATION_DATA_PATH
 from modules.git_client import GatewayGitClient
 
-
+CONTROLLER_CONTAINER_NAME = "acropolis_edge_controller"
+CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
 
 class GatewayDockerClient:
     def __init__(self):
@@ -20,7 +21,7 @@ class GatewayDockerClient:
     def is_edge_running(self):
         containers = self.docker_client.containers.list()
         for container in containers:
-            if container.name == "acropolis_edge":
+            if container.name == CONTROLLER_CONTAINER_NAME:
                 return container.attrs["State"]["Running"]
 
     def is_image_available(self, image_tag):
@@ -33,7 +34,7 @@ class GatewayDockerClient:
         if self.is_edge_running():
             containers = self.docker_client.containers.list()
             for container in containers:
-                if container.name == "acropolis_edge":
+                if container.name == CONTROLLER_CONTAINER_NAME:
                     version = container.attrs["Config"]["Image"].split("-")[-1]
                     if version.__len__() > 0 and (
                             version[0] == "v" or version.__len__() == 40
@@ -44,11 +45,11 @@ class GatewayDockerClient:
         if self.is_edge_running():
             containers = self.docker_client.containers.list()
             for container in containers:
-                if container.name == "acropolis_edge":
+                if container.name == CONTROLLER_CONTAINER_NAME:
                     container.stop(timeout=60)
-                    print("[DOCKER-CLIENT] Stopped Acropolis Edge container")
+                    print("[DOCKER-CLIENT] Stopped Acropolis Edge Controller container")
         else:
-            print("[DOCKER-CLIENT] Acropolis Edge container is not running")
+            print("[DOCKER-CLIENT] Acropolis Edge Controller container is not running")
 
     def prune_containers(self):
         self.docker_client.containers.prune()
@@ -66,7 +67,7 @@ class GatewayDockerClient:
 
         # edge container is not running
         # check if the image is available already, if not build it
-        if not self.is_image_available("acropolis-edge-" + version + ":latest"):
+        if not self.is_image_available(CONTROLLER_IMAGE_PREFIX + version + ":latest"):
             print("[DOCKER-CLIENT] Image not available, building image first...")
             GatewayGitClient().execute_fetch()
             commit_hash = GatewayGitClient().get_commit_from_hash_or_tag(version)
@@ -81,18 +82,18 @@ class GatewayDockerClient:
             else:
                 print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
             self.docker_client.images.build(
-                path="./software",
-                dockerfile="./docker/Dockerfile",
-                tag="acropolis-edge-" + version + ":latest"
+                path="../controller",
+                dockerfile="../controller/docker/Dockerfile",
+                tag=CONTROLLER_IMAGE_PREFIX + version + ":latest"
             )
-            print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag acropolis-edge-" + version)
+            print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version)
 
         # remove old containers and start the new one
         self.prune_containers()
         self.docker_client.containers.run(
-            "acropolis-edge-" + version,
+            CONTROLLER_IMAGE_PREFIX + version,
             detach=True,
-            name="acropolis_edge",
+            name=CONTROLLER_CONTAINER_NAME,
             restart_policy={
                 "Name": "always",
                 "MaximumRetryCount": 0
