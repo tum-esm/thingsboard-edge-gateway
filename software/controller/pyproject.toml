@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "software"
+name = "controller"
 version = "1"
 description = ""
 authors = ["Patrick Aigner <patrick.aigner@tum.de>"]

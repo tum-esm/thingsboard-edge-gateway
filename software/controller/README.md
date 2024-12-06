@@ -39,20 +39,20 @@ poetry install --with=dev
 
 **System Check Procedure**
 
-![](../docs/procedure-system-check.png)
+![](../../docs/procedure-system-check.png)
 
 **Calibration Procedure**
 
-![](../docs/procedure-calibration.png)
+![](../../docs/procedure-calibration.png)
 
 **Measurement Procedure**
 
-![](../docs/procedure-measurement.png)
+![](../../docs/procedure-measurement.png)
 
 **Configuration Procedure**
 
-![](../docs/procedure-configuration.png)
+![](../../docs/procedure-configuration.png)
 
 **Exception Handling**
 
-![](../docs/main-loop-exception-handling.png)
+![](../../docs/main-loop-exception-handling.png)
