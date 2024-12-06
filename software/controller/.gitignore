@@ -16,6 +16,12 @@ config.h
 state.json
 *.venv
 *.pyc
+.env
+config.json
+archive.lock
+
+#folders
+logs/
 
 # ssh stuff
 authorized_keys
