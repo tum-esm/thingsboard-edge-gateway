@@ -40,3 +40,19 @@ First Draft
 <img src="docs/Software-Architecture.svg">
 
 <br/>
+
+## Related Work
+
+Aigner et. al.: Advancing Urban Greenhouse Gas Monitoring: Development and Evaluation of a High-Density CO2 Sensor Network in Munich. ICOS Science Conference 2024, Versailles, France, 10.-12. Sept, [Link](https://www.icos-cp.eu/news-and-events/science-conference/icos2024sc/all-abstracts)
+
+## Current Development Team:
+
+- Patrick Aigner [@patrickjaigner](https://github.com/patrickjaigner)
+- Lars Frölich [@larsfroelich](https://github.com/larsfroelich)
+
+## Past Development Team Members:
+
+
+- Felix Böhm [@empicano](https://github.com/empicano)
+- Moritz Makowski [@dostuffthatmatters](https://github.com/dostuffthatmatters)
+- Adrian Schmitt
