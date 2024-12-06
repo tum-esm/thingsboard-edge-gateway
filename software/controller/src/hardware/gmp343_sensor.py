@@ -4,7 +4,7 @@ from typing import Optional
 import gpiozero
 import gpiozero.pins.pigpio
 
-import utils, custom_types
+import custom_types, interfaces, utils
 
 CO2_SENSOR_POWER_PIN_OUT = 20
 CO2_SENSOR_SERIAL_PORT = "/dev/ttySC0"
@@ -50,7 +50,7 @@ class CO2SensorInterface:
                                                pin_factory=self.pin_factory)
 
         # serial connection to receive data from CO2 sensor
-        self.serial_interface = utils.serial_interfaces.SerialCO2SensorInterface(
+        self.serial_interface = interfaces.serial_interfaces.SerialCO2SensorInterface(
             port=CO2_SENSOR_SERIAL_PORT)
 
         # turn the sensor off and on and set it to our default settings
