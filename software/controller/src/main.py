@@ -1,10 +1,12 @@
 import os
 import signal
 import time
-from typing import Any, Optional
+import dotenv
+from typing import Any
 
-from src import custom_types, utils, hardware, procedures
+from src import utils, hardware, procedures
 
+PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
 
 def run() -> None:
     """Entry point for the measurement automation
@@ -23,6 +25,7 @@ def run() -> None:
     - Procedure: Calibration
     - Procedure: Measurements (CO2, Wind)
     """
+    dotenv.load_dotenv(os.path.join(PROJECT_DIR, "config", ".env"))
     simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
 
     logger = utils.Logger(origin="main", print_to_console=simulate or os.environ.get("ACROPOLIS_LOG_TO_CONSOLE"))
@@ -196,3 +199,6 @@ def run() -> None:
                     forward=True,
                 )
                 exit(1)
+
+if __name__ == "__main__":
+    run()

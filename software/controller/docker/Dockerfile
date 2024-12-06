@@ -40,6 +40,4 @@ COPY src ./src
 COPY tests ./tests
 COPY --from=build_image /root/config ./config
 
-COPY run_automation.py .
-
-ENTRYPOINT ["/root/.venv/bin/python3", "/root/run_automation.py"]
+ENTRYPOINT ["/root/.venv/bin/python3", "/root/src/main.py"]
