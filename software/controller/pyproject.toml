@@ -21,6 +21,7 @@ pydantic = "^2.9.2"
 python-dotenv = "^1.0.1"
 pigpio = "^1.78"
 pytest = "^8.3.3"
+simple-pid = "2.0.1"
 
 
 [tool.poetry.group.dev]
