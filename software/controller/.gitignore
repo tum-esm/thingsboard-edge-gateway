@@ -1,8 +1,12 @@
-config.json
 *.db
 *.tmp.db
 *.tmp.log
 *.tmp.json
+*.venv
+*.pyc
+.env
+*.lock
+config.json
 nohup.out
 sensor/hidden/
 sensor/logs/
@@ -14,11 +18,6 @@ data/**/*.json
 heated_enclosure.ino.*
 config.h
 state.json
-*.venv
-*.pyc
-.env
-config.json
-archive.lock
 
 #folders
 logs/
