@@ -1,4 +1,3 @@
-from .config_interface import ConfigInterface
 from .functions import (
     run_shell_command,
     CommandLineException,
@@ -11,8 +10,8 @@ from .functions import (
     ExponentialBackOff,
     read_os_uptime,
 )
+
 from .logger import Logger
 from .message_queue import MessageQueue
 from .moving_average_queue import RingBuffer
-from .serial_interfaces import SerialCO2SensorInterface, SerialI2CInterface, SerialOneDirectionalInterface
-from .state_interface import StateInterface
+

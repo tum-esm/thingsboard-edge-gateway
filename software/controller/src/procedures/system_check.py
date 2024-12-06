@@ -1,7 +1,7 @@
 import time
 import psutil
 
-import hardware, custom_types, utils
+import hardware, interfaces, custom_types, utils
 
 
 class SystemCheckProcedure:
@@ -10,7 +10,7 @@ class SystemCheckProcedure:
     def __init__(
         self,
         config: custom_types.Config,
-        hardware_interface: hardware.HardwareInterface,
+        hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
         self.logger, self.config = utils.Logger(
@@ -82,8 +82,6 @@ class SystemCheckProcedure:
 
         # read UPS status
         self.hardware_interface.ups.update_ups_status()
-
-        state = utils.StateInterface.read()
 
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),

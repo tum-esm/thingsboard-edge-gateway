@@ -4,7 +4,7 @@ import time
 import dotenv
 from typing import Any
 
-import hardware, modules, procedures, utils
+import interfaces, modules, procedures, utils
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -36,7 +36,7 @@ def run() -> None:
     logger.horizontal_line()
 
     try:
-        config = utils.ConfigInterface.read()
+        config = interfaces.ConfigInterface.read()
     except Exception as e:
         logger.exception(e, label="could not load local config.json")
         raise e
@@ -49,7 +49,7 @@ def run() -> None:
     # -------------------------------------------------------------------------
 
     # check and provide valid state file
-    utils.StateInterface.init()
+    interfaces.StateInterface.init()
 
     # define timeouts for parts of the automation
     max_setup_time = 180
@@ -72,8 +72,8 @@ def run() -> None:
     logger.info("Initializing hardware interfaces.", forward=True)
 
     try:
-        hardware_interface = hardware.HardwareInterface(config=config,
-                                                        simulate=simulate)
+        hardware_interface = interfaces.HardwareInterface(config=config,
+                                                          simulate=simulate)
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",

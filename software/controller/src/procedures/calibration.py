@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-import custom_types, utils, hardware
+import custom_types, interfaces, utils, hardware
 
 
 class CalibrationProcedure:
@@ -10,7 +10,7 @@ class CalibrationProcedure:
     def __init__(
         self,
         config: custom_types.Config,
-        hardware_interface: hardware.HardwareInterface,
+        hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
         self.logger, self.config = utils.Logger(

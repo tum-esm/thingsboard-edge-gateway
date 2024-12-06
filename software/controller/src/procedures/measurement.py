@@ -1,7 +1,7 @@
 import time
 from typing import Optional, Literal
 
-import custom_types, utils, hardware
+import custom_types, interfaces, utils, hardware
 
 
 class WindMeasurementProcedure:
@@ -13,7 +13,7 @@ class WindMeasurementProcedure:
     def __init__(
         self,
         config: custom_types.Config,
-        hardware_interface: hardware.HardwareInterface,
+        hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
         self.logger, self.config = utils.Logger(
@@ -42,8 +42,6 @@ class WindMeasurementProcedure:
             self.logger.info(
                 f"latest wind sensor measurement: {self.wind_data}")
 
-            state = utils.StateInterface.read()
-
             self.message_queue.enqueue_message(
                 timestamp=int(time.time()),
                 payload=custom_types.MQTTWindData(
@@ -63,8 +61,6 @@ class WindMeasurementProcedure:
         if self.device_info is not None:
             self.logger.info(
                 f"latest wind sensor device info: {self.device_info}")
-
-            state = utils.StateInterface.read()
 
             self.message_queue.enqueue_message(
                 timestamp=int(time.time()),
@@ -109,7 +105,7 @@ class CO2MeasurementProcedure:
     def __init__(
         self,
         config: custom_types.Config,
-        hardware_interface: hardware.HardwareInterface,
+        hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
         self.logger, self.config = utils.Logger(
@@ -159,7 +155,6 @@ class CO2MeasurementProcedure:
 
         # do regular measurements for about 2 minutes
         while True:
-            state = utils.StateInterface.read()
             # idle until next measurement period
             seconds_to_wait_for_next_measurement = max(
                 self.config.hardware.gmp343_filter_seconds_averaging -
