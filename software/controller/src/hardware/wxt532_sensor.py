@@ -4,8 +4,9 @@ import time
 from typing import Optional, Tuple
 import gpiozero
 import gpiozero.pins.pigpio
+import serial
 
-import utils, custom_types
+import custom_types, utils
 
 measurement_pattern = (
     pattern
@@ -13,7 +14,6 @@ measurement_pattern = (
 device_status_pattern = r"Th=([0-9.]+)C,Vh=([0-9.]+)N,Vs=([0-9.]+)V,Vr=([0-9.]+)V"
 
 WIND_SENSOR_POWER_PIN_OUT = 21
-WIND_SENSOR_SERIAL_PORT = "/dev/ttySC1"
 
 
 class WindSensorInterface:
@@ -52,22 +52,32 @@ class WindSensorInterface:
         )
         self.power_pin.on()
 
-        # serial connection to receive data from wind sensor
-        self.wxt532_interface = utils.serial_interfaces.SerialOneDirectionalInterface(
-            port=WIND_SENSOR_SERIAL_PORT,
+        self.wxt532_interface = serial.Serial(
+            port="/dev/ttySC1",
             baudrate=19200,
-            encoding="cp1252",
-            line_ending="\r\n",
+            bytesize=8,
+            parity="N",
+            stopbits=1,
         )
 
         self.logger.info("Finished initialization")
+
+    def _get_messages(self) -> list[str]:
+        new_input_bytes = self.wxt532_interface.read_all()
+        if new_input_bytes is None:
+            return []
+
+        self.current_input_stream += new_input_bytes.decode("cp1252")
+        separate_messages = self.current_input_stream.split(line_ending="\r\n")
+        self.current_input_stream = separate_messages[-1]
+        return separate_messages[:-1]
 
     def _update_current_values(self) -> None:
         start_time = time.time()
         new_messages = []
 
         while True:
-            answer = self.wxt532_interface.get_messages()
+            answer = self.wxt532_interface._get_messages()
             if not answer:
                 break
             if (time.time() - start_time) > 5:
@@ -203,6 +213,3 @@ class WindSensorInterface:
 
         self.power_pin.off()
         self.pin_factory.close()
-
-        # I don't know why this is needed sometimes, just to make sure
-        utils.run_shell_command(f"pigs w {WIND_SENSOR_POWER_PIN_OUT} 0")
