@@ -15,6 +15,7 @@ heated_enclosure.ino.*
 config.h
 state.json
 *.venv
+*.pyc
 
 # ssh stuff
 authorized_keys
