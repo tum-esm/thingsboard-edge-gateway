@@ -81,22 +81,6 @@ def run_shell_command(
     return stdout
 
 
-def get_hostname() -> str:
-    raw_hostname = run_shell_command("hostname")
-    if "." in raw_hostname:
-        return raw_hostname.split(".")[0]
-    else:
-        return raw_hostname
-
-
-def distance_between_angles(angle_1: float, angle_2: float) -> float:
-    """calculate the directional distance (in degrees) between two angles"""
-    if angle_1 > angle_2:
-        return min(angle_1 - angle_2, 360 + angle_2 - angle_1)
-    else:
-        return min(angle_2 - angle_1, 360 + angle_1 - angle_2)
-
-
 def get_gpio_pin_factory() -> gpiozero.pins.pigpio.PiGPIOFactory:
     """
     Connects to the active pipiod deamon running on the Pi over network socket.
