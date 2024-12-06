@@ -25,7 +25,7 @@ class MessageQueue:
     def __init__(self) -> None:
         db_path = os.path.join(ACROPOLIS_COMMUNICATION_DATA_PATH,
                                "acropolis_comm_db.db")
-        print(f"DB path: {db_path}")
+
         self.con = sqlite3.connect(db_path,
                                    isolation_level=None,
                                    autocommit=True)
