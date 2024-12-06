@@ -14,6 +14,7 @@ data/**/*.json
 heated_enclosure.ino.*
 config.h
 state.json
+*.venv
 
 # ssh stuff
 authorized_keys
