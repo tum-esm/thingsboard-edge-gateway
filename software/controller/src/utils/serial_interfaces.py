@@ -2,11 +2,11 @@ import fcntl
 import re
 import time
 from typing import Literal
-
 import serial
 
 
 class SerialCO2SensorInterface:
+
     def __init__(self, port: str) -> None:
         self.serial_interface = serial.Serial(
             port=port,
@@ -17,7 +17,10 @@ class SerialCO2SensorInterface:
         )
 
     def send_command(
-        self, message: str, expected_regex: str = r".*\>.*", timeout: float = 8
+        self,
+        message: str,
+        expected_regex: str = r".*\>.*",
+        timeout: float = 8
     ) -> tuple[Literal["success", "uncomplete", "timeout"], str]:
         """
         send a command to the sensor. Puts a "\x1B" string after the
@@ -26,16 +29,17 @@ class SerialCO2SensorInterface:
         Returns the sensor answer as tuple (indicator, answer).
         """
         self.flush_receiver_stream()  # empty input queue
-        self.serial_interface.write(f"{message}\r\n".encode("utf-8"))  # send command
+        self.serial_interface.write(
+            f"{message}\r\n".encode("utf-8"))  # send command
         self.serial_interface.flush()  # wait until data is written
-        return self.wait_for_answer(
-            expected_regex=expected_regex, timeout=timeout
-        )  # return answer
+        return self.wait_for_answer(expected_regex=expected_regex,
+                                    timeout=timeout)  # return answer
 
     def flush_receiver_stream(self) -> None:
         """wait 0.2 seconds and then empty the current input queue"""
         time.sleep(0.2)  # wait for outstanding answers from previous commands
-        self.serial_interface.read_all()  # reads everything in queue and throws it away
+        self.serial_interface.read_all(
+        )  # reads everything in queue and throws it away
 
     def wait_for_answer(
         self, expected_regex: str, timeout: float
@@ -65,6 +69,7 @@ class SerialCO2SensorInterface:
 
 
 class SerialOneDirectionalInterface:
+
     def __init__(
         self,
         port: str,
@@ -99,6 +104,7 @@ class SerialOneDirectionalInterface:
 
 
 class SerialI2CInterface:
+
     def __init__(self, address: int = 0, device: int = 1) -> None:
         """Open I2C-Port
 

@@ -4,7 +4,7 @@ import time
 import dotenv
 from typing import Any
 
-from src import utils, hardware, procedures
+import hardware, modules, procedures, utils
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -26,6 +26,7 @@ def run() -> None:
     - Procedure: Calibration
     - Procedure: Measurements (CO2, Wind)
     """
+
     dotenv.load_dotenv(os.path.join(PROJECT_DIR, "config", ".env"))
     simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
 

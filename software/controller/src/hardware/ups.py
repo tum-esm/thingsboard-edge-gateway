@@ -1,9 +1,8 @@
 import time
 from typing import Optional
-
 import gpiozero
 
-from src import utils, custom_types
+import utils, custom_types
 
 UPS_READY_PIN_IN = 5
 UPS_BATTERY_MODE_PIN_IN = 10
@@ -11,6 +10,7 @@ UPS_ALARM_PIN_IN = 7
 
 
 class UPSInterface:
+
     def __init__(
         self,
         config: custom_types.Config,
@@ -80,8 +80,7 @@ class UPSInterface:
             return
 
         battery_state = gpiozero.DigitalInputDevice(
-            UPS_READY_PIN_IN, bounce_time=0.3, pin_factory=self.pin_factory
-        )
+            UPS_READY_PIN_IN, bounce_time=0.3, pin_factory=self.pin_factory)
 
         power_mode = gpiozero.DigitalInputDevice(
             UPS_BATTERY_MODE_PIN_IN,
@@ -99,11 +98,11 @@ class UPSInterface:
         # this is probably never reached as the power is shut down in this case
         if battery_state.is_active & power_mode.is_active:
             self.logger.info(
-                "the battery voltage has dropped below the minimum threshold"
-            )
+                "the battery voltage has dropped below the minimum threshold")
             self.battery_above_voltage_threshold = False
         else:
-            self.logger.info("the battery voltage is above the minimum threshold")
+            self.logger.info(
+                "the battery voltage is above the minimum threshold")
             self.battery_above_voltage_threshold = True
 
     def _read_alarm_state(self) -> None:
@@ -117,9 +116,9 @@ class UPSInterface:
             self.battery_error_detected = False
             return
 
-        alarm_state = gpiozero.DigitalInputDevice(
-            UPS_ALARM_PIN_IN, bounce_time=0.3, pin_factory=self.pin_factory
-        )
+        alarm_state = gpiozero.DigitalInputDevice(UPS_ALARM_PIN_IN,
+                                                  bounce_time=0.3,
+                                                  pin_factory=self.pin_factory)
 
         if not alarm_state.is_active:
             self.logger.info("the battery status is fine")

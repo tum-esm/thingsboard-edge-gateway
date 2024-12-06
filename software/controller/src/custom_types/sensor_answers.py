@@ -1,7 +1,5 @@
 from typing import Optional
-
 import pydantic
-
 
 # validation is only necessary for external sources
 # internal source will be covered by mypy

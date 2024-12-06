@@ -4,10 +4,9 @@ from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
-
 import filelock
 
-from src import custom_types
+import custom_types
 from .functions import CommandLineException
 from .message_queue import MessageQueue
 

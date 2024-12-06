@@ -1,13 +1,13 @@
 import time
-from typing import Literal, Optional
-
 import bme280
 import smbus2
+from typing import Literal, Optional
 
-from src import utils, custom_types
+import utils, custom_types
 
 
 class BME280SensorInterface:
+
     def __init__(
         self,
         config: custom_types.Config,
@@ -51,7 +51,8 @@ class BME280SensorInterface:
             except Exception as e:
                 self.logger.exception(
                     e,
-                    label=f"Could not initialize BME280 sensor (variant: {self.variant})",
+                    label=
+                    f"Could not initialize BME280 sensor (variant: {self.variant})",
                     forward=True,
                 )
 
@@ -122,12 +123,9 @@ class BME280SensorInterface:
     def read_compensation_param(self) -> None:
         try:
             self.compensation_params = bme280.load_calibration_params(
-                self.bus, self.address
-            )
+                self.bus, self.address)
         except Exception:
-            self.logger.warning(
-                "Could not fetch compensation params.",
-            )
+            self.logger.warning("Could not fetch compensation params.", )
             self.compensation_params = None
 
     def _reset_sensor(self) -> None:
@@ -150,9 +148,7 @@ class BME280SensorInterface:
             )
 
             self.read_compensation_param()
-            self.logger.info(
-                f"Reset sensor was successful.",
-            )
+            self.logger.info(f"Reset sensor was successful.", )
             self.sensor_connected = True
             time.sleep(1)
         except Exception:

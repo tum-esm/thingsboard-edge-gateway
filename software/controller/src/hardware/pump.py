@@ -1,9 +1,8 @@
 import time
-
 import gpiozero
 import gpiozero.pins.pigpio
 
-from src import utils, custom_types
+import utils, custom_types
 
 PUMP_CONTROL_PIN_OUT = 19
 PUMP_CONTROL_PIN_FREQUENCY = 10000
@@ -48,8 +47,7 @@ class PumpInterface:
 
         # start pump to run continuously
         self.set_desired_pump_speed(
-            pwm_duty_cycle=self.config.hardware.pump_pwm_duty_cycle,
-        )
+            pwm_duty_cycle=self.config.hardware.pump_pwm_duty_cycle, )
         time.sleep(0.5)
 
         self.logger.info("Finished initialization")
@@ -72,8 +70,7 @@ class PumpInterface:
         self.set_desired_pump_speed(pwm_duty_cycle=duty_cycle)
         time.sleep(duration)
         self.set_desired_pump_speed(
-            pwm_duty_cycle=self.config.hardware.pump_pwm_duty_cycle,
-        )
+            pwm_duty_cycle=self.config.hardware.pump_pwm_duty_cycle, )
 
     def teardown(self) -> None:
         """ends all hardware/system connections"""

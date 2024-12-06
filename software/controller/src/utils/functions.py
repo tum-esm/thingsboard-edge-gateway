@@ -6,7 +6,6 @@ import subprocess
 import time
 from datetime import datetime
 from typing import Any, Optional
-
 import gpiozero.pins.pigpio
 import pigpio
 
@@ -14,6 +13,7 @@ pigpio.exceptions = False
 
 
 class CommandLineException(Exception):
+
     def __init__(self, value: str, details: Optional[str] = None) -> None:
         self.value = value
         self.details = details
@@ -24,6 +24,7 @@ class CommandLineException(Exception):
 
 
 class ExponentialBackOff:
+
     def __init__(self) -> None:
         self.backoff_time_bucket_index = 0
         # incremental backoff times on exceptions (1m, 2m, 4m, 8m, 16m, 32m)
@@ -43,7 +44,8 @@ class ExponentialBackOff:
         """
         Sets next backoff timer
         """
-        current_backoff_time = self.backoff_time_buckets[self.backoff_time_bucket_index]
+        current_backoff_time = self.backoff_time_buckets[
+            self.backoff_time_bucket_index]
 
         self.backoff_time_bucket_index = min(
             self.backoff_time_bucket_index + 1,
@@ -107,8 +109,7 @@ def get_gpio_pin_factory() -> gpiozero.pins.pigpio.PiGPIOFactory:
         assert pin_factory.connection.connected
     except:
         raise ConnectionError(
-            'pigpio is not connected, please run "sudo pigpiod -n 127.0.0.1"'
-        )
+            'pigpio is not connected, please run "sudo pigpiod -n 127.0.0.1"')
     return pin_factory
 
 
@@ -133,7 +134,8 @@ def set_alarm(timeout: int, label: str) -> None:
     """Set an alarm that will raise a `TimeoutError` after `timeout` seconds"""
 
     def alarm_handler(*_args: Any) -> None:
-        raise TimeoutError(f"{label} took too long (timed out after {timeout} seconds)")
+        raise TimeoutError(
+            f"{label} took too long (timed out after {timeout} seconds)")
 
     signal.signal(signal.SIGALRM, alarm_handler)
     signal.alarm(timeout)

@@ -1,8 +1,3 @@
-import os
-from typing import TypedDict
-import filelock
-
-from src import custom_types, utils
 from .bme280_sensor import BME280SensorInterface
 from .gmp343_sensor import CO2SensorInterface
 from .pump import PumpInterface
@@ -10,6 +5,13 @@ from .sht45_sensor import SHT45SensorInterface
 from .ups import UPSInterface
 from .valves import ValveInterface
 from .wxt532_sensor import WindSensorInterface
+
+# TODO: move code out of here
+
+import os
+from typing import TypedDict
+import filelock
+import custom_types, utils
 
 
 class HwLock(TypedDict):
@@ -25,11 +27,11 @@ def acquire_hardware_lock() -> None:
         global_hw_lock["lock"].acquire()
     except filelock.Timeout:
         raise HardwareInterface.HardwareOccupiedException(
-            "hardware occupied by another process"
-        )
+            "hardware occupied by another process")
 
 
 class HardwareInterface:
+
     class HardwareOccupiedException(Exception):
         """raise when trying to use the hardware, but it
         is used by another process"""
@@ -56,30 +58,36 @@ class HardwareInterface:
         acquire_hardware_lock()
 
         # measurement sensors
-        self.wind_sensor = WindSensorInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
+        self.wind_sensor = WindSensorInterface(config,
+                                               testing=self.testing,
+                                               simulate=self.simulate)
         self.air_inlet_bme280_sensor = BME280SensorInterface(
-            config, variant="air-inlet", testing=self.testing, simulate=self.simulate
-        )
+            config,
+            variant="air-inlet",
+            testing=self.testing,
+            simulate=self.simulate)
         self.air_inlet_sht45_sensor = SHT45SensorInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
-        self.co2_sensor = CO2SensorInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
+            config, testing=self.testing, simulate=self.simulate)
+        self.co2_sensor = CO2SensorInterface(config,
+                                             testing=self.testing,
+                                             simulate=self.simulate)
 
         # measurement actors
-        self.pump = PumpInterface(config, testing=self.testing, simulate=self.simulate)
-        self.valves = ValveInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
+        self.pump = PumpInterface(config,
+                                  testing=self.testing,
+                                  simulate=self.simulate)
+        self.valves = ValveInterface(config,
+                                     testing=self.testing,
+                                     simulate=self.simulate)
 
         # enclosure controls
-        self.mainboard_sensor = BME280SensorInterface(
-            config, variant="ioboard", testing=self.testing, simulate=self.simulate
-        )
-        self.ups = UPSInterface(config, testing=self.testing, simulate=self.simulate)
+        self.mainboard_sensor = BME280SensorInterface(config,
+                                                      variant="ioboard",
+                                                      testing=self.testing,
+                                                      simulate=self.simulate)
+        self.ups = UPSInterface(config,
+                                testing=self.testing,
+                                simulate=self.simulate)
 
     def check_errors(self) -> None:
         """checks for detectable hardware errors"""
@@ -119,26 +127,32 @@ class HardwareInterface:
 
         # measurement sensors
         self.air_inlet_bme280_sensor = BME280SensorInterface(
-            config, variant="air-inlet", testing=self.testing, simulate=self.simulate
-        )
+            config,
+            variant="air-inlet",
+            testing=self.testing,
+            simulate=self.simulate)
         self.air_inlet_sht45_sensor = SHT45SensorInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
-        self.co2_sensor = CO2SensorInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
-        self.wind_sensor = WindSensorInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
+            config, testing=self.testing, simulate=self.simulate)
+        self.co2_sensor = CO2SensorInterface(config,
+                                             testing=self.testing,
+                                             simulate=self.simulate)
+        self.wind_sensor = WindSensorInterface(config,
+                                               testing=self.testing,
+                                               simulate=self.simulate)
 
         # measurement actors
-        self.pump = PumpInterface(config, testing=self.testing, simulate=self.simulate)
-        self.valves = ValveInterface(
-            config, testing=self.testing, simulate=self.simulate
-        )
+        self.pump = PumpInterface(config,
+                                  testing=self.testing,
+                                  simulate=self.simulate)
+        self.valves = ValveInterface(config,
+                                     testing=self.testing,
+                                     simulate=self.simulate)
 
         # enclosure controls
-        self.mainboard_sensor = BME280SensorInterface(
-            config, variant="ioboard", testing=self.testing, simulate=self.simulate
-        )
-        self.ups = UPSInterface(config, testing=self.testing, simulate=self.simulate)
+        self.mainboard_sensor = BME280SensorInterface(config,
+                                                      variant="ioboard",
+                                                      testing=self.testing,
+                                                      simulate=self.simulate)
+        self.ups = UPSInterface(config,
+                                testing=self.testing,
+                                simulate=self.simulate)

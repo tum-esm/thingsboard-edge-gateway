@@ -1,9 +1,8 @@
 import time
 from typing import Literal
-
 import gpiozero
 
-from src import utils, custom_types
+import utils, custom_types
 
 VALVE_PIN_1_OUT = 25
 VALVE_PIN_2_OUT = 24
@@ -12,6 +11,7 @@ VALVE_PIN_4_OUT = 22
 
 
 class ValveInterface:
+
     def __init__(
         self,
         config: custom_types.Config,
@@ -34,13 +34,23 @@ class ValveInterface:
         # set up valve control pin connections
         self.pin_factory = utils.get_gpio_pin_factory()
         self.valves: dict[Literal[1, 2, 3, 4], gpiozero.OutputDevice] = {
-            1: gpiozero.OutputDevice(VALVE_PIN_1_OUT, pin_factory=self.pin_factory),
-            2: gpiozero.OutputDevice(VALVE_PIN_2_OUT, pin_factory=self.pin_factory),
-            3: gpiozero.OutputDevice(VALVE_PIN_3_OUT, pin_factory=self.pin_factory),
-            4: gpiozero.OutputDevice(VALVE_PIN_4_OUT, pin_factory=self.pin_factory),
+            1:
+            gpiozero.OutputDevice(VALVE_PIN_1_OUT,
+                                  pin_factory=self.pin_factory),
+            2:
+            gpiozero.OutputDevice(VALVE_PIN_2_OUT,
+                                  pin_factory=self.pin_factory),
+            3:
+            gpiozero.OutputDevice(VALVE_PIN_3_OUT,
+                                  pin_factory=self.pin_factory),
+            4:
+            gpiozero.OutputDevice(VALVE_PIN_4_OUT,
+                                  pin_factory=self.pin_factory),
         }
-        self.active_input: Literal[1, 2, 3, 4] = self.config.measurement.valve_number
-        self.logger.info(f"Initialized with switching to valve: {self.active_input}")
+        self.active_input: Literal[1, 2, 3,
+                                   4] = self.config.measurement.valve_number
+        self.logger.info(
+            f"Initialized with switching to valve: {self.active_input}")
         self.set_active_input(self.active_input)
 
         self.logger.info("Finished initialization")
@@ -87,5 +97,8 @@ class ValveInterface:
         self.pin_factory.close()
 
         # I don't know why this is needed sometimes, just to make sur
-        for pin in [VALVE_PIN_1_OUT, VALVE_PIN_2_OUT, VALVE_PIN_3_OUT, VALVE_PIN_4_OUT]:
+        for pin in [
+                VALVE_PIN_1_OUT, VALVE_PIN_2_OUT, VALVE_PIN_3_OUT,
+                VALVE_PIN_4_OUT
+        ]:
             utils.run_shell_command(f"pigs w {pin} 0")

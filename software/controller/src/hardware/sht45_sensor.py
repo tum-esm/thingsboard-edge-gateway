@@ -1,11 +1,13 @@
 import random
 import time
-
 import adafruit_sht4x
-import board
-import busio
+try:
+    import board
+    import busio
+except:
+    pass
 
-from src import utils, custom_types
+import utils, custom_types
 
 
 class SHT45SensorInterface:
@@ -78,8 +80,7 @@ class SHT45SensorInterface:
         # returns None if no air-inlet sensor is connected
         if not self.sensor_connected:
             self.logger.warning(
-                "Did not fetch SHT45 sensor data. Device is not connected.",
-            )
+                "Did not fetch SHT45 sensor data. Device is not connected.", )
             return output
 
         # read sht45 data (retries one time)
@@ -110,7 +111,5 @@ class SHT45SensorInterface:
             self.sensor_connected = True
             time.sleep(1)
         except Exception:
-            self.logger.warning(
-                f"Reset of the SHT45 sensor failed.",
-            )
+            self.logger.warning(f"Reset of the SHT45 sensor failed.", )
             self.sensor_connected = False

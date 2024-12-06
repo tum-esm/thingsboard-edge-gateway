@@ -2,7 +2,7 @@ import json
 import os
 import time
 
-from src import custom_types, utils
+import custom_types, utils
 
 dirname = os.path.dirname
 PROJECT_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))
