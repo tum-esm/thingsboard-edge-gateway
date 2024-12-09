@@ -59,6 +59,7 @@ class WindSensorInterface:
             parity="N",
             stopbits=1,
         )
+        self.current_input_stream = ""
 
         self.logger.info("Finished initialization")
 
@@ -68,7 +69,7 @@ class WindSensorInterface:
             return []
 
         self.current_input_stream += new_input_bytes.decode("cp1252")
-        separate_messages = self.current_input_stream.split(line_ending="\r\n")
+        separate_messages = self.current_input_stream.split("\r\n")
         self.current_input_stream = separate_messages[-1]
         return separate_messages[:-1]
 
@@ -77,7 +78,7 @@ class WindSensorInterface:
         new_messages = []
 
         while True:
-            answer = self.wxt532_interface._get_messages()
+            answer = self._get_messages()
             if not answer:
                 break
             if (time.time() - start_time) > 5:
