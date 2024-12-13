@@ -76,12 +76,13 @@ class GatewayDockerClient:
                 print("[DOCKER-CLIENT][FATAL] Unable to get commit hash for version " + version)
                 return
             print("[DOCKER-CLIENT] Building image for commit " + commit_hash)
-            GatewayGitClient().execute_reset_to_commit(commit_hash)
-            if GatewayGitClient().get_current_commit() != commit_hash:
+
+            if GatewayGitClient().execute_reset_to_commit(commit_hash) \
+                and GatewayGitClient().get_current_commit() == commit_hash:
+                print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
+            else:
                 print("[DOCKER-CLIENT][FATAL] Unable to reset to commit " + commit_hash)
                 return
-            else:
-                print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
             self.docker_client.images.build(
                 path=os.path.join(os.path.dirname(ACROPOLIS_GATEWAY_GIT_PATH), "/software/controller"),
                 dockerfile="./docker/Dockerfile",
