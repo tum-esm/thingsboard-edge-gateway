@@ -84,7 +84,7 @@ class GatewayDockerClient:
                 print("[DOCKER-CLIENT][FATAL] Unable to reset to commit " + commit_hash)
                 return
             self.docker_client.images.build(
-                path=os.path.join(os.path.dirname(ACROPOLIS_GATEWAY_GIT_PATH), "/software/controller"),
+                path=os.path.join(os.path.dirname(ACROPOLIS_GATEWAY_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version + ":latest"
             )
