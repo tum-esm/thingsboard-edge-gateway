@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from src.main import PROJECT_DIR
+from main import PROJECT_DIR
 
 
 class GatewayGitClient:
