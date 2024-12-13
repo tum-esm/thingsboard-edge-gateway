@@ -1,11 +1,12 @@
 import os
 import subprocess
 
+from src.main import PROJECT_DIR
+
 
 class GatewayGitClient:
     def __init__(self):
-        self.git_repo_path = os.environ.get("ACROPOLIS_GATEWAY_GIT_PATH") or "../.git"
-
+        self.git_repo_path = os.environ.get("ACROPOLIS_GATEWAY_GIT_PATH") or os.path.join(os.path.dirname(PROJECT_DIR), ".git")
 
     # Singleton pattern
     def __new__(cls):

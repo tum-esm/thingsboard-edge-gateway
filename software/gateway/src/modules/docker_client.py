@@ -1,6 +1,7 @@
+import os
 import docker
 
-from main import ACROPOLIS_COMMUNICATION_DATA_PATH
+from main import ACROPOLIS_COMMUNICATION_DATA_PATH, PROJECT_DIR
 from modules.git_client import GatewayGitClient
 
 CONTROLLER_CONTAINER_NAME = "acropolis_edge_controller"
@@ -9,6 +10,7 @@ CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
 class GatewayDockerClient:
     def __init__(self):
         self.docker_client = docker.from_env()
+        self.git_repo_path = os.environ.get("ACROPOLIS_GATEWAY_GIT_PATH") or os.path.join(os.path.dirname(PROJECT_DIR), ".git")
 
     # Singleton pattern
     def __new__(cls):
@@ -82,8 +84,8 @@ class GatewayDockerClient:
             else:
                 print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
             self.docker_client.images.build(
-                path="../controller",
-                dockerfile="../controller/docker/Dockerfile",
+                path=os.path.join(os.path.dirname(self.git_repo_path), "/software/controller"),
+                dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version + ":latest"
             )
             print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version)
