@@ -5,7 +5,6 @@ import signal
 import sys
 import threading
 import traceback
-from os.path import dirname
 from time import sleep
 
 from args import parse_args
@@ -13,8 +12,8 @@ from modules import mqtt, sqlite, docker_client, git_client
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
-PROJECT_DIR = dirname(dirname(os.path.abspath(__file__))) # path to "gateway" folder
-ACROPOLIS_COMMUNICATION_DATA_PATH = str(os.environ.get("ACROPOLIS_COMMUNICATION_DATA_PATH")) or os.path.join(dirname(PROJECT_DIR))
+from utils.paths import ACROPOLIS_COMMUNICATION_DATA_PATH
+
 mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
