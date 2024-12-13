@@ -45,7 +45,9 @@ class GatewayGitClient:
 
     def execute_reset_to_commit(self, commit_hash):
         try:
-            if subprocess.run(["git", f"--git-dir={ACROPOLIS_GATEWAY_GIT_PATH}", "reset", "--hard", commit_hash]).returncode == 0:
+            if subprocess.run(["git", f"--git-dir={ACROPOLIS_GATEWAY_GIT_PATH}", "reset", "--hard", commit_hash]).returncode == 0\
+                and subprocess.run(["git", f"--git-dir={ACROPOLIS_GATEWAY_GIT_PATH}", "reset", "HEAD", "--hard"]).returncode == 0\
+                and subprocess.run(["git", f"--git-dir={ACROPOLIS_GATEWAY_GIT_PATH}", "clean", "-f", "-d"]).returncode == 0:
                 return True
         except subprocess.CalledProcessError as e:
             print("[GIT-CLIENT] Unable to reset to commit hash: ", e, e.stderr, e.stdout)
