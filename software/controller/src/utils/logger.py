@@ -10,7 +10,7 @@ from .functions import CommandLineException
 from .message_queue import MessageQueue
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
-LOGS_ARCHIVE_DIR = join(PROJECT_DIR, "logs", "archive")
+LOGS_ARCHIVE_DIR = "/root/logs"
 
 # The logging module behaved very weird with the setup we have
 # therefore I am just formatting and appending the log lines

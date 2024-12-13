@@ -2,7 +2,7 @@ import os
 import docker
 
 from modules.git_client import GatewayGitClient
-from utils.paths import ACROPOLIS_GATEWAY_GIT_PATH, ACROPOLIS_COMMUNICATION_DATA_PATH
+from utils.paths import ACROPOLIS_GATEWAY_GIT_PATH, ACROPOLIS_COMMUNICATION_DATA_PATH, ACROPOLIS_CONTROLLER_LOGS_PATH
 
 CONTROLLER_CONTAINER_NAME = "acropolis_edge_controller"
 CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
@@ -121,6 +121,10 @@ class GatewayDockerClient:
                 },
                 ACROPOLIS_COMMUNICATION_DATA_PATH: {
                     "bind": "/root/data",
+                    "mode": "rw"
+                },
+                ACROPOLIS_CONTROLLER_LOGS_PATH: {
+                    "bind": "/root/logs",
                     "mode": "rw"
                 },
             }
