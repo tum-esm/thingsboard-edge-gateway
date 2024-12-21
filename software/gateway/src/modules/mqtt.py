@@ -1,11 +1,32 @@
 import json
 import ssl
-import struct
+import time
 
 from paho.mqtt.client import Client
 
+GatewayMqttClientInstance = None
+
 class GatewayMqttClient(Client):
-    def __init__(self, message_queue, access_token):
+    initialized = False
+    connected = False
+    message_queue = None
+
+    @staticmethod
+    def instance():
+        global GatewayMqttClientInstance
+        if GatewayMqttClientInstance is None:
+            GatewayMqttClientInstance = GatewayMqttClient.__new__(GatewayMqttClient)
+        return GatewayMqttClientInstance
+
+    def __init__(self):
+        super().__init__()
+        GatewayMqttClient.__call__(self)
+
+    def __call__(self, *args, **kwargs):
+        fatal_error("GatewayMqttClient is a singleton and cannot be instantiated directly. "
+                           "Use GatewayMqttClient.instance() instead.")
+
+    def init(self, message_queue, access_token):
         super().__init__()
 
         # set up the client
@@ -16,7 +37,12 @@ class GatewayMqttClient(Client):
         self.on_connect = self.__on_connect
         self.on_message = self.__on_message
         self.on_disconnect = self.__on_disconnect
+
         self.message_queue = message_queue
+        self.initialized = True
+        self.connected = False
+
+        return self
 
     def graceful_exit(self):
         print("Exiting MQTT-client gracefully...")
@@ -35,8 +61,10 @@ class GatewayMqttClient(Client):
         self.subscribe("v2/fw/response/+")
 
         self.publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+        self.connected = True
 
     def __on_disconnect(self, _client, _userdata, _rc):
+        self.connected = False
         print(f"Disconnected from ThingsBoard with result code: {_rc}")
         self.graceful_exit()
 
@@ -47,4 +75,17 @@ class GatewayMqttClient(Client):
         })
 
     def publish_message(self, message):
+        if not self.initialized or not self.connected:
+            print(f'MQTT client is not connected/initialized, cannot publish message "{message}"')
+            return
+        print(f'Publishing message: {message}')
         self.publish("v1/devices/me/telemetry", message)
+
+    def publish_log(self, log_level, log_message):
+        self.publish_message(json.dumps({
+            "ts": int(time.time()) * 1000,
+            "values": {
+                "severity": log_level,
+                "message": "GATEWAY - " + log_message
+            }
+        }))

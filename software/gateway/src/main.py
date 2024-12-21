@@ -1,18 +1,16 @@
-import inspect
 import os
 import queue
 import signal
 import sys
 import threading
-import traceback
 from time import sleep
 
+import utils.paths
+import utils.misc
 from args import parse_args
-from modules import mqtt, sqlite, docker_client, git_client
+from modules import sqlite, docker_client, git_client
+from modules import mqtt
 from self_provisioning import self_provisioning_get_access_token
-from utils.misc import get_maybe
-
-from utils.paths import ACROPOLIS_COMMUNICATION_DATA_PATH
 
 mqtt_client = None
 archive_sqlite_db = None
@@ -24,6 +22,7 @@ def shutdown_handler(sig, frame):
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
 
+    print("GRACEFUL SHUTDOWN")
     if mqtt_client is not None:
         mqtt_client.graceful_exit()
     if archive_sqlite_db is not None:
@@ -31,6 +30,7 @@ def shutdown_handler(sig, frame):
     if communication_sqlite_db is not None:
         communication_sqlite_db.close()
 
+    sys.stdout.flush()
     sys.exit(sig)
 
 # Set up signal handling for forced shutdown in case graceful shutdown fails
@@ -54,12 +54,12 @@ try:
         access_token = self_provisioning_get_access_token(args)
 
         archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-        comm_db_path = os.path.join(ACROPOLIS_COMMUNICATION_DATA_PATH, "acropolis_comm_db.db")
+        comm_db_path = os.path.join(utils.paths.ACROPOLIS_COMMUNICATION_DATA_PATH, "acropolis_comm_db.db")
         print(f"Comm DB path: {comm_db_path}")
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
         # create and run the mqtt client in a separate thread
-        mqtt_client = mqtt.GatewayMqttClient(mqtt_message_queue, access_token)
+        mqtt_client = mqtt.GatewayMqttClient.instance().init(mqtt_message_queue, access_token)
         mqtt_client.connect(args.tb_host, args.tb_port)
         mqtt_client_thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()
@@ -73,10 +73,10 @@ try:
             # check if there are any new incoming mqtt messages in the queue
             if not mqtt_message_queue.empty():
                 msg = mqtt_message_queue.get()
-                msg_payload = get_maybe(msg, "payload", "shared") or get_maybe(msg, "payload")
-                sw_title = get_maybe(msg_payload, "sw_title")
-                sw_url = get_maybe(msg_payload, "sw_url")
-                sw_version = get_maybe(msg_payload, "sw_version")
+                msg_payload = utils.misc.get_maybe(msg, "payload", "shared") or utils.misc.get_maybe(msg, "payload")
+                sw_title = utils.misc.get_maybe(msg_payload, "sw_title")
+                sw_url = utils.misc.get_maybe(msg_payload, "sw_url")
+                sw_version = utils.misc.get_maybe(msg_payload, "sw_version")
                 if sw_title is not None and sw_url is not None and sw_version is not None:
                     if docker_client.is_edge_running():
                         current_version = docker_client.get_edge_version()
@@ -108,6 +108,4 @@ try:
             # if nothing happened this iteration, sleep for a while
             sleep(1)
 except Exception as e:
-    print(f"An error occurred in gateway main loop: {e}")
-    print(traceback.format_exc())
-    shutdown_handler(1, inspect.currentframe())
+    utils.misc.fatal_error(f"An error occurred in gateway main loop: {e}")
