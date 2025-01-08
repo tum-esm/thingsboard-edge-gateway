@@ -1,5 +1,6 @@
 import gpiozero
 import gpiozero.pins.pigpio
+import os
 import time
 from typing import Any, Optional
 
@@ -8,8 +9,8 @@ from src.custom_types import sensor_types, config_types
 from src.interfaces import serial_interfaces
 from src.utils import gpio_pin_factory
 
-CO2_SENSOR_POWER_PIN_OUT = 20
-CO2_SENSOR_SERIAL_PORT = "/dev/ttySC0"
+GMP343_SENSOR_POWER_PIN_OUT = os.environ.get("GMP343_SENSOR_POWER_PIN_OUT")
+GMP343_SENSOR_SERIAL_PORT = os.environ.get("GMP343_SENSOR_SERIAL_PORT")
 CO2_MEASUREMENT_REGEX = (
     r"\d+\.\d+\s+"  # raw
     + r"\d+\.\d+\s+"  # compensated
@@ -145,9 +146,9 @@ class VaisalaGMP343(Sensor):
                                   humidity: float) -> None:
         """update pressure, humidity in sensor for internal compensation."""
 
-        assert 0 <= humidity <= 100, f"invalid humidity ({humidity} not in [0, 100])"
+        assert 0 <= humidity <= 100, f"humidity ({humidity} not in [0, 100])"
         assert (700 <= pressure <=
-                1300), f"invalid pressure ({pressure} not in [700, 1300])"
+                1300), f"pressure ({pressure} not in [700, 1300])"
 
         self._send_command_to_sensor(command=f"rh {round(humidity, 2)}")
         self._send_command_to_sensor(command=f"p {round(pressure, 2)}")
