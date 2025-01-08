@@ -1,10 +1,15 @@
 import os
+import sys
 import signal
 import time
 import dotenv
+from pathlib import Path
 from typing import Any
 
-from src.interfaces import config_interface, hardware_interface, logging_interface, state_interface
+# Ensure the project root is added to the Python path to allow absolute imports from src
+sys.path.insert(0, Path(__file__).parent)
+
+from src.interfaces import config_interface, logging_interface, state_interface, hardware_interface
 from src.procedures import calibration, measurement, system_check
 from src.utils import alarms, expontential_backoff, system_info
 
@@ -77,8 +82,8 @@ def run() -> None:
     logger.info("Initializing hardware interfaces.", forward=True)
 
     try:
-        hardware_interface = hardware_interface.HardwareInterface(
-            config=config, simulate=simulate)
+        hardware = hardware_interface.HardwareInterface(config=config,
+                                                        simulate=simulate)
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",
@@ -90,7 +95,7 @@ def run() -> None:
         alarms.set_alarm(10, "graceful teardown")
 
         logger.info("Starting graceful teardown.")
-        hardware_interface.teardown()
+        hardware.teardown()
         logger.info("Finished graceful teardown.")
         exit(0)
 
@@ -110,13 +115,13 @@ def run() -> None:
 
     try:
         system_check_procedure = system_check.SystemCheckProcedure(
-            config, hardware_interface, simulate=simulate)
+            config, hardware, simulate=simulate)
         calibration_procedure = calibration.CalibrationProcedure(
-            config, hardware_interface, simulate=simulate)
+            config, hardware, simulate=simulate)
         wind_measurement_procedure = measurement.WindMeasurementProcedure(
-            config, hardware_interface, simulate=simulate)
+            config, hardware, simulate=simulate)
         co2_measurement_procedure = measurement.CO2MeasurementProcedure(
-            config, hardware_interface, simulate=simulate)
+            config, hardware, simulate=simulate)
     except Exception as e:
         logger.exception(e,
                          label="could not initialize procedures",
@@ -197,8 +202,8 @@ def run() -> None:
                     ebo.set_next_timer()
                     # reinitialize all hardware interfaces
                     logger.info("Performing hardware reset.", forward=True)
-                    hardware_interface.teardown()
-                    hardware_interface.reinitialize(config)
+                    hardware.teardown()
+                    hardware.reinitialize(config)
                     logger.info("Hardware reset was successful.", forward=True)
 
             except Exception as e:
