@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 # Ensure the project root is added to the Python path to allow absolute imports from src
-sys.path.insert(0, Path(__file__).parent)
+sys.path.insert(0, str(Path(__file__).parent))
 
 from src.interfaces import config_interface, logging_interface, state_interface, hardware_interface
 from src.procedures import calibration, measurement, system_check
