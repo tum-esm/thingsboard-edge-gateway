@@ -29,7 +29,7 @@ class VaisalaGMP343(Sensor):
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
             port=CO2_SENSOR_SERIAL_PORT)
 
-    def _initialize_sensor(self):
+    def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
         self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         self.power_pin = gpiozero.OutputDevice(pin=CO2_SENSOR_POWER_PIN_OUT,
@@ -42,13 +42,13 @@ class VaisalaGMP343(Sensor):
 
         self._send_sensor_settings()
 
-    def _shutdown_sensor(self):
+    def _shutdown_sensor(self) -> None:
         """Shutdown the sensor."""
 
         self.power_pin.off()
         self.pin_factory.close()
 
-    def _read(self, *args, **kwargs):
+    def _read(self, *args, **kwargs) -> sensor_types.CO2SensorData:
         """Read the sensor value."""
         humidity = kwargs.get('humidity', None)
         pressure = kwargs.get('pressure', None)
@@ -75,50 +75,35 @@ class VaisalaGMP343(Sensor):
         expected_regex: str = r".*\>.*",
         timeout: float = 8,
     ) -> str:
-        """Allows to send a full text command to the GMP343 CO2 Sensor.
-        Please refer to the user manual for valid commands."""
+        """Send a command and handle different types of responses."""
 
-        if self.simulate:
-            return "Simulated CO2 Sensor."
+        def _retry_send(self, command, expected_regex, timeout, error_type):
+            """Helper method to handle retry logic for uncomplete or timeout responses."""
+            answer = self.serial_interface.send_command(
+                message=command.strip().split(" ")[-1]
+                if error_type == "uncomplete" else command,
+                expected_regex=expected_regex,
+                timeout=timeout)
+
+            if answer[0] == "success":
+                self.logger.info(f"Resending {error_type} was successful.")
+                return self._format_raw_answer(answer[1])
+            else:
+                raise self.SensorError(
+                    f"Resend failed: {error_type}. Sensor answer: {answer[1]}")
 
         answer = self.serial_interface.send_command(
             message=command, expected_regex=expected_regex, timeout=timeout)
 
-        # command was successful
+        # If command is successful, return the formatted result
         if answer[0] == "success":
             return self._format_raw_answer(answer[1])
 
-        # command returned uncomplete message
-        if answer[0] == "uncomplete":
-            answer = self.serial_interface.send_command(
-                message=command.strip().split(" ")[-1],
-                expected_regex=expected_regex,
-                timeout=timeout)
+        # Handle retries for uncomplete or timeout error
+        if answer[0] in ("uncomplete", "timeout"):
+            return _retry_send(command, expected_regex, timeout, answer[0])
 
-            if answer[0] == "success":
-                self.logger.info(
-                    "Resending value after uncomplete was successful")
-                return self._format_raw_answer(answer[1])
-            else:
-                raise self.SensorError(
-                    f"Resend failed: uncomplete. Sensor answer: {answer[1]}")
-
-        # command returned timeout message
-        if answer[0] == "timeout":
-            answer = self.serial_interface.send_command(
-                message=command,
-                expected_regex=expected_regex,
-                timeout=timeout)
-
-            if answer[0] == "success":
-                self.logger.info(
-                    "Resending command after timeout was successful.")
-                return self._format_raw_answer(answer[1])
-            else:
-                raise self.SensorError(
-                    f"Resend failed: timeout. Sensor answer: {answer[1]}")
-
-    def _send_sensor_settings(self):
+    def _send_sensor_settings(self) -> None:
         """send the sensor settings as defined in the configuration file."""
 
         self._send_command_to_sensor(
