@@ -6,7 +6,7 @@ from typing import Literal, Optional
 import sys
 
 import custom_types
-from .functions import CommandLineException
+from .gpio_pin_factory import CommandLineException
 from .message_queue import MessageQueue
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))

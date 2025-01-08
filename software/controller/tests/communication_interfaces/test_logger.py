@@ -2,11 +2,23 @@ import pytest
 from ..pytest_utils import expect_log_file_contents
 from os.path import dirname, abspath
 import sys
+import random
+import string
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 sys.path.append(PROJECT_DIR)
 
 from src import utils
+
+
+def get_random_string(length: int, forbidden: list[str] = []) -> str:
+    """a random string from lowercase letter, the strings from
+    the list passed as `forbidden` will not be generated"""
+    while True:
+        output: str = "".join(random.choices(string.ascii_lowercase, k=length))
+        if output not in forbidden:
+            break
+    return output
 
 
 @pytest.mark.remote_update
