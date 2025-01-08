@@ -2,7 +2,7 @@ import time
 from typing import Literal
 import gpiozero
 
-import utils, custom_types, interfaces
+from .. import utils, custom_types, interfaces
 
 VALVE_PIN_1_OUT = 25
 VALVE_PIN_2_OUT = 24

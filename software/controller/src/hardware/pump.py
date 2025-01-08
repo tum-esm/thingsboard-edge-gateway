@@ -2,7 +2,7 @@ import time
 import gpiozero
 import gpiozero.pins.pigpio
 
-import utils, custom_types, interfaces
+from .. import utils, custom_types, interfaces
 
 PUMP_CONTROL_PIN_OUT = 19
 PUMP_CONTROL_PIN_FREQUENCY = 10000

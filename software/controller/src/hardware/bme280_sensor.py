@@ -3,7 +3,7 @@ import bme280
 import smbus2
 from typing import Literal, Optional
 
-import custom_types, interfaces
+from .. import custom_types, interfaces
 
 
 class BME280SensorInterface:

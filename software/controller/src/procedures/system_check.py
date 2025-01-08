@@ -1,7 +1,7 @@
 import time
 import psutil
 
-import interfaces, custom_types, utils
+from .. import interfaces, custom_types, utils
 
 
 class SystemCheckProcedure:

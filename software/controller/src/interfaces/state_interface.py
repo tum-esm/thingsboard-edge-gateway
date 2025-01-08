@@ -3,7 +3,7 @@ import os
 import time
 
 from .logging_interface import Logger
-import custom_types, utils
+from .. import custom_types, utils
 
 dirname = os.path.dirname
 PROJECT_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))

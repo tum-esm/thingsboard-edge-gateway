@@ -1,10 +1,10 @@
 import os
 from typing import TypedDict
 import filelock
-import custom_types
-from .logging_interface import Logger
 
-from hardware import BME280SensorInterface, CO2SensorInterface, PumpInterface, SHT45SensorInterface, UPSInterface, ValveInterface, WindSensorInterface
+from .logging_interface import Logger
+from .. import custom_types
+from ..hardware import BME280SensorInterface, CO2SensorInterface, PumpInterface, SHT45SensorInterface, UPSInterface, ValveInterface, WindSensorInterface
 
 
 class HwLock(TypedDict):

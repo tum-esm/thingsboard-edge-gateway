@@ -6,7 +6,7 @@ import gpiozero
 import gpiozero.pins.pigpio
 import serial
 
-import custom_types, utils, interfaces
+from .. import custom_types, utils, interfaces
 
 measurement_pattern = (
     pattern

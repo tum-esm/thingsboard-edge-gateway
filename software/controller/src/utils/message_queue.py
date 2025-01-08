@@ -4,7 +4,7 @@ from os.path import dirname
 import dataclasses
 from typing import Union
 
-import custom_types
+from .. import custom_types
 
 PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
 ACROPOLIS_COMMUNICATION_DATA_PATH = os.environ.get(

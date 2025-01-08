@@ -5,7 +5,7 @@ from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
 
-import custom_types, utils
+from .. import custom_types, utils
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 LOGS_ARCHIVE_DIR = "/root/logs"

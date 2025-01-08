@@ -7,7 +7,7 @@ try:
 except:
     pass
 
-import interfaces, custom_types
+from .. import interfaces, custom_types
 
 
 class SHT45SensorInterface:

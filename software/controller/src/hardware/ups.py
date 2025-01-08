@@ -2,7 +2,7 @@ import time
 from typing import Optional
 import gpiozero
 
-import utils, custom_types, interfaces
+from .. import utils, custom_types, interfaces
 
 UPS_READY_PIN_IN = 5
 UPS_BATTERY_MODE_PIN_IN = 10

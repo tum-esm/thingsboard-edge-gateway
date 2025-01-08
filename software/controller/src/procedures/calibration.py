@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 
-import custom_types, interfaces, utils
+from .. import custom_types, interfaces, utils
 
 
 class CalibrationProcedure:

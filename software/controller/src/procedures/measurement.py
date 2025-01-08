@@ -1,7 +1,7 @@
 import time
 from typing import Optional, Literal
 
-import custom_types, interfaces, utils
+from .. import custom_types, interfaces, utils
 
 
 class WindMeasurementProcedure:
