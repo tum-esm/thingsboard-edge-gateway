@@ -4,7 +4,7 @@ import time
 import dotenv
 from typing import Any
 
-import interfaces, procedures, utils
+from . import interfaces, procedures, utils
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -28,11 +28,13 @@ def run() -> None:
     """
 
     dotenv.load_dotenv(os.path.join(PROJECT_DIR, "config", ".env"))
-    simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
+    simulate = os.environ.get("ACROPOLIS_SIMULATION_MODE") == "True"
+    log_to_console = os.environ.get("ACROPOLIS_LOG_TO_CONSOLE") == "True"
+    log_to_file = os.environ.get("ACROPOLIS_LOG_TO_FILE") == "True"
 
     logger = interfaces.Logger(origin="main",
-                               print_to_console=simulate
-                               or os.environ.get("ACROPOLIS_LOG_TO_CONSOLE"))
+                               print_to_console=simulate or log_to_console,
+                               write_to_file=log_to_file)
     logger.horizontal_line()
 
     try:
