@@ -2,7 +2,7 @@ import json
 import os
 import pathlib
 
-from .. import custom_types
+from src.custom_types import config_types
 
 PROJECT_DIR = pathlib.Path(os.path.abspath(__file__)).parents[2]
 CONFIG_PATH = os.path.join(PROJECT_DIR, "config", "config.json")
@@ -17,10 +17,10 @@ class ConfigInterface:
         """raised when config.json is not in a valid format"""
 
     @staticmethod
-    def read() -> custom_types.Config:
+    def read() -> config_types.Config:
         try:
             with open(CONFIG_PATH, "r") as f:
-                return custom_types.Config(**json.load(f))
+                return config_types.Config(**json.load(f))
         except FileNotFoundError:
             raise ConfigInterface.FileIsMissing()
         except json.JSONDecodeError:

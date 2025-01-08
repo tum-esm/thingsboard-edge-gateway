@@ -6,7 +6,9 @@ import gpiozero
 import gpiozero.pins.pigpio
 import serial
 
-from .. import custom_types, utils, interfaces
+from src.custom_types import config_types, sensor_types
+from src.interfaces import logging_interface
+from src.utils import gpio_pin_factory, list_operations
 
 measurement_pattern = (
     pattern
@@ -24,11 +26,11 @@ class WindSensorInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = interfaces.Logger(
+        self.logger = logging_interface.Logger(
             origin="wind-sensor",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -37,15 +39,15 @@ class WindSensorInterface:
         self.simulate = simulate
 
         self.logger.info("Starting initialization")
-        self.wind_measurement: Optional[custom_types.WindSensorData] = None
-        self.device_status: Optional[custom_types.WindSensorStatus] = None
+        self.wind_measurement: Optional[sensor_types.WindSensorData] = None
+        self.device_status: Optional[sensor_types.WindSensorStatus] = None
 
         if self.simulate:
             self.logger.info("Simulating wind sensor.")
             return
 
         # power pin to power up/down wind sensor
-        self.pin_factory = utils.get_gpio_pin_factory()
+        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         self.power_pin = gpiozero.OutputDevice(
             pin=WIND_SENSOR_POWER_PIN_OUT,
             pin_factory=self.pin_factory,
@@ -89,14 +91,14 @@ class WindSensorInterface:
             new_messages += answer
 
         now = round(time.time())
-        wind_measurements: list[custom_types.WindSensorData] = []
+        wind_measurements: list[sensor_types.WindSensorData] = []
 
         for message in new_messages:
             # Check if there's a match for the measurement_pattern
             measurement_match = re.search(measurement_pattern, message)
             if measurement_match is not None:
                 # Extract the values using group() method
-                measurement_message = custom_types.WindSensorData(
+                measurement_message = sensor_types.WindSensorData(
                     direction_min=measurement_match.group(1),
                     direction_avg=measurement_match.group(2),
                     direction_max=measurement_match.group(3),
@@ -111,7 +113,7 @@ class WindSensorInterface:
             device_match = re.search(device_status_pattern, message)
             if device_match is not None:
                 # Extract the values using group() method
-                self.device_status = custom_types.WindSensorStatus(
+                self.device_status = sensor_types.WindSensorStatus(
                     temperature=device_match.group(1),
                     heating_voltage=device_match.group(2),
                     supply_voltage=device_match.group(3),
@@ -125,15 +127,15 @@ class WindSensorInterface:
                 f"Processed {len(wind_measurements)} wind sensor measurements during the last "
                 f"{self.config.measurement.procedure_seconds} seconds interval."
             )
-            self.wind_measurement = custom_types.WindSensorData(
+            self.wind_measurement = sensor_types.WindSensorData(
                 direction_min=min([m.direction_min
                                    for m in wind_measurements]),
-                direction_avg=utils.avg_list(
+                direction_avg=list_operations.avg_list(
                     [m.direction_avg for m in wind_measurements], 1),
                 direction_max=max([m.direction_max
                                    for m in wind_measurements]),
                 speed_min=min([m.speed_min for m in wind_measurements]),
-                speed_avg=utils.avg_list(
+                speed_avg=list_operations.avg_list(
                     [m.speed_avg for m in wind_measurements], 1),
                 speed_max=max([m.speed_max for m in wind_measurements]),
                 last_update_time=[
@@ -146,14 +148,14 @@ class WindSensorInterface:
     def get_current_sensor_measurement(
         self,
     ) -> Tuple[
-            Optional[custom_types.WindSensorData],
-            Optional[custom_types.WindSensorStatus],
+            Optional[sensor_types.WindSensorData],
+            Optional[sensor_types.WindSensorStatus],
     ]:
         if self.simulate:
             wind_dir = 60 + random.random() * 120
             wind_speed = 3 + random.random() * 8
             return (
-                custom_types.WindSensorData(
+                sensor_types.WindSensorData(
                     # generate random wind data
                     direction_min=wind_dir - 30,
                     direction_avg=wind_dir,
@@ -163,7 +165,7 @@ class WindSensorInterface:
                     speed_max=wind_speed + 3,
                     last_update_time=round(time.time()),
                 ),
-                custom_types.WindSensorStatus(
+                sensor_types.WindSensorStatus(
                     # generate random device status
                     temperature=20 + random.random() * 10,
                     heating_voltage=24 + random.random() * 2,

@@ -2,7 +2,9 @@ import time
 from typing import Literal
 import gpiozero
 
-from .. import utils, custom_types, interfaces
+from src.custom_types import config_types
+from src.interfaces import logging_interface
+from src.utils import gpio_pin_factory, shell_commands
 
 VALVE_PIN_1_OUT = 25
 VALVE_PIN_2_OUT = 24
@@ -14,11 +16,11 @@ class ValveInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = interfaces.Logger(
+        self.logger = logging_interface.Logger(
             origin="valves",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -32,7 +34,7 @@ class ValveInterface:
             return
 
         # set up valve control pin connections
-        self.pin_factory = utils.get_gpio_pin_factory()
+        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         self.valves: dict[Literal[1, 2, 3, 4], gpiozero.OutputDevice] = {
             1:
             gpiozero.OutputDevice(VALVE_PIN_1_OUT,
@@ -101,4 +103,4 @@ class ValveInterface:
                 VALVE_PIN_1_OUT, VALVE_PIN_2_OUT, VALVE_PIN_3_OUT,
                 VALVE_PIN_4_OUT
         ]:
-            utils.run_shell_command(f"pigs w {pin} 0")
+            shell_commands.run_shell_command(f"pigs w {pin} 0")

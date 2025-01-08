@@ -4,7 +4,9 @@ from typing import Optional
 import gpiozero
 import gpiozero.pins.pigpio
 
-from .. import custom_types, interfaces, utils
+from src.custom_types import sensor_types, config_types
+from src.interfaces import logging_interface, serial_interfaces
+from src.utils import shell_commands, gpio_pin_factory
 
 CO2_SENSOR_POWER_PIN_OUT = 20
 CO2_SENSOR_SERIAL_PORT = "/dev/ttySC0"
@@ -26,11 +28,11 @@ class CO2SensorInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = interfaces.Logger(
+        self.logger = logging_interface.Logger(
             origin="co2-sensor",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -45,12 +47,12 @@ class CO2SensorInterface:
             return
 
         # power pin to power up/down CO2 sensor
-        self.pin_factory = utils.get_gpio_pin_factory()
+        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         self.power_pin = gpiozero.OutputDevice(pin=CO2_SENSOR_POWER_PIN_OUT,
                                                pin_factory=self.pin_factory)
 
         # serial connection to receive data from CO2 sensor
-        self.serial_interface = interfaces.serial_interfaces.SerialCO2SensorInterface(
+        self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
             port=CO2_SENSOR_SERIAL_PORT)
 
         # turn the sensor off and on and set it to our default settings
@@ -106,7 +108,7 @@ class CO2SensorInterface:
     def get_current_concentration(
             self,
             pressure: Optional[float] = None,
-            humidity: Optional[float] = None) -> custom_types.CO2SensorData:
+            humidity: Optional[float] = None) -> sensor_types.CO2SensorData:
         """get the latest concentration and chamber temperature from the CO2 probe"""
 
         # request data from CO2 sensor
@@ -134,7 +136,7 @@ class CO2SensorInterface:
             self._reset_sensor()
             sensor_data = (0.0, 0.0, 0.0, 0.0)
 
-        return custom_types.CO2SensorData(
+        return sensor_types.CO2SensorData(
             raw=sensor_data[0],
             compensated=sensor_data[1],
             filtered=sensor_data[2],
@@ -385,4 +387,5 @@ class CO2SensorInterface:
         self.pin_factory.close()
 
         # I don't know why this is needed sometimes, just to make sure
-        utils.run_shell_command(f"pigs w {CO2_SENSOR_POWER_PIN_OUT} 0")
+        shell_commands.run_shell_command(
+            f"pigs w {CO2_SENSOR_POWER_PIN_OUT} 0")

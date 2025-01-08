@@ -2,9 +2,15 @@ import os
 from typing import TypedDict
 import filelock
 
-from .logging_interface import Logger
-from .. import custom_types
-from ..hardware import BME280SensorInterface, CO2SensorInterface, PumpInterface, SHT45SensorInterface, UPSInterface, ValveInterface, WindSensorInterface
+from src.interfaces import logging_interface
+from src.custom_types import config_types
+from src.hardware.bme280_sensor import BME280SensorInterface
+from src.hardware.gmp343_sensor import CO2SensorInterface
+from src.hardware.pump import PumpInterface
+from src.hardware.sht45_sensor import SHT45SensorInterface
+from src.hardware.ups import UPSInterface
+from src.hardware.valves import ValveInterface
+from src.hardware.wxt532_sensor import WindSensorInterface
 
 
 class HwLock(TypedDict):
@@ -31,7 +37,7 @@ class HardwareInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
@@ -41,7 +47,7 @@ class HardwareInterface:
             timeout=5,
         )
         self.config = config
-        self.logger = Logger(
+        self.logger = logging_interface.Logger(
             "hardware-interface",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -112,7 +118,7 @@ class HardwareInterface:
         # release lock
         global_hw_lock["lock"].release()
 
-    def reinitialize(self, config: custom_types.Config) -> None:
+    def reinitialize(self, config: config_types.Config) -> None:
         """reinitialize after an unsuccessful update"""
         self.config = config
         self.logger.info("running hardware reinitialization")

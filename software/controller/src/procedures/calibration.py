@@ -1,7 +1,10 @@
 import time
 from datetime import datetime
 
-from .. import custom_types, interfaces, utils
+from src.custom_types import config_types
+from src.custom_types import mqtt_playload_types
+from src.interfaces import logging_interface, hardware_interface, state_interface
+from src.utils import message_queue, ring_buffer
 
 
 class CalibrationProcedure:
@@ -9,21 +12,21 @@ class CalibrationProcedure:
 
     def __init__(
         self,
-        config: custom_types.Config,
-        hardware_interface: interfaces.HardwareInterface,
+        config: config_types.Config,
+        hardware_interface: hardware_interface.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = interfaces.Logger(
+        self.logger, self.config = logging_interface.Logger(
             origin="calibration-procedure"), config
         self.hardware_interface = hardware_interface
         self.simulate = simulate
 
         # state variables
         self.last_measurement_time: float = 0
-        self.message_queue = utils.MessageQueue()
-        self.rb_pressure = utils.RingBuffer(
+        self.message_queue = message_queue.MessageQueue()
+        self.rb_pressure = ring_buffer.RingBuffer(
             self.config.calibration.average_air_inlet_measurements)
-        self.rb_humidity = utils.RingBuffer(
+        self.rb_humidity = ring_buffer.RingBuffer(
             self.config.calibration.average_air_inlet_measurements)
         self.seconds_drying_with_first_bottle = 0
 
@@ -45,7 +48,7 @@ class CalibrationProcedure:
         self.rb_humidity.append(self.air_inlet_sht45_data.humidity)
 
     def _alternate_bottle_for_drying(
-            self) -> list[custom_types.CalibrationGasConfig]:
+            self) -> list[config_types.CalibrationGasConfig]:
         """
         1. sets time for drying the air chamber with first calibration bottle
         2. switches to the next calibration cylinder every other calibration
@@ -56,7 +59,7 @@ class CalibrationProcedure:
             self.config.calibration.sampling_per_cylinder_seconds)
 
         # read the latest state
-        state = interfaces.StateInterface.read()
+        state = state_interface.StateInterface.read()
 
         current_position = state.next_calibration_cylinder
 
@@ -67,7 +70,7 @@ class CalibrationProcedure:
 
         # update state config
         state.next_calibration_cylinder = next_position
-        interfaces.StateInterface.write(state)
+        state_interface.StateInterface.write(state)
 
         # update sequence
 
@@ -102,7 +105,7 @@ class CalibrationProcedure:
         return self.config.calibration.gas_cylinders
 
     def run(self) -> None:
-        state = interfaces.StateInterface.read()
+        state = state_interface.StateInterface.read()
         calibration_time = datetime.utcnow().timestamp()
         self.logger.info(
             f"starting calibration procedure at timestamp {calibration_time}",
@@ -155,7 +158,7 @@ class CalibrationProcedure:
                 # send out MQTT measurement message
                 self.message_queue.enqueue_message(
                     timestamp=int(time.time()),
-                    payload=custom_types.MQTTCO2CalibrationData(
+                    payload=mqtt_playload_types.MQTTCO2CalibrationData(
                         cal_bottle_id=float(gas.bottle_id),
                         cal_gmp343_raw=current_sensor_data.raw,
                         cal_gmp343_compensated=current_sensor_data.compensated,
@@ -199,9 +202,9 @@ class CalibrationProcedure:
             f"finished calibration procedure at timestamp {datetime.utcnow().timestamp()}",
             forward=True,
         )
-        state = interfaces.StateInterface.read()
+        state = state_interface.StateInterface.read()
         state.last_calibration_time = calibration_time
-        interfaces.StateInterface.write(state)
+        state_interface.StateInterface.write(state)
 
     def is_due(self) -> bool:
         """returns true when calibration procedure should run
@@ -212,7 +215,7 @@ class CalibrationProcedure:
         #"""
 
         # load state, kept during configuration procedures
-        state = interfaces.StateInterface.read()
+        state = state_interface.StateInterface.read()
         current_utc_day = datetime.utcnow().date()
         current_utc_hour = datetime.utcnow().hour
 

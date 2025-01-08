@@ -2,8 +2,8 @@ import json
 import os
 import time
 
-from .logging_interface import Logger
-from .. import custom_types, utils
+from src.custom_types import state_types
+from src.interfaces import logging_interface
 
 dirname = os.path.dirname
 PROJECT_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))
@@ -24,17 +24,17 @@ class StateInterface:
         StateInterface.write(state)
 
     @staticmethod
-    def read() -> custom_types.State:
-        logger = Logger("state-interface")
+    def read() -> state_types.State:
+        logger = logging_interface.Logger("state-interface")
         try:
             with open(STATE_PATH, "r") as f:
-                return custom_types.State(**json.load(f))
+                return state_types.State(**json.load(f))
         except FileNotFoundError:
             logger.warning("state.json is missing, creating a new one")
         except Exception as e:
             logger.warning(f"state.json is invalid, creating a new one: {e}")
 
-        new_empty_state = custom_types.State(
+        new_empty_state = state_types.State(
             last_upgrade_time=None,
             last_calibration_time=None,
             current_config_revision=0,
@@ -44,6 +44,6 @@ class StateInterface:
         return new_empty_state
 
     @staticmethod
-    def write(new_state: custom_types.State) -> None:
+    def write(new_state: state_types.State) -> None:
         with open(STATE_PATH, "w") as f:
             json.dump(new_state.dict(), f)

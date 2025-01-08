@@ -5,7 +5,8 @@ from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
 
-from .. import custom_types, utils
+from src.custom_types import mqtt_playload_types
+from src.utils import message_queue, shell_commands
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 LOGS_ARCHIVE_DIR = "/root/logs"
@@ -35,7 +36,7 @@ class Logger:
         self.origin: str = origin
         self.print_to_console = print_to_console
         self.write_to_file = write_to_file
-        self.message_queue = utils.MessageQueue()
+        self.message_queue = message_queue.MessageQueue()
 
     def horizontal_line(self,
                         fill_char: Literal["-", "=", ".", "_"] = "=") -> None:
@@ -133,8 +134,9 @@ class Logger:
         exception_traceback = "\n".join(
             traceback.format_exception(type(e), e, e.__traceback__)).strip()
         exception_details = "None"
-        if isinstance(e, utils.CommandLineException) and (e.details
-                                                          is not None):
+        if isinstance(e,
+                      shell_commands.CommandLineException) and (e.details
+                                                                is not None):
             exception_details = e.details.strip()
 
         subject_string = (exception_name
@@ -199,7 +201,7 @@ class Logger:
 
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),
-            payload=custom_types.MQTTLogMessage(
+            payload=mqtt_playload_types.MQTTLogMessage(
                 severity=level,
                 message=subject + " " + details,
             ),

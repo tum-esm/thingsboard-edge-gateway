@@ -1,7 +1,10 @@
 import time
 from typing import Optional, Literal
 
-from .. import custom_types, interfaces, utils
+from src.custom_types import config_types, sensor_types
+from src.custom_types import mqtt_playload_types
+from src.interfaces import hardware_interface, logging_interface
+from src.utils import message_queue, ring_buffer
 
 
 class WindMeasurementProcedure:
@@ -12,18 +15,18 @@ class WindMeasurementProcedure:
 
     def __init__(
         self,
-        config: custom_types.Config,
-        hardware_interface: interfaces.HardwareInterface,
+        config: config_types.Config,
+        hardware_interface: hardware_interface.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = interfaces.Logger(
+        self.logger, self.config = logging_interface.Logger(
             origin="measurement-procedure"), config
         self.hardware_interface = hardware_interface
         self.simulate = simulate
 
         # state variables
-        self.wind_data: Optional[custom_types.WindSensorData] = None
-        self.message_queue = utils.MessageQueue()
+        self.wind_data: Optional[sensor_types.WindSensorData] = None
+        self.message_queue = message_queue.MessageQueue()
 
     def _read_latest_wind_sensor_communication(self) -> None:
         # wind measurement
@@ -44,7 +47,7 @@ class WindMeasurementProcedure:
 
             self.message_queue.enqueue_message(
                 timestamp=int(time.time()),
-                payload=custom_types.MQTTWindData(
+                payload=mqtt_playload_types.MQTTWindData(
                     wxt532_direction_min=self.wind_data.direction_min,
                     wxt532_direction_avg=self.wind_data.direction_avg,
                     wxt532_direction_max=self.wind_data.direction_max,
@@ -64,7 +67,7 @@ class WindMeasurementProcedure:
 
             self.message_queue.enqueue_message(
                 timestamp=int(time.time()),
-                payload=custom_types.MQTTWindSensorInfo(
+                payload=mqtt_playload_types.MQTTWindSensorInfo(
                     wxt532_temperature=self.device_info.temperature,
                     wxt532_heating_voltage=self.device_info.heating_voltage,
                     wxt532_supply_voltage=self.device_info.supply_voltage,
@@ -104,11 +107,11 @@ class CO2MeasurementProcedure:
 
     def __init__(
         self,
-        config: custom_types.Config,
-        hardware_interface: interfaces.HardwareInterface,
+        config: config_types.Config,
+        hardware_interface: hardware_interface.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = interfaces.Logger(
+        self.logger, self.config = logging_interface.Logger(
             origin="measurement-procedure"), config
         self.hardware_interface = hardware_interface
         self.simulate = simulate
@@ -116,10 +119,10 @@ class CO2MeasurementProcedure:
         # state variables
         self.active_air_inlet: Optional[Literal[1, 2, 3, 4]] = None
         self.last_measurement_time: float = 0
-        self.message_queue = utils.MessageQueue()
-        self.rb_pressure = utils.RingBuffer(
+        self.message_queue = message_queue.MessageQueue()
+        self.rb_pressure = ring_buffer.RingBuffer(
             self.config.measurement.average_air_inlet_measurements)
-        self.rb_humidity = utils.RingBuffer(
+        self.rb_humidity = ring_buffer.RingBuffer(
             self.config.measurement.average_air_inlet_measurements)
 
     def _update_air_inlet_parameters(self) -> None:
@@ -181,7 +184,7 @@ class CO2MeasurementProcedure:
             # send out MQTT measurement message
             self.message_queue.enqueue_message(
                 timestamp=int(time.time()),
-                payload=custom_types.MQTTCO2Data(
+                payload=mqtt_playload_types.MQTTCO2Data(
                     gmp343_raw=current_sensor_data.raw,
                     gmp343_compensated=current_sensor_data.compensated,
                     gmp343_filtered=current_sensor_data.filtered,

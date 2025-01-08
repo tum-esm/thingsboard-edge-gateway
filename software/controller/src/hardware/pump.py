@@ -2,7 +2,9 @@ import time
 import gpiozero
 import gpiozero.pins.pigpio
 
-from .. import utils, custom_types, interfaces
+from src.custom_types import config_types
+from src.interfaces import logging_interface
+from src.utils import shell_commands, gpio_pin_factory
 
 PUMP_CONTROL_PIN_OUT = 19
 PUMP_CONTROL_PIN_FREQUENCY = 10000
@@ -14,11 +16,11 @@ class PumpInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = interfaces.Logger(
+        self.logger = logging_interface.Logger(
             origin="pump",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -34,7 +36,7 @@ class PumpInterface:
         # INITIALIZING THE PUMP CONTROL PIN
 
         # pin factory required for hardware PWM
-        self.pin_factory = utils.get_gpio_pin_factory()
+        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
 
         # pins for setting desired pump speed
         self.control_pin = gpiozero.PWMOutputDevice(
@@ -81,4 +83,4 @@ class PumpInterface:
         self.pin_factory.close()
 
         # I don't know why this is needed sometimes, just to make sure
-        utils.run_shell_command(f"pigs w {PUMP_CONTROL_PIN_OUT} 0")
+        shell_commands.run_shell_command(f"pigs w {PUMP_CONTROL_PIN_OUT} 0")

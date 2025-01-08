@@ -5,18 +5,19 @@ import dataclasses
 from typing import Union
 
 from .. import custom_types
+from src.custom_types import mqtt_playload_types
 
 PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
 ACROPOLIS_COMMUNICATION_DATA_PATH = os.environ.get(
     "ACROPOLIS_COMMUNICATION_DATA_PATH") or os.path.join(
         dirname(PROJECT_DIR), "data")
 
-THINGSBOARD_PAYLOADS = Union[custom_types.MQTTCO2Data,
-                             custom_types.MQTTCO2CalibrationData,
-                             custom_types.MQTTSystemData,
-                             custom_types.MQTTWindData,
-                             custom_types.MQTTWindSensorInfo,
-                             custom_types.MQTTLogMessage]
+THINGSBOARD_PAYLOADS = Union[mqtt_playload_types.MQTTCO2Data,
+                             mqtt_playload_types.MQTTCO2CalibrationData,
+                             mqtt_playload_types.MQTTSystemData,
+                             mqtt_playload_types.MQTTWindData,
+                             mqtt_playload_types.MQTTWindSensorInfo,
+                             mqtt_playload_types.MQTTLogMessage]
 
 
 class MessageQueue:
