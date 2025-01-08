@@ -32,12 +32,7 @@ WORKDIR /root
 COPY --from=build_image /root/.venv /root/.venv
 
 # copy source directories
-COPY cli ./cli
-COPY data ./data
-COPY logs ./logs
-COPY scripts ./scripts
 COPY src ./src
-COPY tests ./tests
 COPY --from=build_image /root/config ./config
 
 ENTRYPOINT ["/root/.venv/bin/python3", "/root/src/main.py"]

@@ -3,3 +3,11 @@
 
 # VS Code
 .vscode/
+
+# Python
+__pycache__
+.venv
+
+# Acropolis
+**tb_access_token
+**.db

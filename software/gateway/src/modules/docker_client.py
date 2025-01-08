@@ -1,8 +1,8 @@
 import os
 import docker
 
-from main import ACROPOLIS_COMMUNICATION_DATA_PATH, PROJECT_DIR
 from modules.git_client import GatewayGitClient
+from utils.paths import ACROPOLIS_GATEWAY_GIT_PATH, ACROPOLIS_COMMUNICATION_DATA_PATH, ACROPOLIS_CONTROLLER_LOGS_PATH
 
 CONTROLLER_CONTAINER_NAME = "acropolis_edge_controller"
 CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
@@ -10,7 +10,6 @@ CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
 class GatewayDockerClient:
     def __init__(self):
         self.docker_client = docker.from_env()
-        self.git_repo_path = os.environ.get("ACROPOLIS_GATEWAY_GIT_PATH") or os.path.join(os.path.dirname(PROJECT_DIR), ".git")
 
     # Singleton pattern
     def __new__(cls):
@@ -77,14 +76,15 @@ class GatewayDockerClient:
                 print("[DOCKER-CLIENT][FATAL] Unable to get commit hash for version " + version)
                 return
             print("[DOCKER-CLIENT] Building image for commit " + commit_hash)
-            GatewayGitClient().execute_reset_to_commit(commit_hash)
-            if GatewayGitClient().get_current_commit() != commit_hash:
+
+            if GatewayGitClient().execute_reset_to_commit(commit_hash) \
+                and GatewayGitClient().get_current_commit() == commit_hash:
+                print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
+            else:
                 print("[DOCKER-CLIENT][FATAL] Unable to reset to commit " + commit_hash)
                 return
-            else:
-                print("[DOCKER-CLIENT] Successfully reset to commit " + commit_hash)
             self.docker_client.images.build(
-                path=os.path.join(os.path.dirname(self.git_repo_path), "/software/controller"),
+                path=os.path.join(os.path.dirname(ACROPOLIS_GATEWAY_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version + ":latest"
             )
@@ -121,6 +121,10 @@ class GatewayDockerClient:
                 },
                 ACROPOLIS_COMMUNICATION_DATA_PATH: {
                     "bind": "/root/data",
+                    "mode": "rw"
+                },
+                ACROPOLIS_CONTROLLER_LOGS_PATH: {
+                    "bind": "/root/logs",
                     "mode": "rw"
                 },
             }

@@ -1,0 +1,11 @@
+from os import path, environ
+from os.path import dirname, join
+
+PROJECT_DIR = dirname(dirname(dirname(path.abspath(__file__)))) # path to "gateway" folder
+ACROPOLIS_COMMUNICATION_DATA_PATH = str(environ.get("ACROPOLIS_COMMUNICATION_DATA_PATH") or join(dirname(PROJECT_DIR)))
+ACROPOLIS_CONTROLLER_LOGS_PATH = str(environ.get("ACROPOLIS_CONTROLLER_LOGS_PATH") or join(dirname(dirname(PROJECT_DIR)), "logs"))
+ACROPOLIS_GATEWAY_GIT_PATH = str(environ.get("ACROPOLIS_GATEWAY_GIT_PATH") or join(dirname(dirname(PROJECT_DIR)), ".git"))
+
+print(f'PROJECT_DIR: {PROJECT_DIR}')
+print(f'ACROPOLIS_COMMUNICATION_DATA_PATH: {ACROPOLIS_COMMUNICATION_DATA_PATH}')
+print(f'ACROPOLIS_GATEWAY_GIT_PATH: {ACROPOLIS_GATEWAY_GIT_PATH}')

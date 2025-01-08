@@ -4,15 +4,13 @@ from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
-import filelock
 
 import custom_types
 from .functions import CommandLineException
 from .message_queue import MessageQueue
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
-LOGS_ARCHIVE_DIR = join(PROJECT_DIR, "logs", "archive")
-FILELOCK_PATH = join(PROJECT_DIR, "logs", "archive.lock")
+LOGS_ARCHIVE_DIR = "/root/logs"
 
 # The logging module behaved very weird with the setup we have
 # therefore I am just formatting and appending the log lines
@@ -40,7 +38,6 @@ class Logger:
         self.print_to_console = print_to_console
         self.write_to_file = write_to_file
         self.message_queue = MessageQueue()
-        self.filelock = filelock.FileLock(FILELOCK_PATH, timeout=3)
 
     def horizontal_line(self,
                         fill_char: Literal["-", "=", ".", "_"] = "=") -> None:
@@ -177,9 +174,8 @@ class Logger:
         if self.write_to_file:
             # YYYY-MM-DD.log
             log_file_name = str(now)[:10] + ".log"
-            with self.filelock:
-                with open(join(LOGS_ARCHIVE_DIR, log_file_name), "a") as f1:
-                    f1.write(log_string)
+            with open(join(LOGS_ARCHIVE_DIR, log_file_name), "a") as f1:
+                f1.write(log_string)
 
     def _enqueue_message(
         self,
