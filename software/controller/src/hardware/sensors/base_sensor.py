@@ -41,7 +41,7 @@ class Sensor(ABC):
         self._initialize_sensor()
         self.logger.info("Finished initialization.")
 
-    def read_with_retry(self, *args, **kwargs) -> Any:
+    def read_with_retry(self, *args: Any, **kwargs: Any) -> Any:
         """Read the sensor value with retries, passing dynamic arguments."""
 
         if self.simulate:
@@ -68,7 +68,7 @@ class Sensor(ABC):
                         e, label="All retries failed. Raising exception.")
                     raise e
 
-    def read(self, *args, **kwargs) -> Any:
+    def read(self, *args: Any, **kwargs: Any) -> Any:
         """Read the sensor value and forward dynamic arguments to _read."""
 
         if self.simulate:
@@ -102,5 +102,5 @@ class Sensor(ABC):
         pass
 
     @abstractmethod
-    def _read(self, *args, **kwargs) -> float:
+    def _read(self, *args: Any, **kwargs: Any) -> Any:
         pass
