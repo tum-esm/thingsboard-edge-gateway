@@ -1,9 +1,10 @@
 import gpiozero
 import gpiozero.pins.pigpio
 import time
+from typing import Any, Optional
 
 from src.hardware.sensors.base_sensor import Sensor
-from src.custom_types import sensor_types
+from src.custom_types import sensor_types, config_types
 from src.interfaces import serial_interfaces
 from src.utils import gpio_pin_factory
 
@@ -22,7 +23,10 @@ STARTUP_REGEX = r"GMP343 - Version STD \d+\.\d+\\r\\n" + \
 class VaisalaGMP343(Sensor):
     """Class for the Vaisala GMP343 sensor."""
 
-    def __init__(self, config, testing=False, simulate=False):
+    def __init__(self,
+                 config: config_types.Config,
+                 testing: bool = False,
+                 simulate: bool = False):
         super().__init__(config, testing=testing, simulate=simulate)
 
         # serial connection to receive data from CO2 sensor
@@ -48,7 +52,8 @@ class VaisalaGMP343(Sensor):
         self.power_pin.off()
         self.pin_factory.close()
 
-    def _read(self, *args, **kwargs) -> sensor_types.CO2SensorData:
+    def _read(self, *args: Any,
+              **kwargs: Optional[float]) -> sensor_types.CO2SensorData:
         """Read the sensor value."""
         humidity = kwargs.get('humidity', None)
         pressure = kwargs.get('pressure', None)
@@ -60,7 +65,7 @@ class VaisalaGMP343(Sensor):
 
         answer = self.serial_interface.send_command(
             "send", expected_regex=CO2_MEASUREMENT_REGEX, timeout=30)
-        sensor_data = tuple(map(float, answer.split()[:4]))
+        sensor_data = tuple(map(float, answer[1].split()[:4]))
 
         return sensor_types.CO2SensorData(
             raw=sensor_data[0],
@@ -77,7 +82,7 @@ class VaisalaGMP343(Sensor):
     ) -> str:
         """Send a command and handle different types of responses."""
 
-        def _retry_send(self, command, expected_regex, timeout, error_type):
+        def _retry_send(command: str, error_type: str) -> str:
             """Helper method to handle retry logic for uncomplete or timeout responses."""
             answer = self.serial_interface.send_command(
                 message=command.strip().split(" ")[-1]
@@ -88,9 +93,9 @@ class VaisalaGMP343(Sensor):
             if answer[0] == "success":
                 self.logger.info(f"Resending {error_type} was successful.")
                 return self._format_raw_answer(answer[1])
-            else:
-                raise self.SensorError(
-                    f"Resend failed: {error_type}. Sensor answer: {answer[1]}")
+
+            raise self.SensorError(
+                f"Resend failed: {error_type}. Sensor answer: {answer[1]}")
 
         answer = self.serial_interface.send_command(
             message=command, expected_regex=expected_regex, timeout=timeout)
@@ -101,50 +106,40 @@ class VaisalaGMP343(Sensor):
 
         # Handle retries for uncomplete or timeout error
         if answer[0] in ("uncomplete", "timeout"):
-            return _retry_send(command, expected_regex, timeout, answer[0])
+            return _retry_send(command, answer[0])
 
     def _send_sensor_settings(self) -> None:
         """send the sensor settings as defined in the configuration file."""
 
-        self._send_command_to_sensor(
-            command='form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"')
+        settings = {
+            'form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"':
+            None,
+            'echo off':
+            None,
+            'range 1':
+            None,
+            f"average {self.config.hardware.gmp343_filter_seconds_averaging}":
+            None,
+            f"smooth {self.config.hardware.gmp343_filter_smoothing_factor}":
+            None,
+            f"median {self.config.hardware.gmp343_filter_median_measurements}":
+            None,
+            f"heat {'on' if self.config.hardware.gmp343_optics_heating else 'off'}":
+            None,
+            f"linear {'on' if self.config.hardware.gmp343_linearisation else 'off'}":
+            None,
+            f"tc {'on' if self.config.hardware.gmp343_temperature_compensation else 'off'}":
+            None,
+            f"rhc {'on' if self.config.hardware.gmp343_relative_humidity_compensation else 'off'}":
+            None,
+            f"pc {'on' if self.config.hardware.gmp343_pressure_compensation else 'off'}":
+            None,
+            f"oc {'on' if self.config.hardware.gmp343_oxygen_compensation else 'off'}":
+            None
+        }
 
-        self._send_command_to_sensor(command="echo off")
-
-        self._send_command_to_sensor(command=f"range 1")
-
-        value = self.config.hardware.gmp343_filter_seconds_averaging
-        self._send_command_to_sensor(command=f"average {value}")
-
-        value = self.config.hardware.gmp343_filter_smoothing_factor
-        self._send_command_to_sensor(command=f"smooth {value}")
-
-        value = self.config.hardware.gmp343_filter_median_measurements
-        self._send_command_to_sensor(command=f"median {value}")
-
-        setting = self.config.hardware.gmp343_optics_heating
-        self._send_command_to_sensor(
-            command=f"heat {'on' if setting else 'off'}")
-
-        setting = self.config.hardware.gmp343_linearisation
-        self._send_command_to_sensor(
-            command=f"linear {'on' if setting else 'off'}")
-
-        setting = self.config.hardware.gmp343_temperature_compensation
-        self._send_command_to_sensor(
-            command=f"tc {'on' if setting else 'off'}")
-
-        setting = self.config.hardware.gmp343_relative_humidity_compensation
-        self._send_command_to_sensor(
-            command=f"rhc {'on' if setting else 'off'}")
-
-        setting = self.config.hardware.gmp343_pressure_compensation
-        self._send_command_to_sensor(
-            command=f"pc {'on' if setting else 'off'}")
-
-        setting = self.config.hardware.gmp343_oxygen_compensation
-        self._send_command_to_sensor(
-            command=f"oc {'on' if setting else 'off'}")
+        for command, _ in settings.items():
+            self._send_command_to_sensor(command=command)
 
     def _send_compensation_values(self, pressure: float,
                                   humidity: float) -> None:
@@ -154,8 +149,8 @@ class VaisalaGMP343(Sensor):
         assert (700 <= pressure <=
                 1300), f"invalid pressure ({pressure} not in [700, 1300])"
 
-        self._set_sensor_parameter(parameter="rh", value=round(humidity, 2))
-        self._set_sensor_parameter(parameter="p", value=round(pressure, 2))
+        self._send_command_to_sensor(command=f"rh {round(humidity, 2)}")
+        self._send_command_to_sensor(command=f"p {round(pressure, 2)}")
 
         self.logger.info(
             f"Updated compensation values: pressure = {pressure}, " +
@@ -172,7 +167,7 @@ class VaisalaGMP343(Sensor):
         try:
             return self._send_command_to_sensor("param")
         except Exception:
-            self._reset_sensor()
+            self.reset_sensor()
             return self._send_command_to_sensor("param")
 
     def check_errors(self) -> None:
