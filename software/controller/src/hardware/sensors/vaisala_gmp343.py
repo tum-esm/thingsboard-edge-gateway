@@ -55,7 +55,8 @@ class VaisalaGMP343(Sensor):
 
         # set compensation values if provided
         if (humidity is not None) and (pressure is not None):
-            self.send_compensation_values(pressure=pressure, humidity=humidity)
+            self._send_compensation_values(pressure=pressure,
+                                           humidity=humidity)
 
         answer = self.serial_interface.send_command(
             "send", expected_regex=CO2_MEASUREMENT_REGEX, timeout=30)
@@ -77,17 +78,15 @@ class VaisalaGMP343(Sensor):
         """Allows to send a full text command to the GMP343 CO2 Sensor.
         Please refer to the user manual for valid commands."""
 
+        if self.simulate:
+            return "Simulated CO2 Sensor."
+
         answer = self.serial_interface.send_command(
             message=command, expected_regex=expected_regex, timeout=timeout)
 
-        answer[1] = (answer[1].strip(" \r\n").replace("  ", "").replace(
-            " : ", ": ").replace(" \r\n",
-                                 "\r\n").replace("\r\n\r\n", "\r\n").replace(
-                                     "\r\n", "; ").removesuffix("; >"))
-
         # command was successful
         if answer[0] == "success":
-            return answer[1]
+            return self._format_raw_answer(answer[1])
 
         # command returned uncomplete message
         if answer[0] == "uncomplete":
@@ -99,7 +98,7 @@ class VaisalaGMP343(Sensor):
             if answer[0] == "success":
                 self.logger.info(
                     "Resending value after uncomplete was successful")
-                return answer[1]
+                return self._format_raw_answer(answer[1])
             else:
                 raise self.SensorError(
                     f"Resend failed: uncomplete. Sensor answer: {answer[1]}")
@@ -114,12 +113,13 @@ class VaisalaGMP343(Sensor):
             if answer[0] == "success":
                 self.logger.info(
                     "Resending command after timeout was successful.")
-                return answer[1]
+                return self._format_raw_answer(answer[1])
             else:
                 raise self.SensorError(
                     f"Resend failed: timeout. Sensor answer: {answer[1]}")
 
     def _send_sensor_settings(self):
+        """send the sensor settings as defined in the configuration file."""
 
         self._send_command_to_sensor(
             command='form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"')
@@ -161,15 +161,9 @@ class VaisalaGMP343(Sensor):
         self._send_command_to_sensor(
             command=f"oc {'on' if setting else 'off'}")
 
-    def send_compensation_values(self, pressure: float,
-                                 humidity: float) -> None:
-        """
-        update pressure, humidity in sensor
-        for its internal compensation.
-
-        the internal temperature compensation is enabled by default
-        and uses the built-in temperature sensor.
-        """
+    def _send_compensation_values(self, pressure: float,
+                                  humidity: float) -> None:
+        """update pressure, humidity in sensor for internal compensation."""
 
         assert 0 <= humidity <= 100, f"invalid humidity ({humidity} not in [0, 100])"
         assert (700 <= pressure <=
@@ -182,10 +176,14 @@ class VaisalaGMP343(Sensor):
             f"Updated compensation values: pressure = {pressure}, " +
             f"humidity = {humidity}.")
 
+    def _format_raw_answer(self, raw: str) -> str:
+        """replace all useless characters in the CO2 probe's answer"""
+        return (raw.strip(" \r\n").replace(
+            "  ", "").replace(" : ", ": ").replace(" \r\n", "\r\n").replace(
+                "\r\n\r\n", "\r\n").replace("\r\n", "; ").removesuffix("; >"))
+
     def check_param_info(self) -> str:
         """runs the "param" command to get a full sensor parameter report"""
-        if self.simulate:
-            return "Simulated CO2 Sensor"
         try:
             return self._send_command_to_sensor("param")
         except Exception:
@@ -195,9 +193,6 @@ class VaisalaGMP343(Sensor):
     def check_errors(self) -> None:
         """checks whether the CO2 probe reports any errors. Possibly raises
         the CO2SensorInterface.CommunicationError exception"""
-        if self.simulate:
-            self.logger.info("The CO2 sensor check doesn't report any errors.")
-            return
 
         answer = self._send_command_to_sensor("errs")
 
