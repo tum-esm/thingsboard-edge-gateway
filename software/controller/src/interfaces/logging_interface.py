@@ -5,9 +5,7 @@ from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
 
-import custom_types
-from .gpio_pin_factory import CommandLineException
-from .message_queue import MessageQueue
+import custom_types, utils
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 LOGS_ARCHIVE_DIR = "/root/logs"
@@ -37,7 +35,7 @@ class Logger:
         self.origin: str = origin
         self.print_to_console = print_to_console
         self.write_to_file = write_to_file
-        self.message_queue = MessageQueue()
+        self.message_queue = utils.MessageQueue()
 
     def horizontal_line(self,
                         fill_char: Literal["-", "=", ".", "_"] = "=") -> None:
@@ -135,7 +133,8 @@ class Logger:
         exception_traceback = "\n".join(
             traceback.format_exception(type(e), e, e.__traceback__)).strip()
         exception_details = "None"
-        if isinstance(e, CommandLineException) and (e.details is not None):
+        if isinstance(e, utils.CommandLineException) and (e.details
+                                                          is not None):
             exception_details = e.details.strip()
 
         subject_string = (exception_name

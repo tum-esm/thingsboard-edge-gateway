@@ -1,7 +1,8 @@
 import os
 from typing import TypedDict
 import filelock
-import custom_types, utils
+import custom_types
+from .logging_interface import Logger
 
 from hardware import BME280SensorInterface, CO2SensorInterface, PumpInterface, SHT45SensorInterface, UPSInterface, ValveInterface, WindSensorInterface
 
@@ -40,7 +41,7 @@ class HardwareInterface:
             timeout=5,
         )
         self.config = config
-        self.logger = utils.Logger(
+        self.logger = Logger(
             "hardware-interface",
             print_to_console=testing,
             write_to_file=(not testing),

@@ -2,7 +2,7 @@ import time
 import gpiozero
 import gpiozero.pins.pigpio
 
-import utils, custom_types
+import utils, custom_types, interfaces
 
 PUMP_CONTROL_PIN_OUT = 19
 PUMP_CONTROL_PIN_FREQUENCY = 10000
@@ -18,7 +18,7 @@ class PumpInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             origin="pump",
             print_to_console=testing,
             write_to_file=(not testing),

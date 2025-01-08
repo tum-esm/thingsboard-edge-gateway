@@ -13,7 +13,7 @@ class CalibrationProcedure:
         hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = utils.Logger(
+        self.logger, self.config = interfaces.Logger(
             origin="calibration-procedure"), config
         self.hardware_interface = hardware_interface
         self.simulate = simulate

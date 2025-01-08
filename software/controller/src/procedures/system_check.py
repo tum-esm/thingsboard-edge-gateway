@@ -1,7 +1,7 @@
 import time
 import psutil
 
-import hardware, interfaces, custom_types, utils
+import interfaces, custom_types, utils
 
 
 class SystemCheckProcedure:
@@ -13,7 +13,7 @@ class SystemCheckProcedure:
         hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = utils.Logger(
+        self.logger, self.config = interfaces.Logger(
             origin="system-check-procedure"), config
         self.hardware_interface = hardware_interface
         self.message_queue = utils.MessageQueue()

@@ -7,7 +7,7 @@ try:
 except:
     pass
 
-import utils, custom_types
+import interfaces, custom_types
 
 
 class SHT45SensorInterface:
@@ -18,7 +18,7 @@ class SHT45SensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             origin="sht45-sensor",
             print_to_console=testing,
             write_to_file=(not testing),

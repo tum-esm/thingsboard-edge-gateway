@@ -3,7 +3,7 @@ import bme280
 import smbus2
 from typing import Literal, Optional
 
-import utils, custom_types
+import custom_types, interfaces
 
 
 class BME280SensorInterface:
@@ -15,7 +15,7 @@ class BME280SensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             "ioboard-bme280" if (variant == "ioboard") else "air-inlet-bme280",
             print_to_console=testing,
             write_to_file=(not testing),

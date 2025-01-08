@@ -2,7 +2,7 @@ import time
 from typing import Literal
 import gpiozero
 
-import utils, custom_types
+import utils, custom_types, interfaces
 
 VALVE_PIN_1_OUT = 25
 VALVE_PIN_2_OUT = 24
@@ -18,7 +18,7 @@ class ValveInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             origin="valves",
             print_to_console=testing,
             write_to_file=(not testing),

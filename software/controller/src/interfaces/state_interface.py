@@ -2,6 +2,7 @@ import json
 import os
 import time
 
+from .logging_interface import Logger
 import custom_types, utils
 
 dirname = os.path.dirname
@@ -24,7 +25,7 @@ class StateInterface:
 
     @staticmethod
     def read() -> custom_types.State:
-        logger = utils.Logger("state-interface")
+        logger = Logger("state-interface")
         try:
             with open(STATE_PATH, "r") as f:
                 return custom_types.State(**json.load(f))

@@ -1,7 +1,7 @@
 import time
 from typing import Optional, Literal
 
-import custom_types, interfaces, utils, hardware
+import custom_types, interfaces, utils
 
 
 class WindMeasurementProcedure:
@@ -16,7 +16,7 @@ class WindMeasurementProcedure:
         hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = utils.Logger(
+        self.logger, self.config = interfaces.Logger(
             origin="measurement-procedure"), config
         self.hardware_interface = hardware_interface
         self.simulate = simulate
@@ -108,7 +108,7 @@ class CO2MeasurementProcedure:
         hardware_interface: interfaces.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = utils.Logger(
+        self.logger, self.config = interfaces.Logger(
             origin="measurement-procedure"), config
         self.hardware_interface = hardware_interface
         self.simulate = simulate

@@ -6,7 +6,7 @@ import gpiozero
 import gpiozero.pins.pigpio
 import serial
 
-import custom_types, utils
+import custom_types, utils, interfaces
 
 measurement_pattern = (
     pattern
@@ -28,7 +28,7 @@ class WindSensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             origin="wind-sensor",
             print_to_console=testing,
             write_to_file=(not testing),

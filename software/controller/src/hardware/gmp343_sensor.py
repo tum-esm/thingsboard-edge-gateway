@@ -30,7 +30,7 @@ class CO2SensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             origin="co2-sensor",
             print_to_console=testing,
             write_to_file=(not testing),

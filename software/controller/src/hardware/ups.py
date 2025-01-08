@@ -2,7 +2,7 @@ import time
 from typing import Optional
 import gpiozero
 
-import utils, custom_types
+import utils, custom_types, interfaces
 
 UPS_READY_PIN_IN = 5
 UPS_BATTERY_MODE_PIN_IN = 10
@@ -17,7 +17,7 @@ class UPSInterface:
         testing: bool = False,
         simulate: bool = False,
     ):
-        self.logger = utils.Logger(
+        self.logger = interfaces.Logger(
             origin="ups",
             print_to_console=testing,
             write_to_file=(not testing),
