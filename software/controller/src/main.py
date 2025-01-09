@@ -39,10 +39,7 @@ def run() -> None:
     log_to_console = os.environ.get("ACROPOLIS_LOG_TO_CONSOLE") == "True"
     log_to_file = os.environ.get("ACROPOLIS_LOG_TO_FILE") == "True"
 
-    logger = logging_interface.Logger(origin="main",
-                                      print_to_console=simulate
-                                      or log_to_console,
-                                      write_to_file=log_to_file)
+    logger = logging_interface.Logger(origin="main")
     logger.horizontal_line()
 
     try:
