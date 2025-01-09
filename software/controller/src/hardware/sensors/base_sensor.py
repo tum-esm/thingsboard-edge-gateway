@@ -101,6 +101,16 @@ class Sensor(ABC):
         self._initialize_sensor()
         self.logger.info("Finished initialization.")
 
+    def teardown(self) -> None:
+        """Shutdown the sensor and close all interfaces."""
+        if self.simulate:
+            self.logger.info("Simulating sensor teardown.")
+            return
+
+        self.logger.info("Starting sensor teardown.")
+        self._shutdown_sensor()
+        self.logger.info("Finished sensor teardown.")
+
     def _simulate_read(self, *args: Any, **kwargs: Any) -> Any:
         """Generate a simulated read value. Can be overridden by subclasses."""
         return random.random()
