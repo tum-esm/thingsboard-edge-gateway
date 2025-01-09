@@ -41,25 +41,26 @@ class Sensor(ABC):
         self._initialize_sensor()
         self.logger.info("Finished initialization.")
 
-    def read_with_retry(self, *args: Any, **kwargs: Any) -> Any:
+    def read_with_retry(self,
+                        timeout: float = 10,
+                        *args: Any,
+                        **kwargs: Any) -> Any:
         """Read the sensor value with retries, passing dynamic arguments.
-        Raises an exception if all retries fail."""
+        Raises SimulatedValue if the sensor is in simulation mode.
+        Raises SensorError if all retries fail."""
 
-        if self.simulate:
-            self.logger.info("Simulating read.")
-            return random.random()
-
+        start_time = time.time()
         for attempt in range(1, self.max_retries + 1):
             try:
                 self.logger.info(
                     f"Attempt {attempt} of {self.max_retries}: Reading sensor value."
                 )
-                return self.read(*args,
-                                 **kwargs)  # Call the abstract read method
+                return self.read(*args, **kwargs)
             except Exception as e:
                 self.logger.warning(f"Attempt {attempt} failed: {e}")
+                if timeout and time.time() - start_time > timeout:
+                    raise self.SensorError("Read retries exceeded timeout.")
                 if attempt < self.max_retries:
-                    # reset the sensor and retry
                     self.reset_sensor()
                     self.logger.info(
                         f"Retrying in {self.retry_delay} seconds...")
@@ -67,18 +68,23 @@ class Sensor(ABC):
                 else:
                     self.logger.exception(
                         e, label="All retries failed. Raising exception.")
-                    raise e
+                    raise self.SensorError("All retries failed.")
 
     def read(self, *args: Any, **kwargs: Any) -> Any:
         """Read the sensor value and forward dynamic arguments to _read.
-        Raises an exception if the read fails."""
+        Raises SimulatedValue if the sensor is in simulation mode.
+        Raises SensorError if the read fails."""
 
         if self.simulate:
             self.logger.info("Simulating read.")
-            return random.random()
+            return self._simulate_read(*args, **kwargs)
 
-        answer = self._read(*args, **kwargs)
-        return answer
+        try:
+            answer = self._read(*args, **kwargs)
+            return {"value": answer, "simulated": False}
+        except Exception as e:
+            self.logger.exception(e, label="Could not read sensor data.")
+            raise self.SensorError("Could not read sensor data.")
 
     def reset_sensor(self) -> None:
         """Reset the sensor by shutting it down and reinitializing it."""
@@ -94,6 +100,10 @@ class Sensor(ABC):
         self.logger.info("Starting initialization.")
         self._initialize_sensor()
         self.logger.info("Finished initialization.")
+
+    def _simulate_read(self, *args: Any, **kwargs: Any) -> Any:
+        """Generate a simulated read value. Can be overridden by subclasses."""
+        return {"value": random.random(), "simulated": True}
 
     @abstractmethod
     def _initialize_sensor(self) -> None:
