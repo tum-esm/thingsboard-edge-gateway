@@ -80,8 +80,8 @@ class Sensor(ABC):
             return self._simulate_read(*args, **kwargs)
 
         try:
-            answer = self._read(*args, **kwargs)
-            return {"value": answer, "simulated": False}
+            return self._read(*args, **kwargs)
+
         except Exception as e:
             self.logger.exception(e, label="Could not read sensor data.")
             raise self.SensorError("Could not read sensor data.")
@@ -103,7 +103,7 @@ class Sensor(ABC):
 
     def _simulate_read(self, *args: Any, **kwargs: Any) -> Any:
         """Generate a simulated read value. Can be overridden by subclasses."""
-        return {"value": random.random(), "simulated": True}
+        return random.random()
 
     @abstractmethod
     def _initialize_sensor(self) -> None:
