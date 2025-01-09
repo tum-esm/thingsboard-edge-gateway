@@ -26,7 +26,7 @@ class VaisalaWXT532(Sensor):
     """Class for the Vaisala WXT532 sensor."""
 
     def __init__(self, config: config_types.Config, simulate: bool = False):
-        super().__init__(config, simulate=simulate)
+        super().__init__(config=config, simulate=simulate)
         self.buffered_messages: List[str] = []
         self.latest_device_status: Optional[
             sensor_types.WindSensorStatus] = None
@@ -167,8 +167,9 @@ class VaisalaWXT532(Sensor):
                                  for m in wind_measurements),
         )
 
-    def check_errors(self) -> None:
-        """Check for errors in the sensor."""
+    def _check_errors(self) -> None:
+        """Check for errors in the sensor.
+        *Raises AssertionError if an error is detected."""
         if self.simulate:
             self.logger.info("No errors detected in simulation mode.")
             return
@@ -185,5 +186,3 @@ class VaisalaWXT532(Sensor):
         assert 22 <= self.latest_device_status.heating_voltage <= 26
         assert 22 <= self.latest_device_status.supply_voltage <= 26
         assert 3.2 <= self.latest_device_status.reference_voltage <= 4.0
-
-        self.logger.info("No errors detected in the wind sensor.")

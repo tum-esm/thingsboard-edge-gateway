@@ -26,7 +26,7 @@ class VaisalaGMP343(Sensor):
     """Class for the Vaisala GMP343 sensor."""
 
     def __init__(self, config: config_types.Config, simulate: bool = False):
-        super().__init__(config, simulate=simulate)
+        super().__init__(config=config, simulate=simulate)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
@@ -184,7 +184,7 @@ class VaisalaGMP343(Sensor):
             self.reset_sensor()
             return self._send_command_to_sensor("param")
 
-    def check_errors(self) -> None:
+    def _check_errors(self) -> None:
         """checks whether the CO2 probe reports any errors. Possibly raises
         the CO2SensorInterface.CommunicationError exception"""
         if self.simulate:
@@ -198,5 +198,4 @@ class VaisalaGMP343(Sensor):
                 f"The CO2 sensor reported errors: {answer}",
                 forward=True,
             )
-
-        self.logger.info("The CO2 sensor check doesn't report any errors.")
+            raise self.SensorError("CO2 sensor reported errors.")

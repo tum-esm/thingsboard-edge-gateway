@@ -107,6 +107,18 @@ class Sensor(ABC):
         self._shutdown_sensor()
         self.logger.info("Finished sensor teardown.")
 
+    def check_errors(self) -> None:
+        """Check for any errors that might have occurred."""
+        if self.simulate:
+            self.logger.warning("Sensor is in simulation mode.")
+
+        self._check_errors()
+        self.logger.info("No errors detected.")
+
+    def _check_errors(self) -> None:
+        """Abstract method to check for errors. Can be overridden by subclasses."""
+        pass
+
     def _simulate_read(self, *args: Any, **kwargs: Any) -> Any:
         """Generate a simulated read value. Can be overridden by subclasses."""
         return random.random()
