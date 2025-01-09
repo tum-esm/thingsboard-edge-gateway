@@ -112,6 +112,8 @@ class VaisalaGMP343(Sensor):
     def _send_sensor_settings(self) -> None:
         """send the sensor settings as defined in the configuration file."""
 
+        self.logger.info("Sending settings to the CO2 sensor.")
+
         settings = {
             'form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"':
             None,
@@ -141,6 +143,8 @@ class VaisalaGMP343(Sensor):
 
         for command, _ in settings.items():
             self._send_command_to_sensor(command=command)
+
+        self.logger.info("Settings sent successfully.")
 
     def _send_compensation_values(self, pressure: float,
                                   humidity: float) -> None:
