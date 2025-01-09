@@ -127,5 +127,6 @@ class Sensor(ABC):
 
     @abstractmethod
     def _read(self, *args: Any, **kwargs: Any) -> Any:
-        """Needs to raise an exception if the read fails."""
+        """Is called by the methods read and read_with_retry.
+        Needs to raise an exception if the read fails."""
         pass
