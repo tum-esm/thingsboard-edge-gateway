@@ -32,12 +32,12 @@ class VaisalaGMP343(Sensor):
 
         # serial connection to receive data from CO2 sensor
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
-            port=CO2_SENSOR_SERIAL_PORT)
+            port=GMP343_SENSOR_SERIAL_PORT)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
         self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
-        self.power_pin = gpiozero.OutputDevice(pin=CO2_SENSOR_POWER_PIN_OUT,
+        self.power_pin = gpiozero.OutputDevice(pin=GMP343_SENSOR_POWER_PIN_OUT,
                                                pin_factory=self.pin_factory)
         self.serial_interface.flush_receiver_stream()
         self.power_pin.on()
