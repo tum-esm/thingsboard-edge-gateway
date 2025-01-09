@@ -4,6 +4,7 @@ from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
+import os
 
 from src.custom_types import mqtt_playload_types
 from src.utils import message_queue, shell_commands
@@ -27,15 +28,11 @@ def _pad_str_right(text: str,
 
 class Logger:
 
-    def __init__(
-        self,
-        origin: str = "insert-name-here",
-        print_to_console: bool = False,
-        write_to_file: bool = True,
-    ) -> None:
+    def __init__(self, origin: str = "insert-name-here") -> None:
         self.origin: str = origin
-        self.print_to_console = print_to_console
-        self.write_to_file = write_to_file
+        self.print_to_console = os.environ.get(
+            "ACROPOLIS_LOG_TO_CONSOLE") == "True"
+        self.write_to_file = os.environ.get("ACROPOLIS_LOG_TO_FILE") == "True"
         self.message_queue = message_queue.MessageQueue()
 
     def horizontal_line(self,
