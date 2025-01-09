@@ -31,18 +31,16 @@ class VaisalaGMP343(Sensor):
                  simulate: bool = False):
         super().__init__(config, testing=testing, simulate=simulate)
 
-        # serial connection to receive data from CO2 sensor
-        self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
-            port=GMP343_SENSOR_SERIAL_PORT)
-
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
         self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         self.power_pin = gpiozero.OutputDevice(pin=GMP343_SENSOR_POWER_PIN_OUT,
                                                pin_factory=self.pin_factory)
-        self.serial_interface.flush_receiver_stream()
-        self.power_pin.on()
         self.last_powerup_time = time.time()
+        self.power_pin.on()
+        self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
+            port=GMP343_SENSOR_SERIAL_PORT)
+        self.serial_interface.flush_receiver_stream()
         self.serial_interface.wait_for_answer(expected_regex=STARTUP_REGEX,
                                               timeout=10)
 
