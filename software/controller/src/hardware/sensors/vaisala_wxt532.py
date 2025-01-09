@@ -170,9 +170,6 @@ class VaisalaWXT532(Sensor):
     def _check_errors(self) -> None:
         """Check for errors in the sensor.
         *Raises AssertionError if an error is detected."""
-        if self.simulate:
-            self.logger.info("No errors detected in simulation mode.")
-            return
 
         if not self.latest_device_status:
             self.logger.info("No device status available.")

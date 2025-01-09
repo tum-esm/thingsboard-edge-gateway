@@ -187,9 +187,6 @@ class VaisalaGMP343(Sensor):
     def _check_errors(self) -> None:
         """checks whether the CO2 probe reports any errors. Possibly raises
         the CO2SensorInterface.CommunicationError exception"""
-        if self.simulate:
-            self.logger.info("No errors detected in simulation mode.")
-            return
 
         answer = self._send_command_to_sensor("errs")
 
