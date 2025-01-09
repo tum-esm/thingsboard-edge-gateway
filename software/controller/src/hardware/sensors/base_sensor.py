@@ -42,7 +42,8 @@ class Sensor(ABC):
         self.logger.info("Finished initialization.")
 
     def read_with_retry(self, *args: Any, **kwargs: Any) -> Any:
-        """Read the sensor value with retries, passing dynamic arguments."""
+        """Read the sensor value with retries, passing dynamic arguments.
+        Raises an exception if all retries fail."""
 
         if self.simulate:
             self.logger.info("Simulating read.")
@@ -69,7 +70,8 @@ class Sensor(ABC):
                     raise e
 
     def read(self, *args: Any, **kwargs: Any) -> Any:
-        """Read the sensor value and forward dynamic arguments to _read."""
+        """Read the sensor value and forward dynamic arguments to _read.
+        Raises an exception if the read fails."""
 
         if self.simulate:
             self.logger.info("Simulating read.")
@@ -95,12 +97,15 @@ class Sensor(ABC):
 
     @abstractmethod
     def _initialize_sensor(self) -> None:
+        """Initializes the sensor and sets up all interfaces and connections."""
         pass
 
     @abstractmethod
     def _shutdown_sensor(self) -> None:
+        """Closes all interfaces and connections."""
         pass
 
     @abstractmethod
     def _read(self, *args: Any, **kwargs: Any) -> Any:
+        """Needs to raise an exception if the read fails."""
         pass
