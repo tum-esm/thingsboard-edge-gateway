@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import time
 import random
+import os
 from typing import Any
 
 from src.custom_types import config_types
@@ -15,7 +16,6 @@ class Sensor(ABC):
 
     def __init__(self,
                  config: config_types.Config,
-                 testing: bool = False,
                  simulate: bool = False,
                  max_retries: int = 3,
                  retry_delay: float = 0.5):
@@ -28,10 +28,7 @@ class Sensor(ABC):
 
         # init logger with sensor class name
         self.logger = logging_interface.Logger(
-            origin=f"{self.__class__.__name__}",
-            print_to_console=testing,
-            write_to_file=(not testing),
-        )
+            origin=f"{self.__class__.__name__}")
 
         if self.simulate:
             self.logger.info(f"Simulating {self.__class__.__name__}.")

@@ -15,19 +15,15 @@ class BoschBME280(Sensor):
     def __init__(self,
                  config: config_types.Config,
                  variant: Literal["ioboard", "air-inlet"],
-                 testing: bool = False,
                  simulate: bool = False):
-        super().__init__(config, testing=testing, simulate=simulate)
+        super().__init__(config, simulate=simulate)
 
         self.variant = variant
         self.compensation_params: Optional[bme280.params] = None
 
         # overwrite logger for variant
         self.logger = logging_interface.Logger(
-            f"{self.__class__.__name__}:" + self.variant,
-            print_to_console=testing,
-            write_to_file=(not testing),
-        )
+            f"{self.__class__.__name__}:" + self.variant, )
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

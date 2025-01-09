@@ -25,11 +25,8 @@ STARTUP_REGEX = r"GMP343 - Version STD \d+\.\d+\\r\\n" + \
 class VaisalaGMP343(Sensor):
     """Class for the Vaisala GMP343 sensor."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 testing: bool = False,
-                 simulate: bool = False):
-        super().__init__(config, testing=testing, simulate=simulate)
+    def __init__(self, config: config_types.Config, simulate: bool = False):
+        super().__init__(config, simulate=simulate)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
@@ -39,7 +36,7 @@ class VaisalaGMP343(Sensor):
         self.last_powerup_time = time.time()
         self.power_pin.on()
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
-            port=GMP343_SENSOR_SERIAL_PORT)
+            port=str(GMP343_SENSOR_SERIAL_PORT))
         self.serial_interface.flush_receiver_stream()
         self.serial_interface.wait_for_answer(expected_regex=STARTUP_REGEX,
                                               timeout=10)
@@ -90,7 +87,8 @@ class VaisalaGMP343(Sensor):
         expected_regex: str = r".*\>.*",
         timeout: float = 8,
     ) -> str:
-        """Send a command and handle different types of responses."""
+        """Send a command and handle different types of responses.
+        Raises a SensorError if sending the command fails."""
 
         def _retry_send(command: str, error_type: str) -> str:
             """Helper method to handle retry logic for uncomplete or timeout responses."""
@@ -117,6 +115,8 @@ class VaisalaGMP343(Sensor):
         # Handle retries for uncomplete or timeout error
         if answer[0] in ("uncomplete", "timeout"):
             return _retry_send(command, answer[0])
+
+        raise self.SensorError("Sending command failed")
 
     def _send_sensor_settings(self) -> None:
         """send the sensor settings as defined in the configuration file."""

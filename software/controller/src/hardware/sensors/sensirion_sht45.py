@@ -14,11 +14,8 @@ from src.custom_types import config_types, sensor_types
 class SensirionSHT45(Sensor):
     """Class for the Sensirion SHT45 sensor."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 testing: bool = False,
-                 simulate: bool = False):
-        super().__init__(config, testing=testing, simulate=simulate)
+    def __init__(self, config: config_types.Config, simulate: bool = False):
+        super().__init__(config, simulate=simulate)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
