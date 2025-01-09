@@ -117,16 +117,19 @@ class Sensor(ABC):
 
     @abstractmethod
     def _initialize_sensor(self) -> None:
-        """Initializes the sensor and sets up all interfaces and connections."""
+        """Initializes the sensor and sets up all interfaces and connections.
+        Is called by the constructor and the method reset_sensor."""
         pass
 
     @abstractmethod
     def _shutdown_sensor(self) -> None:
-        """Closes all interfaces and connections."""
+        """Closes all interfaces and connections.
+        Is called by the methods reset_sensor and teardown."""
         pass
 
     @abstractmethod
     def _read(self, *args: Any, **kwargs: Any) -> Any:
-        """Is called by the methods read and read_with_retry.
-        Needs to raise an exception if the read fails."""
+        """Returns the sensor outout.
+        Needs to raise an exception if the read fails.
+        Is called by the methods read and read_with_retry."""
         pass
