@@ -15,7 +15,7 @@ class SensirionSHT45(Sensor):
     """Class for the Sensirion SHT45 sensor."""
 
     def __init__(self, config: config_types.Config, simulate: bool = False):
-        super().__init__(config, simulate=simulate)
+        super().__init__(config=config, simulate=simulate)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

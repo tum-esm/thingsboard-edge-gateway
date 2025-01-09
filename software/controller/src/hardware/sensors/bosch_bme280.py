@@ -1,8 +1,12 @@
 import time
-import bme280
-import smbus2
 import random
 from typing import Literal, Optional, Any
+
+try:
+    import smbus2
+    import bme280
+except ImportError:
+    pass
 
 from src.hardware.sensors.base_sensor import Sensor
 from src.custom_types import sensor_types, config_types
@@ -16,7 +20,7 @@ class BoschBME280(Sensor):
                  config: config_types.Config,
                  variant: Literal["ioboard", "air-inlet"],
                  simulate: bool = False):
-        super().__init__(config, simulate=simulate)
+        super().__init__(config=config, simulate=simulate)
 
         self.variant = variant
         self.compensation_params: Optional[bme280.params] = None
