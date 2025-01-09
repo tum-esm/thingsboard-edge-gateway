@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import time
 import random
-import os
 from typing import Any
 
 from src.custom_types import config_types
