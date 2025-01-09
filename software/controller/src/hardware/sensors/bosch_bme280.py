@@ -34,7 +34,7 @@ class BoschBME280(Sensor):
         self._connect_sensor()
         self._read_compensation_param()
 
-    def _shutdown_sensor(self):
+    def _shutdown_sensor(self) -> None:
         """Shutdown the sensor."""
         self.compensation_params = None
         if self.bus:
