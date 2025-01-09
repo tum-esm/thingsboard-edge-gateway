@@ -1,6 +1,7 @@
 import time
 import bme280
 import smbus2
+import random
 from typing import Literal, Optional, Any
 
 from src.hardware.sensors.base_sensor import Sensor
@@ -56,6 +57,15 @@ class BoschBME280(Sensor):
             self.logger.exception(e,
                                   label="Could not read BME280 sensor data.")
             raise self.SensorError("Could not read BME280 sensor data.")
+
+    def _simulate_read(self, *args: Any,
+                       **kwargs: Any) -> sensor_types.BME280SensorData:
+        """Simulate reading the sensor value."""
+        return sensor_types.BME280SensorData(
+            temperature=round(random.uniform(0, 50), 2),
+            pressure=round(random.uniform(900, 1050), 2),
+            humidity=round(random.uniform(0, 100), 2),
+        )
 
     def _connect_sensor(self) -> None:
         """Connect to the sensor. Retry if connection fails."""

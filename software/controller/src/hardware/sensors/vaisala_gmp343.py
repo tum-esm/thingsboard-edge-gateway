@@ -1,6 +1,7 @@
 import gpiozero
 import gpiozero.pins.pigpio
 import os
+import random
 import time
 from typing import Any, Optional
 
@@ -73,6 +74,16 @@ class VaisalaGMP343(Sensor):
             compensated=sensor_data[1],
             filtered=sensor_data[2],
             temperature=sensor_data[3],
+        )
+
+    def _simulate_read(self, *args: Any,
+                       **kwargs: Any) -> sensor_types.CO2SensorData:
+        """Simulate the sensor value."""
+        return sensor_types.CO2SensorData(
+            raw=random.uniform(0, 1000),
+            compensated=random.uniform(0, 1000),
+            filtered=random.uniform(0, 1000),
+            temperature=random.uniform(0, 50),
         )
 
     def _send_command_to_sensor(
