@@ -86,7 +86,7 @@ try:
                             print("Software update available: " + sw_title + " from " + (current_version or "UNKNOWN") + " to " + sw_version)
                             docker_client.start_edge(sw_version)
                         else:
-                            print("Software is up to date")
+                            print("Software is up to date (version '" + current_version + "')")
                     else:
                         print("Launching latest edge-software: " + sw_version + " (" + sw_title + ")")
                         docker_client.start_edge(sw_version)
