@@ -77,9 +77,10 @@ class GatewayMqttClient(Client):
     def publish_message(self, message):
         if not self.initialized or not self.connected:
             print(f'MQTT client is not connected/initialized, cannot publish message "{message}"')
-            return
+            return False
         print(f'Publishing message: {message}')
         self.publish("v1/devices/me/telemetry", message)
+        return True
 
     def publish_log(self, log_level, log_message):
         self.publish_message(json.dumps({

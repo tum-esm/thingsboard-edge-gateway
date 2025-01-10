@@ -64,6 +64,8 @@ try:
         mqtt_client_thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()
 
+        sleep(5)
+
         while True:
             if not mqtt_client_thread.is_alive():
                 print("MQTT client thread died, exiting in 30 seconds...")
@@ -101,7 +103,8 @@ try:
                     f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")
                 if len(message) > 0:
                     print('Sending message: ' + str(message[0]))
-                    mqtt_client.publish_message(message[0][2])
+                    if not mqtt_client.publish_message(message[0][2]):
+                        continue
                     communication_sqlite_db.execute(f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
                 continue
 
