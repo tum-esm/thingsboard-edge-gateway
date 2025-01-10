@@ -6,9 +6,9 @@ import gpiozero
 import gpiozero.pins.pigpio
 import serial
 
-from src.custom_types import config_types, sensor_types
-from src.interfaces import logging_interface
-from src.utils import gpio_pin_factory, list_operations
+from custom_types import config_types, sensor_types
+from interfaces import logging_interface
+from utils import gpio_pin_factory, list_operations
 
 measurement_pattern = (
     pattern

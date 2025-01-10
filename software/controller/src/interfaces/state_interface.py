@@ -2,8 +2,8 @@ import json
 import os
 import time
 
-from src.custom_types import state_types
-from src.interfaces import logging_interface
+from custom_types import state_types
+from interfaces import logging_interface
 
 dirname = os.path.dirname
 PROJECT_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))

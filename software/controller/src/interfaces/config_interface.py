@@ -2,7 +2,7 @@ import json
 import os
 import pathlib
 
-from src.custom_types import config_types
+from custom_types import config_types
 
 PROJECT_DIR = pathlib.Path(os.path.abspath(__file__)).parents[2]
 CONFIG_PATH = os.path.join(PROJECT_DIR, "config", "config.json")

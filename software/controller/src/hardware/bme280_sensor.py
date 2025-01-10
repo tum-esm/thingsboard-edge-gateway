@@ -3,8 +3,8 @@ import bme280
 import smbus2
 from typing import Literal, Optional
 
-from src.custom_types import config_types, sensor_types
-from src.interfaces import logging_interface
+from custom_types import config_types, sensor_types
+from interfaces import logging_interface
 
 
 class BME280SensorInterface:

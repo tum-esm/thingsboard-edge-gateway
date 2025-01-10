@@ -7,9 +7,9 @@ import gpiozero
 import gpiozero.pins.pigpio
 import serial
 
-from src.hardware.sensors.base_sensor import Sensor
-from src.custom_types import config_types, sensor_types
-from src.utils import gpio_pin_factory, list_operations
+from hardware.sensors.base_sensor import Sensor
+from custom_types import config_types, sensor_types
+from utils import gpio_pin_factory, list_operations
 
 # Define regex patterns for parsing
 MEASUREMENT_PATTERN = (

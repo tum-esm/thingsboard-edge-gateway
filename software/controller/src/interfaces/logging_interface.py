@@ -6,8 +6,8 @@ from typing import Literal, Optional
 import sys
 import os
 
-from src.custom_types import mqtt_playload_types
-from src.utils import message_queue, shell_commands
+from custom_types import mqtt_playload_types
+from utils import message_queue, shell_commands
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 LOGS_ARCHIVE_DIR = "/root/logs"

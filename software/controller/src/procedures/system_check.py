@@ -1,10 +1,10 @@
 import time
 import psutil
 
-from src.custom_types import config_types
-from src.custom_types import mqtt_playload_types
-from src.interfaces import hardware_interface, logging_interface
-from src.utils import message_queue, system_info
+from custom_types import config_types
+from custom_types import mqtt_playload_types
+from interfaces import hardware_interface, logging_interface
+from utils import message_queue, system_info
 
 
 class SystemCheckProcedure:

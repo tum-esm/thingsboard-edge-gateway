@@ -5,7 +5,7 @@ import dataclasses
 from typing import Union
 
 from .. import custom_types
-from src.custom_types import mqtt_playload_types
+from custom_types import mqtt_playload_types
 
 PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
 ACROPOLIS_DATA_PATH = os.environ.get(

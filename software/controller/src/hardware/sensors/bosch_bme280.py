@@ -8,9 +8,9 @@ try:
 except ImportError:
     pass
 
-from src.hardware.sensors.base_sensor import Sensor
-from src.custom_types import sensor_types, config_types
-from src.interfaces import logging_interface
+from hardware.sensors.base_sensor import Sensor
+from custom_types import sensor_types, config_types
+from interfaces import logging_interface
 
 
 class BoschBME280(Sensor):

@@ -10,7 +10,7 @@ dir = os.path.dirname
 PROJECT_DIR = dir(dir(dir(os.path.abspath(__file__))))
 CONFIG_TEMPLATE_PATH = os.path.join(PROJECT_DIR, "config", "config.template.json")
 sys.path.append(PROJECT_DIR)
-from src.custom_types import Config
+from custom_types import Config
 
 with open(CONFIG_TEMPLATE_PATH, "r") as f:
     VALID_CONFIG = json.load(f)

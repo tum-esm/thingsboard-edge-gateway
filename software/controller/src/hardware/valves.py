@@ -2,9 +2,9 @@ import time
 from typing import Literal
 import gpiozero
 
-from src.custom_types import config_types
-from src.interfaces import logging_interface
-from src.utils import gpio_pin_factory, shell_commands
+from custom_types import config_types
+from interfaces import logging_interface
+from utils import gpio_pin_factory, shell_commands
 
 VALVE_PIN_1_OUT = 25
 VALVE_PIN_2_OUT = 24

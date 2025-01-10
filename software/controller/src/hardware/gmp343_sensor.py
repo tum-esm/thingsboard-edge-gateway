@@ -4,9 +4,9 @@ from typing import Optional
 import gpiozero
 import gpiozero.pins.pigpio
 
-from src.custom_types import sensor_types, config_types
-from src.interfaces import logging_interface, serial_interfaces
-from src.utils import shell_commands, gpio_pin_factory
+from custom_types import sensor_types, config_types
+from interfaces import logging_interface, serial_interfaces
+from utils import shell_commands, gpio_pin_factory
 
 CO2_SENSOR_POWER_PIN_OUT = 20
 CO2_SENSOR_SERIAL_PORT = "/dev/ttySC0"

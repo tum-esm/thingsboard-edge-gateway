@@ -2,15 +2,15 @@ import os
 from typing import TypedDict
 import filelock
 
-from src.interfaces import logging_interface
-from src.custom_types import config_types
-from src.hardware.bme280_sensor import BME280SensorInterface
-from src.hardware.gmp343_sensor import CO2SensorInterface
-from src.hardware.pump import PumpInterface
-from src.hardware.sht45_sensor import SHT45SensorInterface
-from src.hardware.ups import UPSInterface
-from src.hardware.valves import ValveInterface
-from src.hardware.wxt532_sensor import WindSensorInterface
+from interfaces import logging_interface
+from custom_types import config_types
+from hardware.bme280_sensor import BME280SensorInterface
+from hardware.gmp343_sensor import CO2SensorInterface
+from hardware.pump import PumpInterface
+from hardware.sht45_sensor import SHT45SensorInterface
+from hardware.ups import UPSInterface
+from hardware.valves import ValveInterface
+from hardware.wxt532_sensor import WindSensorInterface
 
 
 class HwLock(TypedDict):

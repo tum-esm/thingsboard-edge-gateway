@@ -5,10 +5,10 @@ import random
 import time
 from typing import Any, Optional
 
-from src.hardware.sensors.base_sensor import Sensor
-from src.custom_types import sensor_types, config_types
-from src.interfaces import serial_interfaces
-from src.utils import gpio_pin_factory
+from hardware.sensors.base_sensor import Sensor
+from custom_types import sensor_types, config_types
+from interfaces import serial_interfaces
+from utils import gpio_pin_factory
 
 GMP343_SENSOR_POWER_PIN_OUT = os.environ.get("GMP343_SENSOR_POWER_PIN_OUT")
 GMP343_SENSOR_SERIAL_PORT = os.environ.get("GMP343_SENSOR_SERIAL_PORT")

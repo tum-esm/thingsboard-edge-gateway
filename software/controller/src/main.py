@@ -9,9 +9,9 @@ from typing import Any
 # Ensure the project root is added to the Python path to allow absolute imports from src
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.interfaces import config_interface, logging_interface, state_interface, hardware_interface
-from src.procedures import calibration, measurement, system_check
-from src.utils import alarms, expontential_backoff, system_info
+from interfaces import config_interface, logging_interface, state_interface, hardware_interface
+from procedures import calibration, measurement, system_check
+from utils import alarms, expontential_backoff, system_info
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

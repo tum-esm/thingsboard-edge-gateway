@@ -7,8 +7,8 @@ try:
 except:
     pass
 
-from src.hardware.sensors.base_sensor import Sensor
-from src.custom_types import config_types, sensor_types
+from hardware.sensors.base_sensor import Sensor
+from custom_types import config_types, sensor_types
 
 
 class SensirionSHT45(Sensor):

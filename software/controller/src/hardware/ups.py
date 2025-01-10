@@ -2,9 +2,9 @@ import time
 from typing import Optional
 import gpiozero
 
-from src.custom_types import config_types
-from src.interfaces import logging_interface
-from src.utils import gpio_pin_factory
+from custom_types import config_types
+from interfaces import logging_interface
+from utils import gpio_pin_factory
 
 UPS_READY_PIN_IN = 5
 UPS_BATTERY_MODE_PIN_IN = 10

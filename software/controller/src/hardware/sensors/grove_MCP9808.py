@@ -3,7 +3,7 @@ try:
 except ImportError:
     pass
 
-from src.hardware.sensors.base_sensor import Sensor
+from hardware.sensors.base_sensor import Sensor
 
 
 class GroveMCP9808(Sensor):

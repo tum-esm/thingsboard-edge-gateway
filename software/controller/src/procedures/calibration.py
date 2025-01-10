@@ -1,10 +1,10 @@
 import time
 from datetime import datetime
 
-from src.custom_types import config_types
-from src.custom_types import mqtt_playload_types
-from src.interfaces import logging_interface, hardware_interface, state_interface
-from src.utils import message_queue, ring_buffer
+from custom_types import config_types
+from custom_types import mqtt_playload_types
+from interfaces import logging_interface, hardware_interface, state_interface
+from utils import message_queue, ring_buffer
 
 
 class CalibrationProcedure:
