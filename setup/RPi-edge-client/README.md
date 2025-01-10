@@ -46,43 +46,26 @@ curl -sSL https://install.python-poetry.org/ | python3.12 -
 ```
 
 # open modem interface
-
 sudo minicom -D /dev/ttyS0
-
 # check modem functionality
-
 AT
-
 # see terminal input
-
 ATE1
-
 # switch to RNDIS
-
 AT+CUSBPIDSWITCH=9001,1,1
-
 # Wait for a possible modem restart
 
 # set SIM APN
-
 AT+CGDCONT=1,"IP","iotde.telefonica.com"
-
 # set network registration to automatic
-
 AT+COPS=0
-
 # set LTE only
-
 AT+CNMP=38
-
 ```
 
 ## Install Driver
 
 ```
-
-# download and install driver
-
 cd /home/pi
 wget https://www.waveshare.net/w/upload/8/89/SIM8200_for_RPI.7z
 7z x SIM8200_for_RPI.7z -r -o./SIM8200_for_RPI
@@ -90,13 +73,13 @@ sudo chmod 777 -R SIM8200_for_RPI
 cd SIM8200_for_RPI/Goonline
 make clean
 make
+```
 
-# Set DNS
+### Setup UDHCPC default script
 
-sudo ./simcom-cm &
-sudo udhcpc -i wwan0
-sudo route add -net 0.0.0.0 wwan0
-
+```
+copy default.script to /usr/share/udhcpc/default.script
+sudo chmod -R 0777 /usr/share/udhcpc/
 ```
 
 ## Update Crontab
@@ -108,9 +91,9 @@ crontab -e
 ```
 
 ```
-
-@reboot sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm -f /home/pi/SIM8200_log.txt
-@reboot sudo -b udhcpc -i wwan0 -b
+@reboot sudo pigpiod -n "127.0.0.1"
+@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm -f /home/pi/SIM8200_log.txt
+@reboot sleep 15 && sudo -b udhcpc -i wwan0 -b
 
 ```
 
@@ -134,6 +117,7 @@ mkdir logs
 ```
 
 git clone https://github.com/tum-esm/ACROPOLIS-edge.git ./acropolis-edge
+sudo git config --system --add safe.directory '*'
 sudo ./build_gateway_runner_docker_image.sh
 ./run_dockerized_gateway.sh
 
