@@ -54,7 +54,7 @@ try:
         access_token = self_provisioning_get_access_token(args)
 
         archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-        comm_db_path = os.path.join(utils.paths.ACROPOLIS_COMMUNICATION_DATA_PATH, "acropolis_comm_db.db")
+        comm_db_path = os.path.join(utils.paths.ACROPOLIS_DATA_PATH, "acropolis_comm_db.db")
         print(f"Comm DB path: {comm_db_path}")
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
