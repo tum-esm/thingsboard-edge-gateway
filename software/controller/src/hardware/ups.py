@@ -20,9 +20,7 @@ class UPSInterface:
         simulate: bool = False,
     ):
         self.logger = logging_interface.Logger(
-            origin="ups",
-            print_to_console=testing,
-            write_to_file=(not testing),
+            origin="ups"
         )
         self.config = config
         self.simulate = simulate

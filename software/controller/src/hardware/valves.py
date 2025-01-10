@@ -21,9 +21,7 @@ class ValveInterface:
         simulate: bool = False,
     ) -> None:
         self.logger = logging_interface.Logger(
-            origin="valves",
-            print_to_console=testing,
-            write_to_file=(not testing),
+            origin="valves"
         )
         self.config = config
         self.simulate = simulate

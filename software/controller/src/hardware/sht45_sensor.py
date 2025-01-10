@@ -20,9 +20,7 @@ class SHT45SensorInterface:
         simulate: bool = False,
     ) -> None:
         self.logger = logging_interface.Logger(
-            origin="sht45-sensor",
-            print_to_console=testing,
-            write_to_file=(not testing),
+            origin="sht45-sensor"
         )
         self.config = config
         self.simulate = simulate

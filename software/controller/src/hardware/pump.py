@@ -21,9 +21,7 @@ class PumpInterface:
         simulate: bool = False,
     ) -> None:
         self.logger = logging_interface.Logger(
-            origin="pump",
-            print_to_console=testing,
-            write_to_file=(not testing),
+            origin="pump"
         )
         self.config = config
         self.simulate = simulate
