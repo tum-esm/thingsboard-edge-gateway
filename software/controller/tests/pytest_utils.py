@@ -1,8 +1,6 @@
 from datetime import datetime
 import os
 from os.path import dirname, abspath, join
-import time
-from typing import Callable
 
 PROJECT_DIR = dirname(dirname(abspath(__file__)))
 LOG_FILE = join(PROJECT_DIR, "logs", "archive",

@@ -5,7 +5,6 @@ from typing import Any, Optional
 import pytest
 from os.path import dirname, abspath, join, isfile
 from src import custom_types
-import sqlite3
 
 PROJECT_DIR = dirname(dirname(abspath(__file__)))
 

@@ -1,7 +1,5 @@
 from typing import Any, Optional
 
-# TODO: improve typing once sum(list()) is easier to describe
-
 
 class RingBuffer:
     """Appends float values in a ring buffer and returns the average of it"""

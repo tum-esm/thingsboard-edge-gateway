@@ -1,7 +1,10 @@
 import time
 import psutil
 
-import hardware, interfaces, custom_types, utils
+from src.custom_types import config_types
+from src.custom_types import mqtt_playload_types
+from src.interfaces import hardware_interface, logging_interface
+from src.utils import message_queue, system_info
 
 
 class SystemCheckProcedure:
@@ -9,14 +12,14 @@ class SystemCheckProcedure:
 
     def __init__(
         self,
-        config: custom_types.Config,
-        hardware_interface: interfaces.HardwareInterface,
+        config: config_types.Config,
+        hardware_interface: hardware_interface.HardwareInterface,
         simulate: bool = False,
     ) -> None:
-        self.logger, self.config = utils.Logger(
+        self.logger, self.config = logging_interface.Logger(
             origin="system-check-procedure"), config
         self.hardware_interface = hardware_interface
-        self.message_queue = utils.MessageQueue()
+        self.message_queue = message_queue.MessageQueue()
         self.simulate = simulate
 
     def run(self) -> None:
@@ -33,7 +36,7 @@ class SystemCheckProcedure:
         mainboard_bme280_data = self.hardware_interface.mainboard_sensor.get_data(
         )
         mainboard_temperature = mainboard_bme280_data.temperature
-        cpu_temperature = utils.get_cpu_temperature(self.simulate)
+        cpu_temperature = system_info.get_cpu_temperature(self.simulate)
         self.logger.debug(f"mainboard temp. = {mainboard_temperature} °C, " +
                           f"raspi cpu temp. = {cpu_temperature} °C")
         self.logger.debug(
@@ -85,7 +88,7 @@ class SystemCheckProcedure:
 
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),
-            payload=custom_types.MQTTSystemData(
+            payload=mqtt_playload_types.MQTTSystemData(
                 enclosure_bme280_temperature=mainboard_temperature,
                 enclosure_bme280_humidity=mainboard_bme280_data.humidity,
                 enclosure_bme280_pressure=mainboard_bme280_data.pressure,

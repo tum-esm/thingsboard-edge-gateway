@@ -7,18 +7,19 @@ try:
 except:
     pass
 
-import utils, custom_types
+from src.custom_types import config_types, sensor_types
+from src.interfaces import logging_interface
 
 
 class SHT45SensorInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = logging_interface.Logger(
             origin="sht45-sensor",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -62,17 +63,17 @@ class SHT45SensorInterface:
 
         self.logger.info("finished initialization.")
 
-    def get_data(self, retries: int = 1) -> custom_types.SHT45SensorData:
+    def get_data(self, retries: int = 1) -> sensor_types.SHT45SensorData:
         """Reads temperature and humidity in the air inlet"""
 
         if self.simulate:
-            return custom_types.SHT45SensorData(
+            return sensor_types.SHT45SensorData(
                 temperature=round(5.0 + 25.0 * random.random(), 2),
                 humidity=round(10.0 + 85.0 * random.random(), 2),
             )
 
         # initialize output
-        output = custom_types.SHT45SensorData(
+        output = sensor_types.SHT45SensorData(
             temperature=None,
             humidity=None,
         )

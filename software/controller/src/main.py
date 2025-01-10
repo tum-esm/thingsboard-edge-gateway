@@ -1,10 +1,17 @@
 import os
+import sys
 import signal
 import time
 import dotenv
+from pathlib import Path
 from typing import Any
 
-import interfaces, modules, procedures, utils
+# Ensure the project root is added to the Python path to allow absolute imports from src
+sys.path.insert(0, str(Path(__file__).parent))
+
+from src.interfaces import config_interface, logging_interface, state_interface, hardware_interface
+from src.procedures import calibration, measurement, system_check
+from src.utils import alarms, expontential_backoff, system_info
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -28,15 +35,15 @@ def run() -> None:
     """
 
     dotenv.load_dotenv(os.path.join(PROJECT_DIR, "config", ".env"))
-    simulate = os.environ.get("ACROPOLIS_MODE") == "simulate"
+    simulate = os.environ.get("ACROPOLIS_SIMULATION_MODE") == "True"
+    log_to_console = os.environ.get("ACROPOLIS_LOG_TO_CONSOLE") == "True"
+    log_to_file = os.environ.get("ACROPOLIS_LOG_TO_FILE") == "True"
 
-    logger = utils.Logger(origin="main",
-                          print_to_console=simulate
-                          or os.environ.get("ACROPOLIS_LOG_TO_CONSOLE"))
+    logger = logging_interface.Logger(origin="main")
     logger.horizontal_line()
 
     try:
-        config = interfaces.ConfigInterface.read()
+        config = config_interface.ConfigInterface.read()
     except Exception as e:
         logger.exception(e, label="could not load local config.json")
         raise e
@@ -49,7 +56,7 @@ def run() -> None:
     # -------------------------------------------------------------------------
 
     # check and provide valid state file
-    interfaces.StateInterface.init()
+    state_interface.StateInterface.init()
 
     # define timeouts for parts of the automation
     max_setup_time = 180
@@ -60,10 +67,10 @@ def run() -> None:
                             + 180  # extra time
                             )
     max_measurement_time = config.measurement.procedure_seconds + 180  # extra time
-    utils.set_alarm(max_setup_time, "setup")
+    alarms.set_alarm(max_setup_time, "setup")
 
     # Exponential backoff time
-    ebo = utils.ExponentialBackOff()
+    ebo = expontential_backoff.ExponentialBackOff()
 
     # -------------------------------------------------------------------------
     # initialize all hardware interfaces
@@ -72,8 +79,8 @@ def run() -> None:
     logger.info("Initializing hardware interfaces.", forward=True)
 
     try:
-        hardware_interface = interfaces.HardwareInterface(config=config,
-                                                          simulate=simulate)
+        hardware = hardware_interface.HardwareInterface(config=config,
+                                                        simulate=simulate)
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",
@@ -82,10 +89,10 @@ def run() -> None:
 
     # tear down hardware on program termination
     def _graceful_teardown(*_args: Any) -> None:
-        utils.set_alarm(10, "graceful teardown")
+        alarms.set_alarm(10, "graceful teardown")
 
         logger.info("Starting graceful teardown.")
-        hardware_interface.teardown()
+        hardware.teardown()
         logger.info("Finished graceful teardown.")
         exit(0)
 
@@ -104,14 +111,14 @@ def run() -> None:
     logger.info("Initializing procedures.", forward=True)
 
     try:
-        system_check_procedure = procedures.SystemCheckProcedure(
-            config, hardware_interface, simulate=simulate)
-        calibration_procedure = procedures.CalibrationProcedure(
-            config, hardware_interface, simulate=simulate)
-        wind_measurement_procedure = procedures.WindMeasurementProcedure(
-            config, hardware_interface, simulate=simulate)
-        co2_measurement_procedure = procedures.CO2MeasurementProcedure(
-            config, hardware_interface, simulate=simulate)
+        system_check_procedure = system_check.SystemCheckProcedure(
+            config, hardware, simulate=simulate)
+        calibration_procedure = calibration.CalibrationProcedure(
+            config, hardware, simulate=simulate)
+        wind_measurement_procedure = measurement.WindMeasurementProcedure(
+            config, hardware, simulate=simulate)
+        co2_measurement_procedure = measurement.CO2MeasurementProcedure(
+            config, hardware, simulate=simulate)
     except Exception as e:
         logger.exception(e,
                          label="could not initialize procedures",
@@ -132,7 +139,7 @@ def run() -> None:
             # -----------------------------------------------------------------
             # SYSTEM CHECKS
 
-            utils.set_alarm(max_system_check_time, "system check")
+            alarms.set_alarm(max_system_check_time, "system check")
 
             logger.info("Running system checks.")
             system_check_procedure.run()
@@ -140,7 +147,7 @@ def run() -> None:
             # -----------------------------------------------------------------
             # CALIBRATION
 
-            utils.set_alarm(max_calibration_time, "calibration")
+            alarms.set_alarm(max_calibration_time, "calibration")
 
             if config.active_components.run_calibration_procedures:
                 if calibration_procedure.is_due():
@@ -154,7 +161,7 @@ def run() -> None:
             # -----------------------------------------------------------------
             # MEASUREMENTS
 
-            utils.set_alarm(max_measurement_time, "measurement")
+            alarms.set_alarm(max_measurement_time, "measurement")
 
             # if messages are empty, run regular measurements
             logger.info("Running measurements.")
@@ -175,7 +182,7 @@ def run() -> None:
             # reboot if exception lasts longer than 12 hours
             if (time.time() -
                     last_successful_mainloop_iteration_time) >= 86400:
-                if utils.read_os_uptime() >= 86400:
+                if system_info.read_os_uptime() >= 86400:
                     logger.info(
                         "Rebooting because no successful mainloop iteration for 24 hours.",
                         forward=True,
@@ -192,8 +199,8 @@ def run() -> None:
                     ebo.set_next_timer()
                     # reinitialize all hardware interfaces
                     logger.info("Performing hardware reset.", forward=True)
-                    hardware_interface.teardown()
-                    hardware_interface.reinitialize(config)
+                    hardware.teardown()
+                    hardware.reinitialize(config)
                     logger.info("Hardware reset was successful.", forward=True)
 
             except Exception as e:

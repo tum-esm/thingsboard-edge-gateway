@@ -3,19 +3,20 @@ import bme280
 import smbus2
 from typing import Literal, Optional
 
-import utils, custom_types
+from src.custom_types import config_types, sensor_types
+from src.interfaces import logging_interface
 
 
 class BME280SensorInterface:
 
     def __init__(
         self,
-        config: custom_types.Config,
+        config: config_types.Config,
         variant: Literal["ioboard", "air-inlet"],
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = utils.Logger(
+        self.logger = logging_interface.Logger(
             "ioboard-bme280" if (variant == "ioboard") else "air-inlet-bme280",
             print_to_console=testing,
             write_to_file=(not testing),
@@ -66,18 +67,18 @@ class BME280SensorInterface:
 
         self.logger.info("Finished initialization")
 
-    def get_data(self, retries: int = 1) -> custom_types.BME280SensorData:
+    def get_data(self, retries: int = 1) -> sensor_types.BME280SensorData:
         """Reads temperature,humidity and pressure on ioboard and air inlet"""
 
         if self.simulate:
-            return custom_types.BME280SensorData(
+            return sensor_types.BME280SensorData(
                 temperature=20.0,
                 humidity=50.0,
                 pressure=1013.25,
             )
 
         # initialize output
-        output = custom_types.BME280SensorData(
+        output = sensor_types.BME280SensorData(
             temperature=None,
             humidity=None,
             pressure=None,
