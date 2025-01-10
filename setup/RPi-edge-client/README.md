@@ -10,11 +10,16 @@ sudo apt upgrade
 sudo apt install -y build-essential libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev openssl docker.io git tldr ncdu minicom pigpio libsqlite3-dev wget screen udhcpc
 ```
 
+```
+sudo raspi-config
+#Enable I2C interface
+```
+
 # Docker Setup
 
 ```
 nano /etc/docker/daemon.json
-Add:
+#Add:
 {
     "dns": ["8.8.8.8", "1.1.1.1",  "8.8.4.4"]
 }
@@ -28,7 +33,6 @@ sudo reboot
 # Python
 
 ```
-
 wget https://www.python.org/ftp/python/3.12.8/Python-3.12.8.tgz
 sudo tar zxf Python-3.12.8.tgz
 cd Python-3.12.8
@@ -36,7 +40,6 @@ sudo ./configure --enable-optimizations --enable-loadable-sqlite-extensions
 sudo make -j 4
 sudo make install
 curl -sSL https://install.python-poetry.org/ | python3.12 -
-
 ```
 
 # Modem
@@ -44,7 +47,6 @@ curl -sSL https://install.python-poetry.org/ | python3.12 -
 ## AT Modem Commands
 
 ```
-
 # open modem interface
 sudo minicom -D /dev/ttyS0
 # check modem functionality
@@ -85,42 +87,34 @@ sudo chmod -R 0777 /usr/share/udhcpc/
 ## Update Crontab
 
 ```
-
 crontab -e
-
-```
-
-```
+#Add:
 @reboot sudo pigpiod -n "127.0.0.1"
 @reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm -f /home/pi/SIM8200_log.txt
 @reboot sleep 15 && sudo -b udhcpc -i wwan0 -b
-
 ```
 
 # Setup Gateway
 
 ```
-
 cd /home/pi
 mkdir /home/pi/acropolis
 cd /home/pi/acropolis/
 mkdir data
 mkdir logs
-
 ```
 
 ### Copy Files
 
 - Copy `run_dockerized_gateway.sh` to /home/pi/acropolis/
 - Update `THINGSBOARD_PROVISION_*` environment parameters
+-
 
 ```
-
 git clone https://github.com/tum-esm/ACROPOLIS-edge.git ./acropolis-edge
 sudo git config --system --add safe.directory '*'
 sudo ./build_gateway_runner_docker_image.sh
 ./run_dockerized_gateway.sh
-
 ```
 
 # Create Image of SDCard
