@@ -115,4 +115,7 @@ gpio=4,6=op
 # PWM Settings
 dtoverlay=pwm,pin=18,func=5,pin2=19,func2=2
 
+# Heat Box Ventilator Power
+gpio=26=op=dl
+
 [all]
