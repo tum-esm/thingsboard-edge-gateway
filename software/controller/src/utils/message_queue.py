@@ -4,7 +4,6 @@ from os.path import dirname
 import dataclasses
 from typing import Union
 
-from .. import custom_types
 from custom_types import mqtt_playload_types
 
 PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
