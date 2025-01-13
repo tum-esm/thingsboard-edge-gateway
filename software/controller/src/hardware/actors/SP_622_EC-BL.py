@@ -27,16 +27,13 @@ class MembrancePump(base_actor.Actor):
     def _initialize_actor(self):
         """Initializes the membrane pump."""
 
-        # pin factory required for hardware PWM
-        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
-
-        # pins for setting desired pump speed
+        # initialize device and reserve GPIO pin
         self.control_pin = gpiozero.PWMOutputDevice(
             pin=PUMP_CONTROL_PIN_OUT,
             active_high=True,
             initial_value=False,
             frequency=PUMP_CONTROL_PIN_FREQUENCY,
-            pin_factory=self.pin_factory,
+            pin_factory=gpio_pin_factory.get_gpio_pin_factory(),
         )
 
         # start pump to run continuously
@@ -46,8 +43,8 @@ class MembrancePump(base_actor.Actor):
         """Shuts down the membrane pump."""
 
         self.control_pin.off()
-        # Closing the pin_factory will reset pump to default pin state = 100%
-        # self.pin_factory.close()
+        # Shut down the device and release all associated resources (such as GPIO pins).
+        self.control_pin.close()
 
     def _set(self, *args, **kwargs):
         pwm_duty_cycle = kwargs.get('pwm_duty_cycle',
