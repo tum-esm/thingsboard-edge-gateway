@@ -24,7 +24,6 @@ This repository contains the software and hardware blueprints for the measuremen
 ## Repository Overview
 
 - Software
-- Hardware
 - Setup
 
 ## System Overview
@@ -51,7 +50,6 @@ Aigner et. al.: Advancing Urban Greenhouse Gas Monitoring: Development and Evalu
 - Lars Frölich [@larsfroelich](https://github.com/larsfroelich)
 
 ## Past Development Team Members:
-
 
 - Felix Böhm [@empicano](https://github.com/empicano)
 - Moritz Makowski [@dostuffthatmatters](https://github.com/dostuffthatmatters)
