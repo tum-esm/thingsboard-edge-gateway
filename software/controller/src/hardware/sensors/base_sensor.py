@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 import time
 import random
 from typing import Any
+try:
+    import gpiozero.pins.pigpio
+except Exception:
+    pass
 
 from custom_types import config_types
 from interfaces import logging_interface
@@ -17,13 +21,15 @@ class Sensor(ABC):
                  config: config_types.Config,
                  simulate: bool = False,
                  max_retries: int = 3,
-                 retry_delay: float = 0.5):
+                 retry_delay: float = 0.5,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory = None):
 
         # init parameters
         self.config = config
         self.simulate = simulate
         self.max_retries = max_retries
         self.retry_delay = retry_delay
+        self.pin_factory = pin_factory
 
         # init logger with sensor class name
         self.logger = logging_interface.Logger(

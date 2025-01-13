@@ -1,14 +1,16 @@
-import gpiozero
-import gpiozero.pins.pigpio
 import os
 import random
 import time
 from typing import Any, Optional
+try:
+    import gpiozero
+    import gpiozero.pins.pigpio
+except Exception:
+    pass
 
 from hardware.sensors.base_sensor import Sensor
 from custom_types import sensor_types, config_types
 from interfaces import serial_interfaces
-from utils import gpio_pin_factory
 
 GMP343_SENSOR_POWER_PIN_OUT = os.environ.get("GMP343_SENSOR_POWER_PIN_OUT")
 GMP343_SENSOR_SERIAL_PORT = os.environ.get("GMP343_SENSOR_SERIAL_PORT")
@@ -25,14 +27,18 @@ STARTUP_REGEX = r"GMP343 - Version STD \d+\.\d+\\r\\n" + \
 class VaisalaGMP343(Sensor):
     """Class for the Vaisala GMP343 sensor."""
 
-    def __init__(self, config: config_types.Config, simulate: bool = False):
-        super().__init__(config=config, simulate=simulate)
+    def __init__(self,
+                 config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
+                 simulate: bool = False):
+        super().__init__(config=config,
+                         pin_factory=pin_factory,
+                         simulate=simulate)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
-        self.power_pin = gpiozero.OutputDevice(
-            pin=GMP343_SENSOR_POWER_PIN_OUT,
-            pin_factory=gpio_pin_factory.get_gpio_pin_factory())
+        self.power_pin = gpiozero.OutputDevice(pin=GMP343_SENSOR_POWER_PIN_OUT,
+                                               pin_factory=self.pin_factory)
         self.last_powerup_time = time.time()
         self.power_pin.on()
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(

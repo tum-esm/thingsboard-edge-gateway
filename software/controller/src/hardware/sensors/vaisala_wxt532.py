@@ -3,13 +3,16 @@ import os
 import re
 import time
 from typing import Any, Tuple, Optional, List, Match
-import gpiozero
-import gpiozero.pins.pigpio
-import serial
+try:
+    import gpiozero
+    import gpiozero.pins.pigpio
+    import serial
+except Exception:
+    pass
 
 from hardware.sensors.base_sensor import Sensor
 from custom_types import config_types, sensor_types
-from utils import gpio_pin_factory, list_operations
+from utils import list_operations
 
 # Define regex patterns for parsing
 MEASUREMENT_PATTERN = (
@@ -25,17 +28,21 @@ WXT532_SENSOR_SERIAL_PORT = os.environ.get("WXT532_SENSOR_SERIAL_PORT")
 class VaisalaWXT532(Sensor):
     """Class for the Vaisala WXT532 sensor."""
 
-    def __init__(self, config: config_types.Config, simulate: bool = False):
-        super().__init__(config=config, simulate=simulate)
+    def __init__(self,
+                 config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
+                 simulate: bool = False):
+        super().__init__(config=config,
+                         pin_factory=pin_factory,
+                         simulate=simulate)
         self.buffered_messages: List[str] = []
         self.latest_device_status: Optional[
             sensor_types.WindSensorStatus] = None
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
-        self.power_pin = gpiozero.OutputDevice(
-            pin=WXT532_SENSOR_POWER_PIN_OUT,
-            pin_factory=gpio_pin_factory.get_gpio_pin_factory())
+        self.power_pin = gpiozero.OutputDevice(pin=WXT532_SENSOR_POWER_PIN_OUT,
+                                               pin_factory=self.pin_factory)
         self.power_pin.on()
 
         self.wxt532_interface = serial.Serial(

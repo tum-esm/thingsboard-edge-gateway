@@ -1,29 +1,25 @@
 import time
-try:
-    import gpiozero
-    import gpiozero.pins.pigpio
-except Exception:
-    pass
+from typing import Literal
+import gpiozero
 
 from hardware.actors import base_actor
 from custom_types import config_types
 
-PUMP_CONTROL_PIN_OUT = 19
-PUMP_CONTROL_PIN_FREQUENCY = 10000
-PUMP_SPEED_PIN_IN = 16
+VALVE_PIN_1_OUT = 25
+VALVE_PIN_2_OUT = 24
+VALVE_PIN_3_OUT = 23
+VALVE_PIN_4_OUT = 22
 
 
-class SchwarzerPrecisionPump(base_actor.Actor):
+class ACLValves(base_actor.Actor):
     """Class for controlling the SP 622 EC_BL membrane pump."""
 
-    def __init__(
-        self,
-        config: config_types.Config,
-        pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-        simulate=False,
-        max_retries=3,
-        retry_delay=0.5,
-    ):
+    def __init__(self,
+                 config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
+                 simulate=False,
+                 max_retries=3,
+                 retry_delay=0.5):
         super().__init__(config=config,
                          simulate=simulate,
                          max_retries=max_retries,
@@ -36,16 +32,22 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         """Initializes the membrane pump."""
 
         # initialize device and reserve GPIO pin
-        self.control_pin = gpiozero.PWMOutputDevice(
-            pin=PUMP_CONTROL_PIN_OUT,
-            active_high=True,
-            initial_value=False,
-            frequency=PUMP_CONTROL_PIN_FREQUENCY,
-            pin_factory=self.pin_factory,
-        )
-
-        # start pump to run continuously
-        self.set(pwm_duty_cycle=self.default_pwm_duty_cycle)
+        self.valves: dict[Literal[1, 2, 3, 4], gpiozero.OutputDevice] = {
+            1:
+            gpiozero.OutputDevice(VALVE_PIN_1_OUT,
+                                  pin_factory=self.pin_factory),
+            2:
+            gpiozero.OutputDevice(VALVE_PIN_2_OUT,
+                                  pin_factory=self.pin_factory),
+            3:
+            gpiozero.OutputDevice(VALVE_PIN_3_OUT,
+                                  pin_factory=self.pin_factory),
+            4:
+            gpiozero.OutputDevice(VALVE_PIN_4_OUT,
+                                  pin_factory=self.pin_factory),
+        }
+        self.active_input: Literal[1, 2, 3,
+                                   4] = self.config.measurement.valve_number
 
     def _shutdown_actor(self):
         """Shuts down the membrane pump."""
