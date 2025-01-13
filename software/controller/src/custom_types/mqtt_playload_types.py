@@ -46,10 +46,10 @@ class MQTTSystemData():
     raspi_disk_usage: float
     raspi_cpu_usage: float
     raspi_memory_usage: float
-    ups_powered_by_grid: float
-    ups_battery_is_fully_charged: float
-    ups_battery_error_detected: float
-    ups_battery_above_voltage_threshold: float
+    ups_powered_by_grid: bool
+    ups_battery_is_fully_charged: bool
+    ups_battery_error_detected: bool
+    ups_battery_above_voltage_threshold: bool
 
 
 @dataclasses.dataclass
