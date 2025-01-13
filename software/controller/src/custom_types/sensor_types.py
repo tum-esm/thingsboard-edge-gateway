@@ -30,10 +30,10 @@ class SHT45SensorData(pydantic.BaseModel):
 
 class UPSSensorData(pydantic.BaseModel):
 
-    ups_powered_by_grid: bool
-    ups_battery_is_fully_charged: bool
-    ups_battery_error_detected: bool
-    ups_battery_above_voltage_threshold: bool
+    ups_powered_by_grid: bool | float
+    ups_battery_is_fully_charged: bool | float
+    ups_battery_error_detected: bool | float
+    ups_battery_above_voltage_threshold: bool | float
 
 
 class WindSensorData(pydantic.BaseModel):
