@@ -30,9 +30,9 @@ class VaisalaGMP343(Sensor):
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
-        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
-        self.power_pin = gpiozero.OutputDevice(pin=GMP343_SENSOR_POWER_PIN_OUT,
-                                               pin_factory=self.pin_factory)
+        self.power_pin = gpiozero.OutputDevice(
+            pin=GMP343_SENSOR_POWER_PIN_OUT,
+            pin_factory=gpio_pin_factory.get_gpio_pin_factory())
         self.last_powerup_time = time.time()
         self.power_pin.on()
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
@@ -47,7 +47,8 @@ class VaisalaGMP343(Sensor):
         """Shutdown the sensor."""
 
         self.power_pin.off()
-        self.pin_factory.close()
+        # Shut down the device and release all associated resources (such as GPIO pins).
+        self.power_pin.close()
 
     def _read(self, *args: Any,
               **kwargs: Optional[float]) -> sensor_types.CO2SensorData:

@@ -33,9 +33,9 @@ class VaisalaWXT532(Sensor):
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
-        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
-        self.power_pin = gpiozero.OutputDevice(pin=WXT532_SENSOR_POWER_PIN_OUT,
-                                               pin_factory=self.pin_factory)
+        self.power_pin = gpiozero.OutputDevice(
+            pin=WXT532_SENSOR_POWER_PIN_OUT,
+            pin_factory=gpio_pin_factory.get_gpio_pin_factory())
         self.power_pin.on()
 
         self.wxt532_interface = serial.Serial(
@@ -50,7 +50,8 @@ class VaisalaWXT532(Sensor):
     def _shutdown_sensor(self) -> None:
         """Shutdown the sensor."""
         self.power_pin.off()
-        self.pin_factory.close()
+        # Shut down the device and release all associated resources (such as GPIO pins).
+        self.power_pin.close()
 
     def _read(
         self, *args: Any, **kwargs: Any
