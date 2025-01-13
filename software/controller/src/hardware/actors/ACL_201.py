@@ -1,5 +1,5 @@
 import time
-from typing import Literal
+from typing import Literal, Any
 import gpiozero
 
 from hardware.actors import base_actor
@@ -17,19 +17,20 @@ class ACLValves(base_actor.Actor):
     def __init__(self,
                  config: config_types.Config,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-                 simulate=False,
-                 max_retries=3,
-                 retry_delay=0.5):
+                 simulate: bool = False,
+                 max_retries: int = 3,
+                 retry_delay: float = 0.5):
         super().__init__(config=config,
                          simulate=simulate,
                          max_retries=max_retries,
                          retry_delay=retry_delay,
                          pin_factory=pin_factory)
 
-        self.default_pwm_duty_cycle = config.hardware.pump_pwm_duty_cycle
+        self.active_input: Literal[1, 2, 3,
+                                   4] = self.config.measurement.valve_number
 
-    def _initialize_actor(self):
-        """Initializes the membrane pump."""
+    def _initialize_actor(self) -> None:
+        """Initializes the solenoid valves."""
 
         # initialize device and reserve GPIO pin
         self.valves: dict[Literal[1, 2, 3, 4], gpiozero.OutputDevice] = {
@@ -46,31 +47,55 @@ class ACLValves(base_actor.Actor):
             gpiozero.OutputDevice(VALVE_PIN_4_OUT,
                                   pin_factory=self.pin_factory),
         }
-        self.active_input: Literal[1, 2, 3,
-                                   4] = self.config.measurement.valve_number
 
-    def _shutdown_actor(self):
-        """Shuts down the membrane pump."""
+        # Set to sample from main air channel
+        self._set(number=self.active_input)
 
-        self.control_pin.off()
-        # Shut down the device and release all associated resources (such as GPIO pins).
-        self.control_pin.close()
+    def _shutdown_actor(self) -> None:
+        """Shuts down the solenoid valves."""
 
-    def _set(self, *args, **kwargs):
-        pwm_duty_cycle = kwargs.get('pwm_duty_cycle',
-                                    self.default_pwm_duty_cycle)
+        # Reset to sample from main air channel
+        self._set(number=self.active_input)
 
-        assert (
-            0 <= pwm_duty_cycle <= 1
-        ), f"pwm duty cycle has to be between 0 and 1 (passed {pwm_duty_cycle})"
-        self.control_pin.value = pwm_duty_cycle
+        for valve in self.valves.values():
+            # Shut down the device and release all associated resources (such as GPIO pins).
+            valve.close()
 
-    def flush_system(self, duration: int, pwm_duty_cycle: float):
-        """Flushes the system with the pump for a given duration and duty cycle."""
-        assert (
-            0 <= pwm_duty_cycle <= 1
-        ), f"pwm duty cycle has to be between 0 and 1 (passed {pwm_duty_cycle})"
+    def _set(self, *args: Any, **kwargs: Literal[1, 2, 3, 4]) -> None:
+        """Sets the state of all solenoid valves
+        
+        Allows flow through selected valve.
+        Permits flow through all other valves.
 
-        self.set(pwm_duty_cycle=pwm_duty_cycle)
-        time.sleep(duration)
-        self.set(pwm_duty_cycle=self.default_pwm_duty_cycle)
+        Waits shortly after closing input valve 1 before opening calibration
+        valves to evacuate the gas volume."""
+
+        number = kwargs.get('number', 1)
+
+        if number == 1:
+            self.valves[1].off()
+            self.valves[2].off()
+            self.valves[3].off()
+            self.valves[4].off()
+        if number == 2:
+            self.valves[1].on()
+            self.valves[3].off()
+            self.valves[4].off()
+            time.sleep(5)
+            self.valves[2].on()
+        if number == 3:
+            self.valves[1].on()
+            self.valves[2].off()
+            self.valves[4].off()
+            time.sleep(5)
+            self.valves[3].on()
+
+        if number == 4:
+            self.valves[1].on()
+            self.valves[2].off()
+            self.valves[3].off()
+            time.sleep(5)
+            self.valves[4].on()
+
+        self.active_input = number
+        self.logger.info(f"switched to valve {self.active_input}")
