@@ -28,6 +28,14 @@ class SHT45SensorData(pydantic.BaseModel):
     humidity: Optional[float]
 
 
+class UPSSensorData(pydantic.BaseModel):
+
+    ups_powered_by_grid: bool
+    ups_battery_is_fully_charged: bool
+    ups_battery_error_detected: bool
+    ups_battery_above_voltage_threshold: bool
+
+
 class WindSensorData(pydantic.BaseModel):
     direction_min: float
     direction_avg: float
