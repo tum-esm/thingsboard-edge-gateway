@@ -1,4 +1,5 @@
 import time
+from typing import Any
 try:
     import gpiozero
     import gpiozero.pins.pigpio
@@ -20,9 +21,9 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         self,
         config: config_types.Config,
         pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-        simulate=False,
-        max_retries=3,
-        retry_delay=0.5,
+        simulate: bool = False,
+        max_retries: int = 3,
+        retry_delay: float = 0.5,
     ):
         super().__init__(config=config,
                          simulate=simulate,
@@ -32,7 +33,7 @@ class SchwarzerPrecisionPump(base_actor.Actor):
 
         self.default_pwm_duty_cycle = config.hardware.pump_pwm_duty_cycle
 
-    def _initialize_actor(self):
+    def _initialize_actor(self) -> None:
         """Initializes the membrane pump."""
 
         # initialize device and reserve GPIO pin
@@ -47,14 +48,14 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         # start pump to run continuously
         self.set(pwm_duty_cycle=self.default_pwm_duty_cycle)
 
-    def _shutdown_actor(self):
+    def _shutdown_actor(self) -> None:
         """Shuts down the membrane pump."""
 
         self.control_pin.off()
         # Shut down the device and release all associated resources (such as GPIO pins).
         self.control_pin.close()
 
-    def _set(self, *args, **kwargs):
+    def _set(self, *args: Any, **kwargs: float) -> None:
         pwm_duty_cycle = kwargs.get('pwm_duty_cycle',
                                     self.default_pwm_duty_cycle)
 
@@ -63,7 +64,7 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         ), f"pwm duty cycle has to be between 0 and 1 (passed {pwm_duty_cycle})"
         self.control_pin.value = pwm_duty_cycle
 
-    def flush_system(self, duration: int, pwm_duty_cycle: float):
+    def flush_system(self, duration: int, pwm_duty_cycle: float) -> None:
         """Flushes the system with the pump for a given duration and duty cycle."""
         assert (
             0 <= pwm_duty_cycle <= 1
