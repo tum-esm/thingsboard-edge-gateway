@@ -1,3 +1,13 @@
+# File Structure
+
+```
+📁 RPi-edge-client
+
+    📄 config.txt
+    📄 default.script
+    📄 README.md
+```
+
 # OS Setup
 
 - Install RASPBERRY PI OS LITE (64-Bit)
