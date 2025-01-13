@@ -8,8 +8,8 @@ except Exception:
 from hardware.sensors.base_sensor import Sensor
 from custom_types import config_types, sensor_types
 
-UPS_READY_PIN_IN = 5
-UPS_BATTERY_MODE_PIN_IN = 10
+UPS_BATTERY_CHARGE_PIN_IN = 5
+UPS_POWER_MODE_PIN_IN = 10
 UPS_ALARM_PIN_IN = 7
 
 
@@ -28,15 +28,15 @@ class PhoenixContactUPS(Sensor):
         """Initialize the sensor."""
 
         self.pins: dict[str, gpiozero.DigitalInputDevice] = {
-            "UPS_READY_PIN_IN":
+            "UPS_BATTERY_CHARGE_PIN_IN":
             gpiozero.DigitalInputDevice(
-                UPS_READY_PIN_IN,
+                UPS_BATTERY_CHARGE_PIN_IN,
                 bounce_time=0.3,
                 pin_factory=self.pin_factory,
             ),
-            "UPS_BATTERY_MODE_PIN_IN":
+            "UPS_POWER_MODE_PIN_IN":
             gpiozero.DigitalInputDevice(
-                UPS_BATTERY_MODE_PIN_IN,
+                UPS_POWER_MODE_PIN_IN,
                 bounce_time=0.3,
                 pin_factory=self.pin_factory,
             ),
@@ -59,7 +59,7 @@ class PhoenixContactUPS(Sensor):
         """Read the sensor value."""
 
         ups_powered_by_grid = self._read_power_mode()
-        battery_is_fully_charged = self._read_battery_state()
+        battery_is_fully_charged = self._read_battery_charge_state()
         battery_error_detected = self._read_alarm_state()
         battery_above_voltage_threshold = self._read_voltage_threshold_state(
             ups_powered_by_grid=ups_powered_by_grid,
@@ -83,24 +83,24 @@ class PhoenixContactUPS(Sensor):
 
     def _read_power_mode(self) -> bool:
         """
-        UPS_BATTERY_MODE_PIN_IN is HIGH when the system is powered by the battery
-        UPS_BATTERY_MODE_PIN_IN is LOW when the system is powered by the grid
+        UPS_POWER_MODE_PIN_IN is HIGH when the system is powered by the battery
+        UPS_POWER_MODE_PIN_IN is LOW when the system is powered by the grid
         """
 
-        if not self.pins["UPS_BATTERY_MODE_PIN_IN"].is_active:
+        if not self.pins["UPS_POWER_MODE_PIN_IN"].is_active:
             self.logger.info("System is powered by the grid")
             return True
         else:
             self.logger.info("System is powered by the battery")
             return False
 
-    def _read_battery_state(self) -> bool:
+    def _read_battery_charge_state(self) -> bool:
         """
-        UPS_READY_PIN_IN is HIGH when the battery is fully charged
-        UPS_READY_PIN_IN is LOW when the battery is not fully charged
+        UPS_BATTERY_CHARGE_PIN_IN is HIGH when the battery is fully charged
+        UPS_BATTERY_CHARGE_PIN_IN is LOW when the battery is not fully charged
         """
 
-        if self.pins["UPS_READY_PIN_IN"].is_active:
+        if self.pins["UPS_BATTERY_CHARGE_PIN_IN"].is_active:
             self.logger.info("The battery is fully charged")
             return True
         else:
@@ -122,7 +122,7 @@ class PhoenixContactUPS(Sensor):
 
     def _read_voltage_threshold_state(self, ups_powered_by_grid: bool,
                                       battery_is_fully_charged: bool) -> bool:
-        """When UPS_STATUS_READY is HIGH & UPS_BATTERY_MODE_PIN_IN is HIGH
+        """When UPS_STATUS_READY is HIGH & UPS_POWER_MODE_PIN_IN is HIGH
         the battery voltage has dropped below the minimum threshold.
         """
 
