@@ -12,7 +12,7 @@ VALVE_PIN_4_OUT = 22
 
 
 class ACLValves(base_actor.Actor):
-    """Class for controlling the SP 622 EC_BL membrane pump."""
+    """Class for controlling the ACL Type 201 solenoid vales."""
 
     def __init__(self,
                  config: config_types.Config,
