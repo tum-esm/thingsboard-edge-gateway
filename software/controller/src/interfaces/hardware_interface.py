@@ -4,13 +4,18 @@ import filelock
 
 from interfaces import logging_interface
 from custom_types import config_types
-from hardware.bme280_sensor import BME280SensorInterface
-from hardware.gmp343_sensor import CO2SensorInterface
-from hardware.pump import PumpInterface
-from hardware.sht45_sensor import SHT45SensorInterface
-from hardware.ups import UPSInterface
-from hardware.valves import ValveInterface
-from hardware.wxt532_sensor import WindSensorInterface
+
+from hardware.sensors.vaisala_gmp343 import VaisalaGMP343
+from hardware.sensors.vaisala_wxt532 import VaisalaWXT532
+from hardware.sensors.bosch_bme280 import BoschBME280
+from hardware.sensors.phoenic_contact_UPS import PhoenixContactUPS
+from hardware.sensors.sensirion_sht45 import SensirionSHT45
+from hardware.sensors.grove_MCP9808 import GroveMCP9808
+
+from hardware.actors.ACL_201 import ACLValves
+from hardware.actors.SP_622_EC_BL import SchwarzerPrecisionPump
+
+from utils import gpio_pin_factory
 
 
 class HwLock(TypedDict):
@@ -48,26 +53,27 @@ class HardwareInterface:
         self.config = config
         self.logger = logging_interface.Logger(config=config,
                                                origin="hardware-interface")
-        self.simulate = simulate
+        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         acquire_hardware_lock()
 
         # measurement sensors
-        self.wind_sensor = WindSensorInterface(config, simulate=self.simulate)
-        self.air_inlet_bme280_sensor = BME280SensorInterface(
-            config, variant="air-inlet", simulate=self.simulate)
-        self.air_inlet_sht45_sensor = SHT45SensorInterface(
-            config, simulate=self.simulate)
-        self.co2_sensor = CO2SensorInterface(config, simulate=self.simulate)
+        self.co2_sensor = VaisalaGMP343(config=self.config,
+                                        pin_factory=self.pin_factory)
+        self.wind_sensor = VaisalaWXT532(config=self.config,
+                                         pin_factory=self.pin_factory)
+        self.ups = PhoenixContactUPS(config=self.config,
+                                     pin_factory=self.pin_factory)
+        self.air_inlet_bme280_sensor = BoschBME280(config=self.config,
+                                                   variant="air-inlet")
+        self.mainboard_sensor = BoschBME280(config=self.config,
+                                            variant="ioboard")
+        self.air_inlet_sht45_sensor = SensirionSHT45(config=self.config)
 
         # measurement actors
-        self.pump = PumpInterface(config, simulate=self.simulate)
-        self.valves = ValveInterface(config, simulate=self.simulate)
-
-        # enclosure controls
-        self.mainboard_sensor = BME280SensorInterface(config,
-                                                      variant="ioboard",
-                                                      simulate=self.simulate)
-        self.ups = UPSInterface(config, simulate=self.simulate)
+        self.pump = SchwarzerPrecisionPump(config=self.config,
+                                           pin_factory=self.pin_factory)
+        self.valves = ACLValves(config=self.config,
+                                pin_factory=self.pin_factory)
 
     def check_errors(self) -> None:
         """checks for detectable hardware errors"""
@@ -84,41 +90,36 @@ class HardwareInterface:
             return
 
         # measurement sensors
-        self.air_inlet_bme280_sensor.teardown()
+        self.co2_sensor.teardown()
         self.wind_sensor.teardown()
+        self.ups.teardown()
+        self.air_inlet_bme280_sensor.teardown()
+        self.mainboard_sensor.teardown()
+        self.air_inlet_sht45_sensor.teardown()
 
         # measurement actors
         self.pump.teardown()
         self.valves.teardown()
-        self.co2_sensor.teardown()
 
-        # enclosure controls
-        self.mainboard_sensor.teardown()
-        self.ups.teardown()
+        self.pin_factory.close()
 
         # release lock
         global_hw_lock["lock"].release()
 
     def reinitialize(self, config: config_types.Config) -> None:
-        """reinitialize after an unsuccessful update"""
+        """reinitialize all hardware devices"""
         self.config = config
         self.logger.info("running hardware reinitialization")
         acquire_hardware_lock()
 
         # measurement sensors
-        self.air_inlet_bme280_sensor = BME280SensorInterface(
-            config, variant="air-inlet", simulate=self.simulate)
-        self.air_inlet_sht45_sensor = SHT45SensorInterface(
-            config, simulate=self.simulate)
-        self.co2_sensor = CO2SensorInterface(config, simulate=self.simulate)
-        self.wind_sensor = WindSensorInterface(config, simulate=self.simulate)
+        self.co2_sensor.reset_sensor()
+        self.wind_sensor.reset_sensor()
+        self.ups.reset_sensor()
+        self.air_inlet_bme280_sensor.reset_sensor()
+        self.mainboard_sensor.reset_sensor()
+        self.air_inlet_sht45_sensor.reset_sensor()
 
         # measurement actors
-        self.pump = PumpInterface(config, simulate=self.simulate)
-        self.valves = ValveInterface(config, simulate=self.simulate)
-
-        # enclosure controls
-        self.mainboard_sensor = BME280SensorInterface(config,
-                                                      variant="ioboard",
-                                                      simulate=self.simulate)
-        self.ups = UPSInterface(config, simulate=self.simulate)
+        self.pump.reset_actor()
+        self.valves.reset_actor()
