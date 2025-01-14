@@ -132,6 +132,25 @@ files = [
 ]
 
 [[package]]
+name = "attrs"
+version = "24.3.0"
+description = "Classes Without Boilerplate"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "attrs-24.3.0-py3-none-any.whl", hash = "sha256:ac96cd038792094f438ad1f6ff80837353805ac950cd2aa0e0625ef19850c308"},
+    {file = "attrs-24.3.0.tar.gz", hash = "sha256:8f5c07333d543103541ba7be0e2ce16eeee8130cb0b3f9238ab904ce1e85baff"},
+]
+
+[package.extras]
+benchmark = ["cloudpickle", "hypothesis", "mypy (>=1.11.1)", "pympler", "pytest (>=4.3.0)", "pytest-codspeed", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
+cov = ["cloudpickle", "coverage[toml] (>=5.3)", "hypothesis", "mypy (>=1.11.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
+dev = ["cloudpickle", "hypothesis", "mypy (>=1.11.1)", "pre-commit-uv", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
+docs = ["cogapp", "furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
+tests = ["cloudpickle", "hypothesis", "mypy (>=1.11.1)", "pympler", "pytest (>=4.3.0)", "pytest-mypy-plugins", "pytest-xdist[psutil]"]
+tests-mypy = ["mypy (>=1.11.1)", "pytest-mypy-plugins"]
+
+[[package]]
 name = "binho-host-adapter"
 version = "0.1.6"
 description = "Python Libraries for Binho Multi-Protocol USB Host Adapters"
@@ -693,6 +712,23 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-mypy"
+version = "0.10.3"
+description = "Mypy static type checker plugin for Pytest"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pytest-mypy-0.10.3.tar.gz", hash = "sha256:f8458f642323f13a2ca3e2e61509f7767966b527b4d8adccd5032c3e7b4fd3db"},
+    {file = "pytest_mypy-0.10.3-py3-none-any.whl", hash = "sha256:7638d0d3906848fc1810cb2f5cc7fceb4cc5c98524aafcac58f28620e3102053"},
+]
+
+[package.dependencies]
+attrs = ">=19.0"
+filelock = ">=3.0"
+mypy = {version = ">=0.900", markers = "python_version >= \"3.11\""}
+pytest = {version = ">=6.2", markers = "python_version >= \"3.10\""}
+
+[[package]]
 name = "pytest-ordering"
 version = "0.6"
 description = "pytest plugin to run your tests in a specific order"
@@ -868,4 +904,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12.4"
-content-hash = "4ceed0b9227418c330f2690d7b32d66c722f92730da0c4428b0ad5219eb67cec"
+content-hash = "10314a81d79db0411423e107f9f0c20a2f66228afe1b28559c2732ae57d51eff"
