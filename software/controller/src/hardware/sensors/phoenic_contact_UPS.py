@@ -1,5 +1,4 @@
-import time
-from typing import Optional, Any
+from typing import Any
 try:
     import gpiozero
 except Exception:
