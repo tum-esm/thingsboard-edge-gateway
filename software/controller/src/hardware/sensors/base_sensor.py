@@ -21,15 +21,13 @@ class Sensor(ABC):
                  config: config_types.Config,
                  simulate: bool = False,
                  max_retries: int = 3,
-                 retry_delay: float = 0.5,
-                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory = None):
+                 retry_delay: float = 0.5):
 
         # init parameters
         self.config = config
         self.simulate = simulate
         self.max_retries = max_retries
         self.retry_delay = retry_delay
-        self.pin_factory = pin_factory
 
         # init logger with sensor class name
         self.logger = logging_interface.Logger(

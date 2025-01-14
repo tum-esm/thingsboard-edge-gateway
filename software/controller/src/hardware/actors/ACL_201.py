@@ -23,9 +23,9 @@ class ACLValves(base_actor.Actor):
         super().__init__(config=config,
                          simulate=simulate,
                          max_retries=max_retries,
-                         retry_delay=retry_delay,
-                         pin_factory=pin_factory)
+                         retry_delay=retry_delay)
 
+        self.pin_factory = pin_factory
         self.active_input: Literal[1, 2, 3,
                                    4] = self.config.measurement.valve_number
 

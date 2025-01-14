@@ -31,9 +31,9 @@ class VaisalaGMP343(Sensor):
                  config: config_types.Config,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
                  simulate: bool = False):
-        super().__init__(config=config,
-                         pin_factory=pin_factory,
-                         simulate=simulate)
+        super().__init__(config=config, simulate=simulate)
+
+        self.pin_factory = pin_factory
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

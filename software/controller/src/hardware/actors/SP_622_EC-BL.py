@@ -28,9 +28,9 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         super().__init__(config=config,
                          simulate=simulate,
                          max_retries=max_retries,
-                         retry_delay=retry_delay,
-                         pin_factory=pin_factory)
+                         retry_delay=retry_delay)
 
+        self.pin_factory = pin_factory
         self.default_pwm_duty_cycle = config.hardware.pump_pwm_duty_cycle
 
     def _initialize_actor(self) -> None:
