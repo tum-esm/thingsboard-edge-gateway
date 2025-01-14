@@ -17,8 +17,9 @@ class BME280SensorInterface:
         simulate: bool = False,
     ) -> None:
         self.logger = logging_interface.Logger(
-            "ioboard-bme280" if (variant == "ioboard") else "air-inlet-bme280"
-        )
+            config=config,
+            origin="ioboard-bme280" if
+            (variant == "ioboard") else "air-inlet-bme280")
         self.config = config
         self.variant = variant
         self.simulate = simulate

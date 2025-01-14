@@ -25,11 +25,9 @@ DEVICE_STATUS_PATTERN = (
 class VaisalaWXT532(Sensor):
     """Class for the Vaisala WXT532 sensor."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-                 simulate: bool = False):
-        super().__init__(config=config, simulate=simulate)
+    def __init__(self, config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
+        super().__init__(config=config)
 
         self.pin_factory = pin_factory
         self.buffered_messages: List[str] = []

@@ -19,9 +19,7 @@ class UPSInterface:
         testing: bool = False,
         simulate: bool = False,
     ):
-        self.logger = logging_interface.Logger(
-            origin="ups"
-        )
+        self.logger = logging_interface.Logger(config=config, origin="ups")
         self.config = config
         self.simulate = simulate
 

@@ -19,19 +19,18 @@ class Sensor(ABC):
 
     def __init__(self,
                  config: config_types.Config,
-                 simulate: bool = False,
                  max_retries: int = 3,
                  retry_delay: float = 0.5):
 
         # init parameters
         self.config = config
-        self.simulate = simulate
+        self.simulate = config.active_components.simulation_mode
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 
         # init logger with sensor class name
         self.logger = logging_interface.Logger(
-            origin=f"{self.__class__.__name__}")
+            config=config, origin=f"{self.__class__.__name__}")
 
         if self.simulate:
             self.logger.info(f"Simulating {self.__class__.__name__}.")

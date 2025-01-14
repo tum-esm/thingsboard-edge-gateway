@@ -14,15 +14,12 @@ class WindMeasurementProcedure:
     2. Send out measurement data over MQTT"""
 
     def __init__(
-        self,
-        config: config_types.Config,
-        hardware_interface: hardware_interface.HardwareInterface,
-        simulate: bool = False,
-    ) -> None:
+            self, config: config_types.Config,
+            hardware_interface: hardware_interface.HardwareInterface) -> None:
         self.logger, self.config = logging_interface.Logger(
-            origin="measurement-procedure"), config
+            config=config, origin="measurement-procedure"), config
         self.hardware_interface = hardware_interface
-        self.simulate = simulate
+        self.simulate = config.active_components.simulation_mode
 
         # state variables
         self.wind_data: Optional[sensor_types.WindSensorData] = None
@@ -112,9 +109,9 @@ class CO2MeasurementProcedure:
         simulate: bool = False,
     ) -> None:
         self.logger, self.config = logging_interface.Logger(
-            origin="measurement-procedure"), config
+            config=config, origin="measurement-procedure"), config
         self.hardware_interface = hardware_interface
-        self.simulate = simulate
+        self.simulate = config.active_components.simulation_mode
 
         # state variables
         self.active_air_inlet: Optional[Literal[1, 2, 3, 4]] = None

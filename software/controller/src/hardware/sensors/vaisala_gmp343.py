@@ -25,11 +25,9 @@ STARTUP_REGEX = r"GMP343 - Version STD \d+\.\d+\\r\\n" + \
 class VaisalaGMP343(Sensor):
     """Class for the Vaisala GMP343 sensor."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-                 simulate: bool = False):
-        super().__init__(config=config, simulate=simulate)
+    def __init__(self, config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
+        super().__init__(config=config)
 
         self.pin_factory = pin_factory
 

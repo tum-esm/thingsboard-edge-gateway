@@ -17,12 +17,10 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         self,
         config: config_types.Config,
         pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-        simulate: bool = False,
         max_retries: int = 3,
         retry_delay: float = 0.5,
     ):
         super().__init__(config=config,
-                         simulate=simulate,
                          max_retries=max_retries,
                          retry_delay=retry_delay)
 

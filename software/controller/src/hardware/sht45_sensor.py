@@ -19,9 +19,8 @@ class SHT45SensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = logging_interface.Logger(
-            origin="sht45-sensor"
-        )
+        self.logger = logging_interface.Logger(config=config,
+                                               origin="sht45-sensor")
         self.config = config
         self.simulate = simulate
         self.logger.info("Starting initialization.")

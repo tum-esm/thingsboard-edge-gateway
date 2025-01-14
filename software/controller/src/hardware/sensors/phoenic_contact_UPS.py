@@ -11,11 +11,9 @@ from custom_types import config_types, sensor_types
 class PhoenixContactUPS(Sensor):
     """Class for the Phoenix Contact Trio-UPS-2G."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
-                 simulate: bool = False):
-        super().__init__(config=config, simulate=simulate)
+    def __init__(self, config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
+        super().__init__(config=config)
 
         self.pin_factory = pin_factory
 

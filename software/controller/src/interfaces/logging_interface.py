@@ -4,9 +4,8 @@ from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import sys
-import os
 
-from custom_types import mqtt_playload_types
+from custom_types import mqtt_playload_types, config_types
 from utils import message_queue, shell_commands
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
@@ -28,11 +27,14 @@ def _pad_str_right(text: str,
 
 class Logger:
 
-    def __init__(self, origin: str = "insert-name-here") -> None:
+    def __init__(self,
+                 config: config_types.Config,
+                 origin: str = "insert-name-here") -> None:
+
+        self.config = config
         self.origin: str = origin
-        self.print_to_console = os.environ.get(
-            "ACROPOLIS_LOG_TO_CONSOLE") == "True"
-        self.write_to_file = os.environ.get("ACROPOLIS_LOG_TO_FILE") == "True"
+        self.print_to_console = self.config.active_components.log_to_console
+        self.write_to_file = self.config.active_components.log_to_file
         self.message_queue = message_queue.MessageQueue()
 
     def horizontal_line(self,

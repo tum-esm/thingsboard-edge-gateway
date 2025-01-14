@@ -20,9 +20,7 @@ class ValveInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = logging_interface.Logger(
-            origin="valves"
-        )
+        self.logger = logging_interface.Logger(config=config, origin="valves")
         self.config = config
         self.simulate = simulate
         self.logger.info("Starting initialization")

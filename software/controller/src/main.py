@@ -34,19 +34,13 @@ def run() -> None:
     - Procedure: Measurements (CO2, Wind)
     """
 
-    dotenv.load_dotenv(os.path.join(PROJECT_DIR, "config", ".env"))
-    simulate = os.environ.get("ACROPOLIS_SIMULATION_MODE") == "True"
-    log_to_console = os.environ.get("ACROPOLIS_LOG_TO_CONSOLE") == "True"
-    log_to_file = os.environ.get("ACROPOLIS_LOG_TO_FILE") == "True"
-
-    logger = logging_interface.Logger(origin="main")
-    logger.horizontal_line()
-
     try:
         config = config_interface.ConfigInterface.read()
     except Exception as e:
-        logger.exception(e, label="could not load local config.json")
         raise e
+
+    logger = logging_interface.Logger(config=config, origin="main")
+    logger.horizontal_line()
 
     logger.info(
         f"Started new automation process with SW version {config.version} and PID {os.getpid()}.",
@@ -56,7 +50,7 @@ def run() -> None:
     # -------------------------------------------------------------------------
 
     # check and provide valid state file
-    state_interface.StateInterface.init()
+    state_interface.StateInterface.init(config=config)
 
     # define timeouts for parts of the automation
     max_setup_time = 180
@@ -79,8 +73,7 @@ def run() -> None:
     logger.info("Initializing hardware interfaces.", forward=True)
 
     try:
-        hardware = hardware_interface.HardwareInterface(config=config,
-                                                        simulate=simulate)
+        hardware = hardware_interface.HardwareInterface(config=config, )
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",
@@ -112,13 +105,13 @@ def run() -> None:
 
     try:
         system_check_procedure = system_check.SystemCheckProcedure(
-            config, hardware, simulate=simulate)
+            config=config, hardware_interface=hardware)
         calibration_procedure = calibration.CalibrationProcedure(
-            config, hardware, simulate=simulate)
+            config=config, hardware_interface=hardware)
         wind_measurement_procedure = measurement.WindMeasurementProcedure(
-            config, hardware, simulate=simulate)
+            config=config, hardware_interface=hardware)
         co2_measurement_procedure = measurement.CO2MeasurementProcedure(
-            config, hardware, simulate=simulate)
+            config=config, hardware_interface=hardware)
     except Exception as e:
         logger.exception(e,
                          label="could not initialize procedures",

@@ -20,9 +20,7 @@ class PumpInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = logging_interface.Logger(
-            origin="pump"
-        )
+        self.logger = logging_interface.Logger(config=config, origin="pump")
         self.config = config
         self.simulate = simulate
         self.logger.info("Starting initialization")

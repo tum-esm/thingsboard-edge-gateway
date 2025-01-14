@@ -30,9 +30,8 @@ class WindSensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = logging_interface.Logger(
-            origin="wind-sensor"
-        )
+        self.logger = logging_interface.Logger(config=config,
+                                               origin="wind-sensor")
         self.config = config
         self.simulate = simulate
 

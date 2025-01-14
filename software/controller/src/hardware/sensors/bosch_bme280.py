@@ -16,18 +16,16 @@ from interfaces import logging_interface
 class BoschBME280(Sensor):
     """Class for the Bosch BME280 sensor."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 variant: Literal["ioboard", "air-inlet"],
-                 simulate: bool = False):
-        super().__init__(config=config, simulate=simulate)
+    def __init__(self, config: config_types.Config,
+                 variant: Literal["ioboard", "air-inlet"]):
+        super().__init__(config=config)
 
         self.variant = variant
         self.compensation_params: Optional[bme280.params] = None
 
         # overwrite logger for variant
         self.logger = logging_interface.Logger(
-            f"{self.__class__.__name__}:" + self.variant, )
+            config=config, origin=f"{self.__class__.__name__}:" + self.variant)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

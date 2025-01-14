@@ -2,7 +2,7 @@ import json
 import os
 import time
 
-from custom_types import state_types
+from custom_types import state_types, config_types
 from interfaces import logging_interface
 
 dirname = os.path.dirname
@@ -13,19 +13,20 @@ STATE_PATH = os.path.join(PROJECT_DIR, "config", "state.json")
 class StateInterface:
 
     @staticmethod
-    def init() -> None:
+    def init(config: config_types.Config) -> None:
         """create state file if it does not exist yet,
         add upgrade time if missing"""
 
-        state = StateInterface.read()
+        state = StateInterface.read(config=config)
         if state.last_upgrade_time is None:
             state.last_upgrade_time = time.time()
 
         StateInterface.write(state)
 
     @staticmethod
-    def read() -> state_types.State:
-        logger = logging_interface.Logger("state-interface")
+    def read(config: config_types.Config) -> state_types.State:
+        logger = logging_interface.Logger(config=config,
+                                          origin="state-interface")
         try:
             with open(STATE_PATH, "r") as f:
                 return state_types.State(**json.load(f))

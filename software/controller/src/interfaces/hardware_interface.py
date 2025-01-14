@@ -46,7 +46,8 @@ class HardwareInterface:
             timeout=5,
         )
         self.config = config
-        self.logger = logging_interface.Logger("hardware-interface")
+        self.logger = logging_interface.Logger(config=config,
+                                               origin="hardware-interface")
         self.simulate = simulate
         acquire_hardware_lock()
 

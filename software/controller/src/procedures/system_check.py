@@ -11,16 +11,13 @@ class SystemCheckProcedure:
     """runs every mainloop call"""
 
     def __init__(
-        self,
-        config: config_types.Config,
-        hardware_interface: hardware_interface.HardwareInterface,
-        simulate: bool = False,
-    ) -> None:
+            self, config: config_types.Config,
+            hardware_interface: hardware_interface.HardwareInterface) -> None:
         self.logger, self.config = logging_interface.Logger(
-            origin="system-check-procedure"), config
+            config=config, origin="system-check-procedure"), config
         self.hardware_interface = hardware_interface
         self.message_queue = message_queue.MessageQueue()
-        self.simulate = simulate
+        self.simulate = config.active_components.simulation_mode
 
     def run(self) -> None:
         """runs system check procedure

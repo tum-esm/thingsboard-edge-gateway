@@ -17,9 +17,9 @@ class CalibrationProcedure:
         simulate: bool = False,
     ) -> None:
         self.logger, self.config = logging_interface.Logger(
-            origin="calibration-procedure"), config
+            config=config, origin="calibration-procedure"), config
         self.hardware_interface = hardware_interface
-        self.simulate = simulate
+        self.simulate = config.active_components.simulation_mode
 
         # state variables
         self.last_measurement_time: float = 0
@@ -59,7 +59,7 @@ class CalibrationProcedure:
             self.config.calibration.sampling_per_cylinder_seconds)
 
         # read the latest state
-        state = state_interface.StateInterface.read()
+        state = state_interface.StateInterface.read(config=self.config)
 
         current_position = state.next_calibration_cylinder
 
@@ -105,7 +105,7 @@ class CalibrationProcedure:
         return self.config.calibration.gas_cylinders
 
     def run(self) -> None:
-        state = state_interface.StateInterface.read()
+        state = state_interface.StateInterface.read(config=self.config)
         calibration_time = datetime.utcnow().timestamp()
         self.logger.info(
             f"starting calibration procedure at timestamp {calibration_time}",
@@ -202,7 +202,7 @@ class CalibrationProcedure:
             f"finished calibration procedure at timestamp {datetime.utcnow().timestamp()}",
             forward=True,
         )
-        state = state_interface.StateInterface.read()
+        state = state_interface.StateInterface.read(config=self.config)
         state.last_calibration_time = calibration_time
         state_interface.StateInterface.write(state)
 
@@ -215,7 +215,7 @@ class CalibrationProcedure:
         #"""
 
         # load state, kept during configuration procedures
-        state = state_interface.StateInterface.read()
+        state = state_interface.StateInterface.read(config=self.config)
         current_utc_day = datetime.utcnow().date()
         current_utc_hour = datetime.utcnow().hour
 

@@ -32,9 +32,8 @@ class CO2SensorInterface:
         testing: bool = False,
         simulate: bool = False,
     ) -> None:
-        self.logger = logging_interface.Logger(
-            origin="co2-sensor"
-        )
+        self.logger = logging_interface.Logger(config=config,
+                                               origin="co2-sensor")
         self.config = config
         self.simulate = simulate
         self.logger.info("Starting initialization.")
