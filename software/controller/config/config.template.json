@@ -12,11 +12,11 @@
         "gas_cylinders": [
             {
                 "valve_number": 2,
-                "bottle_id": "..."
+                "bottle_id": "999"
             },
             {
                 "valve_number": 3,
-                "bottle_id": "..."
+                "bottle_id": "998"
             }
         ],
         "sampling_per_cylinder_seconds": 600,
@@ -35,6 +35,9 @@
     },
     "hardware": {
         "pump_pwm_duty_cycle": 0.13,
+        "pump_power_pin_out": 19,
+        "pump_power_pin_frequency": 10000,
+        "pump_speed_pin_in": 16,
         "gmp343_optics_heating": true,
         "gmp343_linearisation": true,
         "gmp343_temperature_compensation": true,
@@ -43,7 +46,18 @@
         "gmp343_oxygen_compensation": true,
         "gmp343_filter_seconds_averaging": 10,
         "gmp343_filter_smoothing_factor": 0,
-        "gmp343_filter_median_measurements": 0
+        "gmp343_filter_median_measurements": 0,
+        "gmp343_power_pin_out": 20,
+        "gmp343_serial_port": "/dev/ttySC0",
+        "wxt532_power_pin_out": 21,
+        "wxt532_serial_port": "/dev/ttySC1",
+        "valve_pin_1_out": 25,
+        "valve_pin_2_out": 24,
+        "valve_pin_3_out": 23,
+        "valve_pin_4_out": 22,
+        "ups_battery_charge_pin_in": 5,
+        "ups_power_mode_pin_in": 10,
+        "ups_alarm_pin_in": 7
     },
     "measurement": {
         "average_air_inlet_measurements": 15,

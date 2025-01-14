@@ -5,11 +5,6 @@ import gpiozero
 from hardware.actors import base_actor
 from custom_types import config_types
 
-VALVE_PIN_1_OUT = 25
-VALVE_PIN_2_OUT = 24
-VALVE_PIN_3_OUT = 23
-VALVE_PIN_4_OUT = 22
-
 
 class ACLValves(base_actor.Actor):
     """Class for controlling the ACL Type 201 solenoid vales."""
@@ -35,16 +30,16 @@ class ACLValves(base_actor.Actor):
         # initialize device and reserve GPIO pin
         self.valves: dict[Literal[1, 2, 3, 4], gpiozero.OutputDevice] = {
             1:
-            gpiozero.OutputDevice(VALVE_PIN_1_OUT,
+            gpiozero.OutputDevice(self.config.hardware.valve_power_pin_1_out,
                                   pin_factory=self.pin_factory),
             2:
-            gpiozero.OutputDevice(VALVE_PIN_2_OUT,
+            gpiozero.OutputDevice(self.config.hardware.valve_power_pin_2_out,
                                   pin_factory=self.pin_factory),
             3:
-            gpiozero.OutputDevice(VALVE_PIN_3_OUT,
+            gpiozero.OutputDevice(self.config.hardware.valve_power_pin_3_out,
                                   pin_factory=self.pin_factory),
             4:
-            gpiozero.OutputDevice(VALVE_PIN_4_OUT,
+            gpiozero.OutputDevice(self.config.hardware.valve_power_pin_4_out,
                                   pin_factory=self.pin_factory),
         }
 

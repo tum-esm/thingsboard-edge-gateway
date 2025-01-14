@@ -57,6 +57,9 @@ class HardwareConfig(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     pump_pwm_duty_cycle: float = Field(ge=0, le=1)
+    pump_power_pin_out: int
+    pump_power_pin_frequency: int
+    pump_speed_pin_in: int
     gmp343_optics_heating: bool
     gmp343_linearisation: bool
     gmp343_temperature_compensation: bool
@@ -66,6 +69,17 @@ class HardwareConfig(BaseModel):
     gmp343_filter_seconds_averaging: int = Field(..., ge=0, le=60)
     gmp343_filter_smoothing_factor: int = Field(..., ge=0, le=255)
     gmp343_filter_median_measurements: int = Field(..., ge=0, le=13)
+    gmp343_power_pin_out: int
+    gmp343_serial_port: str
+    wxt532_power_pin_out: int
+    wxt532_serial_port: str
+    valve_power_pin_1_out: int
+    valve_power_pin_2_out: int
+    valve_power_pin_3_out: int
+    valve_power_pin_4_out: int
+    ups_battery_charge_pin_in: int
+    ups_power_mode_pin_in: int
+    ups_alarm_pin_in: int
 
 
 # -----------------------------------------------------------------------------

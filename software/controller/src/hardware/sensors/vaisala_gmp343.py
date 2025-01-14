@@ -12,8 +12,6 @@ from hardware.sensors.base_sensor import Sensor
 from custom_types import sensor_types, config_types
 from interfaces import serial_interfaces
 
-GMP343_SENSOR_POWER_PIN_OUT = os.environ.get("GMP343_SENSOR_POWER_PIN_OUT")
-GMP343_SENSOR_SERIAL_PORT = os.environ.get("GMP343_SENSOR_SERIAL_PORT")
 CO2_MEASUREMENT_REGEX = (
     r"\d+\.\d+\s+"  # raw
     + r"\d+\.\d+\s+"  # compensated
@@ -37,12 +35,13 @@ class VaisalaGMP343(Sensor):
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
-        self.power_pin = gpiozero.OutputDevice(pin=GMP343_SENSOR_POWER_PIN_OUT,
-                                               pin_factory=self.pin_factory)
+        self.power_pin = gpiozero.OutputDevice(
+            pin=self.config.hardware.gmp343_power_pin_out,
+            pin_factory=self.pin_factory)
         self.last_powerup_time = time.time()
         self.power_pin.on()
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
-            port=str(GMP343_SENSOR_SERIAL_PORT))
+            port=str(self.config.hardware.gmp343_serial_port))
         self.serial_interface.flush_receiver_stream()
         self.serial_interface.wait_for_answer(expected_regex=STARTUP_REGEX,
                                               timeout=10)

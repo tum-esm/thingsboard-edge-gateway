@@ -21,9 +21,6 @@ MEASUREMENT_PATTERN = (
 DEVICE_STATUS_PATTERN = (
     r"Th=([0-9.]+)C,Vh=([0-9.]+)N,Vs=([0-9.]+)V,Vr=([0-9.]+)V")
 
-WXT532_SENSOR_POWER_PIN_OUT = os.environ.get("WXT532_SENSOR_POWER_PIN_OUT")
-WXT532_SENSOR_SERIAL_PORT = os.environ.get("WXT532_SENSOR_SERIAL_PORT")
-
 
 class VaisalaWXT532(Sensor):
     """Class for the Vaisala WXT532 sensor."""
@@ -41,12 +38,13 @@ class VaisalaWXT532(Sensor):
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
-        self.power_pin = gpiozero.OutputDevice(pin=WXT532_SENSOR_POWER_PIN_OUT,
-                                               pin_factory=self.pin_factory)
+        self.power_pin = gpiozero.OutputDevice(
+            pin=self.config.hardware.wxt532_power_pin_out,
+            pin_factory=self.pin_factory)
         self.power_pin.on()
 
         self.wxt532_interface = serial.Serial(
-            port=WXT532_SENSOR_SERIAL_PORT,
+            port=self.config.hardware.wxt532_serial_port,
             baudrate=19200,
             bytesize=8,
             parity="N",

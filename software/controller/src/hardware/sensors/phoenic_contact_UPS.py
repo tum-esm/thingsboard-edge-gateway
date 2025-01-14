@@ -8,10 +8,6 @@ except Exception:
 from hardware.sensors.base_sensor import Sensor
 from custom_types import config_types, sensor_types
 
-UPS_BATTERY_CHARGE_PIN_IN = 5
-UPS_POWER_MODE_PIN_IN = 10
-UPS_ALARM_PIN_IN = 7
-
 
 class PhoenixContactUPS(Sensor):
     """Class for the Phoenix Contact Trio-UPS-2G."""
@@ -30,19 +26,19 @@ class PhoenixContactUPS(Sensor):
         self.pins: dict[str, gpiozero.DigitalInputDevice] = {
             "UPS_BATTERY_CHARGE_PIN_IN":
             gpiozero.DigitalInputDevice(
-                UPS_BATTERY_CHARGE_PIN_IN,
+                self.config.hardware.ups_battery_charge_pin_in,
                 bounce_time=0.3,
                 pin_factory=self.pin_factory,
             ),
             "UPS_POWER_MODE_PIN_IN":
             gpiozero.DigitalInputDevice(
-                UPS_POWER_MODE_PIN_IN,
+                self.config.hardware.ups_power_mode_pin_in,
                 bounce_time=0.3,
                 pin_factory=self.pin_factory,
             ),
             "UPS_ALARM_PIN_IN":
             gpiozero.DigitalInputDevice(
-                UPS_ALARM_PIN_IN,
+                self.config.hardware.ups_alarm_pin_in,
                 bounce_time=0.3,
                 pin_factory=self.pin_factory,
             )

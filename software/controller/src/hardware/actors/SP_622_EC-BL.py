@@ -9,10 +9,6 @@ except Exception:
 from hardware.actors import base_actor
 from custom_types import config_types
 
-PUMP_CONTROL_PIN_OUT = 19
-PUMP_CONTROL_PIN_FREQUENCY = 10000
-PUMP_SPEED_PIN_IN = 16
-
 
 class SchwarzerPrecisionPump(base_actor.Actor):
     """Class for controlling the SP 622 EC_BL membrane pump."""
@@ -37,11 +33,11 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         """Initializes the membrane pump."""
 
         # initialize device and reserve GPIO pin
-        self.control_pin = gpiozero.PWMOutputDevice(
-            pin=PUMP_CONTROL_PIN_OUT,
+        self.power_pin = gpiozero.PWMOutputDevice(
+            pin=self.config.hardware.pump_power_pin_out,
             active_high=True,
             initial_value=False,
-            frequency=PUMP_CONTROL_PIN_FREQUENCY,
+            frequency=self.config.hardware.pump_power_pin_frequency,
             pin_factory=self.pin_factory,
         )
 
@@ -51,9 +47,9 @@ class SchwarzerPrecisionPump(base_actor.Actor):
     def _shutdown_actor(self) -> None:
         """Shuts down the membrane pump."""
 
-        self.control_pin.off()
+        self.power_pin.off()
         # Shut down the device and release all associated resources (such as GPIO pins).
-        self.control_pin.close()
+        self.power_pin.close()
 
     def _set(self, *args: Any, **kwargs: float) -> None:
         pwm_duty_cycle = kwargs.get('pwm_duty_cycle',
@@ -62,7 +58,7 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         assert (
             0 <= pwm_duty_cycle <= 1
         ), f"pwm duty cycle has to be between 0 and 1 (passed {pwm_duty_cycle})"
-        self.control_pin.value = pwm_duty_cycle
+        self.power_pin.value = pwm_duty_cycle
 
     def flush_system(self, duration: int, pwm_duty_cycle: float) -> None:
         """Flushes the system with the pump for a given duration and duty cycle."""
