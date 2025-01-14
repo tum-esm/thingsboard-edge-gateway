@@ -8,7 +8,7 @@ source .venv/bin/activate
 poetry install
 ```
 
-## Run mypy script
+## Run mypy type check script
 
 ```bash
 chmod +x scripts/run_mypy.sh
