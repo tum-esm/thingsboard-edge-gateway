@@ -2,7 +2,6 @@ import os
 import sys
 import signal
 import time
-import dotenv
 from pathlib import Path
 from typing import Any
 
