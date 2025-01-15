@@ -17,7 +17,7 @@ class ACLValves(base_actor.Actor):
 
         # Ensure active input is set before base class initialization
         self.active_input: Literal[1, 2, 3,
-                                   4] = self.config.measurement.valve_number
+                                   4] = config.measurement.valve_number
 
         super().__init__(config=config,
                          max_retries=max_retries,
