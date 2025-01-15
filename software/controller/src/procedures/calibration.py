@@ -2,9 +2,8 @@ import time
 from datetime import datetime
 
 from custom_types import config_types
-from custom_types import mqtt_playload_types
-from interfaces import logging_interface, hardware_interface, state_interface
-from utils import message_queue, ring_buffer
+from interfaces import logging_interface, state_interface, hardware_interface
+from utils import message_queue
 
 
 class CalibrationProcedure:
@@ -16,90 +15,10 @@ class CalibrationProcedure:
         self.logger, self.config = logging_interface.Logger(
             config=config, origin="calibration-procedure"), config
         self.hardware_interface = hardware_interface
-        self.simulate = config.active_components.simulation_mode
 
-        # state variables
         self.last_measurement_time: float = 0
         self.message_queue = message_queue.MessageQueue()
-        self.rb_pressure = ring_buffer.RingBuffer(
-            self.config.calibration.average_air_inlet_measurements)
-        self.rb_humidity = ring_buffer.RingBuffer(
-            self.config.calibration.average_air_inlet_measurements)
         self.seconds_drying_with_first_bottle = 0
-
-    def _update_air_inlet_parameters(self) -> None:
-        """
-        fetches the latest temperature and pressure data at air inlet
-        """
-
-        self.air_inlet_bme280_data = (
-            self.hardware_interface.air_inlet_bme280_sensor.read_with_retry())
-
-        # Add to ring buffer to calculate moving average of low-cost sensor
-        self.rb_pressure.append(self.air_inlet_bme280_data.pressure)
-
-        self.air_inlet_sht45_data = (
-            self.hardware_interface.air_inlet_sht45_sensor.read_with_retry())
-
-        # Add to ring buffer to calculate moving average of low-cost sensor
-        self.rb_humidity.append(self.air_inlet_sht45_data.humidity)
-
-    def _alternate_bottle_for_drying(
-            self) -> list[config_types.CalibrationGasConfig]:
-        """
-        1. sets time for drying the air chamber with first calibration bottle
-        2. switches to the next calibration cylinder every other calibration
-        """
-
-        # set time extension for first bottle
-        self.seconds_drying_with_first_bottle = (
-            self.config.calibration.sampling_per_cylinder_seconds)
-
-        # read the latest state
-        state = state_interface.StateInterface.read(config=self.config)
-
-        current_position = state.next_calibration_cylinder
-
-        if current_position + 1 < len(self.config.calibration.gas_cylinders):
-            next_position = current_position + 1
-        else:
-            next_position = 0
-
-        # update state config
-        state.next_calibration_cylinder = next_position
-        state_interface.StateInterface.write(state)
-
-        # update sequence
-
-        # 2 calibration cylinders
-        if len(self.config.calibration.gas_cylinders) == 2:
-            if current_position == 0:
-                return self.config.calibration.gas_cylinders
-            if current_position == 1:
-                return [
-                    self.config.calibration.gas_cylinders[1],
-                    self.config.calibration.gas_cylinders[0],
-                ]
-
-        # 3 calibration cylinders
-        if len(self.config.calibration.gas_cylinders) == 3:
-            if current_position == 0:
-                return self.config.calibration.gas_cylinders
-            if current_position == 1:
-                return [
-                    self.config.calibration.gas_cylinders[1],
-                    self.config.calibration.gas_cylinders[2],
-                    self.config.calibration.gas_cylinders[0],
-                ]
-            if current_position == 2:
-                return [
-                    self.config.calibration.gas_cylinders[2],
-                    self.config.calibration.gas_cylinders[1],
-                    self.config.calibration.gas_cylinders[0],
-                ]
-
-        # 1 or 4+ calibration cylinders
-        return self.config.calibration.gas_cylinders
 
     def run(self) -> None:
         state = state_interface.StateInterface.read(config=self.config)
@@ -110,8 +29,7 @@ class CalibrationProcedure:
         )
 
         # clear ring buffers
-        self.rb_humidity.clear()
-        self.rb_pressure.clear()
+        self.hardware_interface.co2_measurement_module.reset_ring_buffers()
 
         # alternate calibration bottle order every other day
         # first bottle receives additional time to dry air chamber
@@ -120,59 +38,8 @@ class CalibrationProcedure:
         for gas in sequence_calibration_bottle:
             # switch to each calibration valve
             self.hardware_interface.valves.set(gas.valve_number)
-            calibration_procedure_start_time = time.time()
 
-            while True:
-                # idle until next measurement period
-                seconds_to_wait_for_next_measurement = max(
-                    self.config.hardware.gmp343_filter_seconds_averaging -
-                    (time.time() - self.last_measurement_time),
-                    0,
-                )
-                self.logger.debug(
-                    f"sleeping {round(seconds_to_wait_for_next_measurement, 3)} seconds"
-                )
-                time.sleep(seconds_to_wait_for_next_measurement)
-                self.last_measurement_time = time.time()
-
-                # update air inlet parameters
-                self._update_air_inlet_parameters()
-
-                # perform a CO2 measurement
-                current_sensor_data = (
-                    self.hardware_interface.co2_sensor.read_with_retry(
-                        pressure=self.rb_pressure.avg(),
-                        humidity=self.rb_humidity.avg(),
-                    ))
-                self.logger.debug(
-                    f"new calibration measurement: {current_sensor_data}")
-
-                # send out MQTT measurement message
-                self.message_queue.enqueue_message(
-                    timestamp=int(time.time()),
-                    payload=mqtt_playload_types.MQTTCO2CalibrationData(
-                        cal_bottle_id=float(gas.bottle_id),
-                        cal_gmp343_raw=current_sensor_data.raw,
-                        cal_gmp343_compensated=current_sensor_data.compensated,
-                        cal_gmp343_filtered=current_sensor_data.filtered,
-                        cal_bme280_temperature=self.air_inlet_bme280_data.
-                        temperature,
-                        cal_bme280_humidity=self.air_inlet_bme280_data.
-                        humidity,
-                        cal_bme280_pressure=self.air_inlet_bme280_data.
-                        pressure,
-                        cal_sht45_temperature=self.air_inlet_sht45_data.
-                        temperature,
-                        cal_sht45_humidity=self.air_inlet_sht45_data.humidity,
-                        cal_gmp343_temperature=current_sensor_data.temperature,
-                    ),
-                )
-
-                if ((self.last_measurement_time -
-                     calibration_procedure_start_time) >=
-                        self.config.calibration.sampling_per_cylinder_seconds +
-                        self.seconds_drying_with_first_bottle):
-                    break
+            self._co2_measurement_interval(gas=gas.valve_number)
 
             # reset drying time extension for following bottles
             self.seconds_drying_with_first_bottle = 0
@@ -252,3 +119,85 @@ class CalibrationProcedure:
 
         self.logger.info("next calibration is due, calibrating now")
         return True
+
+    def _co2_measurement_interval(self, gas: int) -> None:
+        calibration_procedure_start_time = time.time()
+        while True:
+            # idle until next measurement period
+            seconds_to_wait_for_next_measurement = max(
+                self.config.hardware.gmp343_filter_seconds_averaging -
+                (time.time() - self.last_measurement_time),
+                0,
+            )
+            self.logger.debug(
+                f"sleeping {round(seconds_to_wait_for_next_measurement, 3)} seconds"
+            )
+            time.sleep(seconds_to_wait_for_next_measurement)
+            self.last_measurement_time = time.time()
+
+            measurement = self.hardware_interface.co2_measurement_module.perform_CO2_measurement(
+            )
+            self.hardware_interface.co2_measurement_module.send_CO2_calibration_data(
+                CO2_sensor_data=measurement, gas_bottle_id=gas)
+
+            if ((self.last_measurement_time - calibration_procedure_start_time)
+                    >= self.config.calibration.sampling_per_cylinder_seconds +
+                    self.seconds_drying_with_first_bottle):
+                break
+
+    def _alternate_bottle_for_drying(
+            self) -> list[config_types.CalibrationGasConfig]:
+        """
+        1. sets time for drying the air chamber with first calibration bottle
+        2. switches to the next calibration cylinder every other calibration
+        """
+
+        # set time extension for first bottle
+        self.seconds_drying_with_first_bottle = (
+            self.config.calibration.sampling_per_cylinder_seconds)
+
+        # read the latest state
+        state = state_interface.StateInterface.read(config=self.config)
+
+        current_position = state.next_calibration_cylinder
+
+        if current_position + 1 < len(self.config.calibration.gas_cylinders):
+            next_position = current_position + 1
+        else:
+            next_position = 0
+
+        # update state config
+        state.next_calibration_cylinder = next_position
+        state_interface.StateInterface.write(state)
+
+        # update sequence
+
+        # 2 calibration cylinders
+        if len(self.config.calibration.gas_cylinders) == 2:
+            if current_position == 0:
+                return self.config.calibration.gas_cylinders
+            if current_position == 1:
+                return [
+                    self.config.calibration.gas_cylinders[1],
+                    self.config.calibration.gas_cylinders[0],
+                ]
+
+        # 3 calibration cylinders
+        if len(self.config.calibration.gas_cylinders) == 3:
+            if current_position == 0:
+                return self.config.calibration.gas_cylinders
+            if current_position == 1:
+                return [
+                    self.config.calibration.gas_cylinders[1],
+                    self.config.calibration.gas_cylinders[2],
+                    self.config.calibration.gas_cylinders[0],
+                ]
+            if current_position == 2:
+                return [
+                    self.config.calibration.gas_cylinders[2],
+                    self.config.calibration.gas_cylinders[1],
+                    self.config.calibration.gas_cylinders[0],
+                ]
+
+        # 1 or 4+ calibration cylinders
+        return self.config.calibration.gas_cylinders
