@@ -53,7 +53,7 @@ class SystemCheckProcedure:
                 raspi_disk_usage=disk_usage,
                 raspi_cpu_usage=cpu_usage,
                 raspi_memory_usage=memory_usage,
-                ups_powered_by_grid=ups_sate.powered_by_grid,
+                ups_powered_by_grid=ups_sate.ups_powered_by_grid,
                 ups_battery_is_fully_charged=ups_sate.
                 ups_battery_is_fully_charged,
                 ups_battery_error_detected=ups_sate.ups_battery_error_detected,
