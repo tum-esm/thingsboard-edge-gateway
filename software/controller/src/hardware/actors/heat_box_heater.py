@@ -40,8 +40,7 @@ class HeatBoxHeater(base_actor.Actor):
     def _set(self, *args: Any, **kwargs: float) -> None:
         """Sets the PWM signal for the heat box heater."""
 
-        pwm_duty_cycle = kwargs.get('pwm_duty_cycle',
-                                    self.default_pwm_duty_cycle)
+        pwm_duty_cycle = kwargs.get('pwm_duty_cycle', 0)
 
         assert (
             0 <= pwm_duty_cycle <= 1
