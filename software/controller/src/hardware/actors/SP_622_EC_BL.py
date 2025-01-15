@@ -51,6 +51,8 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         self.power_pin.close()
 
     def _set(self, *args: Any, **kwargs: float) -> None:
+        """Sets the PWM signal for the pump."""
+
         pwm_duty_cycle = kwargs.get('pwm_duty_cycle',
                                     self.default_pwm_duty_cycle)
 
