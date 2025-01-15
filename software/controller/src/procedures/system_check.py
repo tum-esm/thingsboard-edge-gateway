@@ -119,6 +119,9 @@ class SystemCheckProcedure:
 
         mainboard_sensor = self.hardware_interface.mainboard_sensor.read()
 
+        self.logger.debug(
+            f"mainboard temp. = {mainboard_sensor.temperature} °C")
+
         if (mainboard_sensor.temperature
                 is not None) and (mainboard_sensor.temperature > 70):
             self.logger.warning(
