@@ -32,7 +32,7 @@ class MeasurementProcedure:
         # Ensure that measurement line is active
         if not (self.hardware_interface.valves.active_input
                 == self.config.measurement.valve_number):
-            self.hardware_interface.vales.set(
+            self.hardware_interface.valves.set(
                 self.config.measurement.valve_number)
 
         # Wind sensor data
@@ -42,10 +42,10 @@ class MeasurementProcedure:
         self.logger.info(
             f"starting {self.config.measurement.procedure_seconds} seconds long CO2 measurement interval"
         )
-        self.co2_measurement_interval()
+        self._co2_measurement_interval()
         self.logger.info(f"finished CO2 measurement interval")
 
-    def co2_measurement_interval(self) -> None:
+    def _co2_measurement_interval(self) -> None:
         measurement_procedure_start_time = time.time()
         while True:
             # idle until next measurement period
