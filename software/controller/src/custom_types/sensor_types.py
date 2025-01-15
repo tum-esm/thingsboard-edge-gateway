@@ -1,19 +1,22 @@
 from typing import Optional
-import pydantic
+import dataclasses
 
 # validation is only necessary for external sources
 # internal source will be covered by mypy
 
-
 # Sensor data
-class CO2SensorData(pydantic.BaseModel):
+
+
+@dataclasses.dataclass
+class CO2SensorData():
     raw: float
     compensated: float
     filtered: float
     temperature: float
 
 
-class BME280SensorData(pydantic.BaseModel):
+@dataclasses.dataclass
+class BME280SensorData():
     """units: °C for temperature, rH for humidity, hPa for pressure"""
 
     temperature: Optional[float]
@@ -21,22 +24,24 @@ class BME280SensorData(pydantic.BaseModel):
     pressure: Optional[float]
 
 
-class SHT45SensorData(pydantic.BaseModel):
+@dataclasses.dataclass
+class SHT45SensorData():
     """units: °C for temperature, rH for humidity"""
 
     temperature: Optional[float]
     humidity: Optional[float]
 
 
-class UPSSensorData(pydantic.BaseModel):
-
+@dataclasses.dataclass
+class UPSSensorData():
     ups_powered_by_grid: bool | float
     ups_battery_is_fully_charged: bool | float
     ups_battery_error_detected: bool | float
     ups_battery_above_voltage_threshold: bool | float
 
 
-class WindSensorData(pydantic.BaseModel):
+@dataclasses.dataclass
+class WindSensorData():
     direction_min: float
     direction_avg: float
     direction_max: float
@@ -46,7 +51,8 @@ class WindSensorData(pydantic.BaseModel):
     last_update_time: float
 
 
-class WindSensorStatus(pydantic.BaseModel):
+@dataclasses.dataclass
+class WindSensorStatus():
     temperature: float
     heating_voltage: float
     supply_voltage: float
