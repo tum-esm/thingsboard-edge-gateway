@@ -9,6 +9,7 @@ class ActiveComponentsConfig(BaseModel):
     run_calibration_procedures: bool
     send_messages_over_mqtt: bool
     run_hardware_tests: bool
+    run_sensor_heating_control: bool
     log_to_file: bool
     log_to_console: bool
     simulation_mode: bool
