@@ -1,5 +1,9 @@
 import time
-import psutil
+from typing import Optional, Any
+try:
+    import psutil
+except Exception:
+    pass
 
 from custom_types import config_types
 from custom_types import mqtt_playload_types
@@ -13,6 +17,7 @@ class SystemCheckProcedure:
     def __init__(
             self, config: config_types.Config,
             hardware_interface: hardware_interface.HardwareInterface) -> None:
+
         self.logger, self.config = logging_interface.Logger(
             config=config, origin="system-check-procedure"), config
         self.hardware_interface = hardware_interface
@@ -30,22 +35,38 @@ class SystemCheckProcedure:
         - check hardware interfaces for errors
         """
 
-        mainboard_bme280_data = self.hardware_interface.mainboard_sensor.get_data(
-        )
-        mainboard_temperature = mainboard_bme280_data.temperature
-        cpu_temperature = system_info.get_cpu_temperature(self.simulate)
-        self.logger.debug(f"mainboard temp. = {mainboard_temperature} °C, " +
-                          f"raspi cpu temp. = {cpu_temperature} °C")
-        self.logger.debug(
-            f"enclosure humidity = {mainboard_bme280_data.humidity} % rH, " +
-            f"enclosure pressure = {mainboard_bme280_data.pressure} hPa")
+        cpu_temperature = self.cpu_temperature()
+        cpu_usage = self.cpu_usage()
+        disk_usage = self.disk_usage()
+        memory_usage = self.memory_usage()
+        ups_sate = self.hardware_interface.ups.read()
+        mainboard_sensor = self.mainboard_sensor()
 
-        if (mainboard_temperature is not None) and (mainboard_temperature
-                                                    > 70):
-            self.logger.warning(
-                f"mainboard temperature is very high ({mainboard_temperature} °C)",
-                forward=True,
-            )
+        # construct message and put it into message queue
+        self.message_queue.enqueue_message(
+            timestamp=int(time.time()),
+            payload=mqtt_playload_types.MQTTSystemData(
+                enclosure_bme280_temperature=mainboard_sensor.temperature,
+                enclosure_bme280_humidity=mainboard_sensor.humidity,
+                enclosure_bme280_pressure=mainboard_sensor.pressure,
+                raspi_cpu_temperature=cpu_temperature,
+                raspi_disk_usage=disk_usage,
+                raspi_cpu_usage=cpu_usage,
+                raspi_memory_usage=memory_usage,
+                ups_powered_by_grid=ups_sate.powered_by_grid,
+                ups_battery_is_fully_charged=ups_sate.
+                ups_battery_is_fully_charged,
+                ups_battery_error_detected=ups_sate.ups_battery_error_detected,
+                ups_battery_above_voltage_threshold=ups_sate.
+                ups_battery_above_voltage_threshold),
+        )
+
+        # check for hardware errors
+        self.hardware_interface.check_errors()
+
+    def cpu_temperature(self) -> Optional[float]:
+        cpu_temperature = system_info.get_cpu_temperature(self.simulate)
+        self.logger.debug(f"raspi cpu temp. = {cpu_temperature} °C")
 
         if (cpu_temperature is not None) and (cpu_temperature > 70):
             self.logger.warning(
@@ -53,6 +74,9 @@ class SystemCheckProcedure:
                 forward=True,
             )
 
+        return cpu_temperature
+
+    def disk_usage(self) -> float:
         # evaluate disk usage
         disk_usage = psutil.disk_usage("/")
         self.logger.debug(
@@ -64,13 +88,22 @@ class SystemCheckProcedure:
                 forward=True,
             )
 
-        # evaluate CPU usage
+        return round(disk_usage.percent / 100, 4)
+
+    def cpu_usage(self) -> float:
+        "Read RPi CPU usage"
+
         cpu_usage_percent = psutil.cpu_percent()
         self.logger.debug(f"{cpu_usage_percent} % total CPU usage")
         if cpu_usage_percent > 80:
             self.logger.warning(
                 f"CPU usage is very high ({cpu_usage_percent} %)",
                 forward=True)
+
+        return round(cpu_usage_percent / 100, 4)
+
+    def memory_usage(self) -> float:
+        "Read RPi memory usage"
 
         memory_usage_percent = psutil.virtual_memory().percent
         self.logger.debug(f"{memory_usage_percent} % total memory usage")
@@ -80,30 +113,17 @@ class SystemCheckProcedure:
                 forward=True,
             )
 
-        # read UPS status
-        self.hardware_interface.ups.update_ups_status()
+        return round(memory_usage_percent / 100, 4)
 
-        self.message_queue.enqueue_message(
-            timestamp=int(time.time()),
-            payload=mqtt_playload_types.MQTTSystemData(
-                enclosure_bme280_temperature=mainboard_temperature,
-                enclosure_bme280_humidity=mainboard_bme280_data.humidity,
-                enclosure_bme280_pressure=mainboard_bme280_data.pressure,
-                raspi_cpu_temperature=cpu_temperature,
-                raspi_disk_usage=round(disk_usage.percent / 100, 4),
-                raspi_cpu_usage=round(cpu_usage_percent / 100, 4),
-                raspi_memory_usage=round(memory_usage_percent / 100, 4),
-                ups_powered_by_grid=1.0
-                if self.hardware_interface.ups.powered_by_grid else 0.0,
-                ups_battery_is_fully_charged=1.0 if
-                self.hardware_interface.ups.battery_is_fully_charged else 0.0,
-                ups_battery_error_detected=1.0
-                if self.hardware_interface.ups.battery_error_detected else 0.0,
-                ups_battery_above_voltage_threshold=1.0
-                if self.hardware_interface.ups.battery_above_voltage_threshold
-                else 0.0,
-            ),
-        )
+    def mainboard_sensor(self) -> Any:
 
-        # check for errors
-        self.hardware_interface.check_errors()
+        mainboard_sensor = self.hardware_interface.mainboard_sensor.read()
+
+        if (mainboard_sensor.temperature
+                is not None) and (mainboard_sensor.temperature > 70):
+            self.logger.warning(
+                f"mainboard temperature is very high ({mainboard_sensor.temperature} °C)",
+                forward=True,
+            )
+
+        return mainboard_sensor
