@@ -11,11 +11,8 @@ class CalibrationProcedure:
     """runs when a calibration is due"""
 
     def __init__(
-        self,
-        config: config_types.Config,
-        hardware_interface: hardware_interface.HardwareInterface,
-        simulate: bool = False,
-    ) -> None:
+            self, config: config_types.Config,
+            hardware_interface: hardware_interface.HardwareInterface) -> None:
         self.logger, self.config = logging_interface.Logger(
             config=config, origin="calibration-procedure"), config
         self.hardware_interface = hardware_interface
@@ -36,13 +33,13 @@ class CalibrationProcedure:
         """
 
         self.air_inlet_bme280_data = (
-            self.hardware_interface.air_inlet_bme280_sensor.get_data())
+            self.hardware_interface.air_inlet_bme280_sensor.read_with_retry())
 
         # Add to ring buffer to calculate moving average of low-cost sensor
         self.rb_pressure.append(self.air_inlet_bme280_data.pressure)
 
         self.air_inlet_sht45_data = (
-            self.hardware_interface.air_inlet_sht45_sensor.get_data())
+            self.hardware_interface.air_inlet_sht45_sensor.read_with_retry())
 
         # Add to ring buffer to calculate moving average of low-cost sensor
         self.rb_humidity.append(self.air_inlet_sht45_data.humidity)
@@ -112,11 +109,6 @@ class CalibrationProcedure:
             forward=True,
         )
 
-        # log the current CO2 sensor device info
-        self.logger.info(
-            f"GMP343 Sensor Info: {self.hardware_interface.co2_sensor.get_param_info()}"
-        )
-
         # clear ring buffers
         self.rb_humidity.clear()
         self.rb_pressure.clear()
@@ -127,7 +119,7 @@ class CalibrationProcedure:
 
         for gas in sequence_calibration_bottle:
             # switch to each calibration valve
-            self.hardware_interface.valves.set_active_input(gas.valve_number)
+            self.hardware_interface.valves.set(gas.valve_number)
             calibration_procedure_start_time = time.time()
 
             while True:
@@ -147,11 +139,11 @@ class CalibrationProcedure:
                 self._update_air_inlet_parameters()
 
                 # perform a CO2 measurement
-                current_sensor_data = (self.hardware_interface.co2_sensor.
-                                       get_current_concentration(
-                                           pressure=self.rb_pressure.avg(),
-                                           humidity=self.rb_humidity.avg(),
-                                       ))
+                current_sensor_data = (
+                    self.hardware_interface.co2_sensor.read_with_retry(
+                        pressure=self.rb_pressure.avg(),
+                        humidity=self.rb_humidity.avg(),
+                    ))
                 self.logger.debug(
                     f"new calibration measurement: {current_sensor_data}")
 
@@ -186,13 +178,13 @@ class CalibrationProcedure:
             self.seconds_drying_with_first_bottle = 0
 
         # switch back to measurement inlet
-        self.hardware_interface.valves.set_active_input(
+        self.hardware_interface.valves.set(
             self.config.measurement.valve_number)
 
         # flush the system after calibration at max pump speed
         self.hardware_interface.pump.flush_system(
             duration=self.config.calibration.system_flushing_seconds,
-            duty_cycle=self.config.calibration.
+            pwm_duty_cycle=self.config.calibration.
             system_flushing_pump_pwm_duty_cycle,
         )
 
