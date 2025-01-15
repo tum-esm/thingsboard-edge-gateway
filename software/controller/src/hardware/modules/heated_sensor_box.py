@@ -42,29 +42,41 @@ class HeatingBoxModule:
 
     def run(self) -> None:
         """Runs the PID to control for temperature."""
-        last_log_timestamp = 0.0
 
-        while True:
-            # Calculate control output and update system state
-            temp = self.temperature_sensor.read_with_retry()  #ignoreType
-            assert isinstance(
-                temp,
-                float), "Temperature should be a float after the None check."
+        try:
+            last_log_timestamp = 0.0
 
-            control = self.pid(temp)
+            while True:
+                # Calculate control output and update system state
+                temp = self.temperature_sensor.read_with_retry()  #ignoreType
+                assert isinstance(
+                    temp, float
+                ), "Temperature should be a float after the None check."
 
-            self.heater.set(pwm_duty_cycle=control)
+                control = self.pid(temp)
 
-            # Check if logging interval has passed
-            if time.time() - last_log_timestamp > 5:
-                self.logger.info(
-                    f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: "
-                    f"Temperature: {round(temp, 2)}, Control: {round(control, 2)}"  # type: ignore[arg-type]
-                )
-                last_log_timestamp = time.time()
+                self.heater.set(pwm_duty_cycle=control)
 
-            # Control loop sleep
-            time.sleep(0.1)
+                # Check if logging interval has passed
+                if time.time() - last_log_timestamp > 5:
+                    self.logger.info(
+                        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: "
+                        f"Temperature: {round(temp, 2)}, Control: {round(control, 2)}"  # type: ignore[arg-type]
+                    )
+                    last_log_timestamp = time.time()
+
+                # Control loop sleep
+                time.sleep(0.1)
+        except Exception as e:
+            self.logger.error(
+                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Error - {e}"
+            )
+        finally:
+            # Final cleanup in case of an unexpected exit
+            self.teardown()
+            self.logger.info(
+                f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: Heater and ventilation powered off."
+            )
 
     def teardown(self) -> None:
         """set default actor values"""
