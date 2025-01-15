@@ -81,3 +81,24 @@ class CO2MeasurementModule:
                 sht45_humidity=self.air_inlet_sht45_data.humidity,
             ),
         )
+
+    def send_CO2_calibration_data(self,
+                                  CO2_sensor_data: sensor_types.CO2SensorData,
+                                  gas_bottle_id: int) -> None:
+
+        # send out MQTT measurement message
+        self.message_queue.enqueue_message(
+            timestamp=int(time.time()),
+            payload=mqtt_playload_types.MQTTCO2CalibrationData(
+                cal_bottle_id=float(gas_bottle_id),
+                cal_gmp343_raw=CO2_sensor_data.raw,
+                cal_gmp343_compensated=CO2_sensor_data.compensated,
+                cal_gmp343_filtered=CO2_sensor_data.filtered,
+                cal_bme280_temperature=self.air_inlet_bme280_data.temperature,
+                cal_bme280_humidity=self.air_inlet_bme280_data.humidity,
+                cal_bme280_pressure=self.air_inlet_bme280_data.pressure,
+                cal_sht45_temperature=self.air_inlet_sht45_data.temperature,
+                cal_sht45_humidity=self.air_inlet_sht45_data.humidity,
+                cal_gmp343_temperature=CO2_sensor_data.temperature,
+            ),
+        )
