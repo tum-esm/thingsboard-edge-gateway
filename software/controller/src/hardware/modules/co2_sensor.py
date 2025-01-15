@@ -16,9 +16,9 @@ class CO2MeasurementModule:
                  inlet_bme280: BoschBME280,
                  inlet_sht45: SensirionSHT45) -> None:
 
-        self.logger, self.config = logging_interface.Logger(
-            config=config, origin="measurement-procedure"), config
-
+        self.logger = logging_interface.Logger(config=config,
+                                               origin="CO2MeasurementModule")
+        self.config = config
         self.message_queue = message_queue.MessageQueue()
         self.reset_ring_buffers()
 
