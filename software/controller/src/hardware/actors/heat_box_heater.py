@@ -6,7 +6,7 @@ from custom_types import config_types
 
 
 class HeatBoxHeater(base_actor.Actor):
-    """Class for controlling the ACL Type 201 solenoid vales."""
+    """Class for controlling the heat box heater."""
 
     def __init__(self,
                  config: config_types.Config,
