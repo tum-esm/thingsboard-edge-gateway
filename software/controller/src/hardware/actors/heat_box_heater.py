@@ -1,5 +1,9 @@
-from typing import Literal, Any
-import gpiozero
+from typing import Any
+
+try:
+    import gpiozero
+except Exception:
+    pass
 
 from hardware.actors import base_actor
 from custom_types import config_types
