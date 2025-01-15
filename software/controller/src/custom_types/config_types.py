@@ -60,6 +60,8 @@ class DocumentationConfig(BaseModel):
 class HardwareConfig(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
+    heat_box_heater_power_pin_out: int
+    heat_box_heater_power_pin_frequency: int
     pump_pwm_duty_cycle: float = Field(ge=0, le=1)
     pump_power_pin_out: int
     pump_power_pin_frequency: int
