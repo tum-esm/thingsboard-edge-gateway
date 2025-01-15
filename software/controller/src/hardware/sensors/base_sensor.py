@@ -54,7 +54,7 @@ class Sensor(ABC):
         start_time = time.time()
         for attempt in range(1, self.max_retries + 1):
             try:
-                self.logger.info(
+                self.logger.debug(
                     f"Attempt {attempt} of {self.max_retries}: Reading sensor value."
                 )
                 return self.read(*args, **kwargs)
