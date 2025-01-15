@@ -29,7 +29,11 @@ class MeasurementProcedure:
         1. Collect Wind Sensor Data
         2. Run CO2 sensor measurement interval
         """
-        # TODO set measurement inlet here?
+        # Ensure that measurement line is active
+        if not (self.hardware_interface.valves.active_input
+                == self.config.measurement.valve_number):
+            self.hardware_interface.vales.set(
+                self.config.measurement.valve_number)
 
         # Wind sensor data
         self.hardware_interface.wind_sensor_module.process_wind_sensor_data()
