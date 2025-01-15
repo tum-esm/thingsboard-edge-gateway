@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import time
-from typing import Any
+from typing import Any, Optional
 try:
     import gpiozero.pins.pigpio
 except Exception:
@@ -16,16 +16,19 @@ class Actor(ABC):
     class ActorError(Exception):
         """Raised when an error occurs in the actor class."""
 
-    def __init__(self,
-                 config: config_types.Config,
-                 max_retries: int = 3,
-                 retry_delay: float = 0.5):
+    def __init__(
+            self,
+            config: config_types.Config,
+            max_retries: int = 3,
+            retry_delay: float = 0.5,
+            pin_factory: Optional[gpiozero.pins.pigpio.PiGPIOFactory] = None):
 
         # init parameters
         self.config = config
         self.simulate = config.active_components.simulation_mode
         self.max_retries = max_retries
         self.retry_delay = retry_delay
+        self.pin_factory = pin_factory
 
         # init logger with actor class name
         self.logger = logging_interface.Logger(

@@ -27,9 +27,8 @@ class VaisalaWXT532(Sensor):
 
     def __init__(self, config: config_types.Config,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
-        super().__init__(config=config)
+        super().__init__(config=config, pin_factory=pin_factory)
 
-        self.pin_factory = pin_factory
         self.buffered_messages: List[str] = []
         self.latest_device_status: Optional[
             sensor_types.WindSensorStatus] = None

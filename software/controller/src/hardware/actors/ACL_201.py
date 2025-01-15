@@ -14,13 +14,15 @@ class ACLValves(base_actor.Actor):
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
                  max_retries: int = 3,
                  retry_delay: float = 0.5):
-        super().__init__(config=config,
-                         max_retries=max_retries,
-                         retry_delay=retry_delay)
 
-        self.pin_factory = pin_factory
+        # Ensure active input is set before base class initialization
         self.active_input: Literal[1, 2, 3,
                                    4] = self.config.measurement.valve_number
+
+        super().__init__(config=config,
+                         max_retries=max_retries,
+                         retry_delay=retry_delay,
+                         pin_factory=pin_factory)
 
     def _initialize_actor(self) -> None:
         """Initializes the solenoid valves."""
