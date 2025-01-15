@@ -180,17 +180,12 @@ class VaisalaGMP343(Sensor):
             "  ", "").replace(" : ", ": ").replace(" \r\n", "\r\n").replace(
                 "\r\n\r\n", "\r\n").replace("\r\n", "; ").removesuffix("; >"))
 
-    def check_param_info(self) -> str:
-        """runs the "param" command to get a full sensor parameter report"""
-        try:
-            return self._send_command_to_sensor("param")
-        except Exception:
-            self.reset_sensor()
-            return self._send_command_to_sensor("param")
-
     def _check_errors(self) -> None:
         """checks whether the CO2 probe reports any errors. Possibly raises
         the CO2SensorInterface.CommunicationError exception"""
+
+        answer = self._send_command_to_sensor("param")
+        self.logger.info(f"GMP343 Sensor Info: {answer}")
 
         answer = self._send_command_to_sensor("errs")
 

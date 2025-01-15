@@ -107,9 +107,7 @@ def run() -> None:
             config=config, hardware_interface=hardware)
         calibration_procedure = calibration.CalibrationProcedure(
             config=config, hardware_interface=hardware)
-        wind_measurement_procedure = measurement.WindMeasurementProcedure(
-            config=config, hardware_interface=hardware)
-        co2_measurement_procedure = measurement.CO2MeasurementProcedure(
+        measurement_procedure = measurement.MeasurementProcedure(
             config=config, hardware_interface=hardware)
     except Exception as e:
         logger.exception(e,
@@ -157,8 +155,7 @@ def run() -> None:
 
             # if messages are empty, run regular measurements
             logger.info("Running measurements.")
-            wind_measurement_procedure.run()
-            co2_measurement_procedure.run()
+            measurement_procedure.run()
 
             # -----------------------------------------------------------------
 
