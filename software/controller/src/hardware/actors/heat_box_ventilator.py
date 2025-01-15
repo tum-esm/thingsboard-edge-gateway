@@ -46,3 +46,9 @@ class HeatBoxVentilator(base_actor.Actor):
             self.power_pin.on()
         else:
             self.power_pin.off()
+
+    def start_ventilation(self):
+        self._set(run_ventilation=True)
+
+    def stop_ventilation(self):
+        self._set(run_ventilation=False)
