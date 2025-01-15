@@ -55,6 +55,9 @@ class CalibrationProcedure:
             system_flushing_pump_pwm_duty_cycle,
         )
 
+        # clear ring buffers
+        self.hardware_interface.co2_measurement_module.reset_ring_buffers()
+
         # save last calibration time
         self.logger.debug("updating state")
         self.logger.info(
