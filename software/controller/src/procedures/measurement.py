@@ -1,6 +1,8 @@
+import time
+from typing import Optional, Literal
+
 from custom_types import config_types
 from interfaces import hardware_interface, logging_interface
-from hardware.modules import co2_sensor, wind_sensor
 
 
 class MeasurementProcedure:
@@ -18,26 +20,48 @@ class MeasurementProcedure:
 
         self.logger, self.config = logging_interface.Logger(
             config=config, origin="measurement-procedure"), config
-
-        # state variables
-        self.co2_sensor_module = co2_sensor.CO2MeasurementModule(
-            config=config, hardware_interface=hardware_interface)
-
-        self.wind_sensor_module = wind_sensor.WindSensorModule(
-            config=config, hardware_interface=hardware_interface)
+        self.active_air_inlet: Optional[Literal[1, 2, 3, 4]] = None
+        self.last_measurement_time: float = 0
+        self.hardware_interface = hardware_interface
 
     def run(self) -> None:
         """
         1. Collect Wind Sensor Data
         2. Run CO2 sensor measurement interval
         """
+        # TODO set measurement inlet here?
 
         # Wind sensor data
-        self.wind_sensor_module.process_wind_sensor_data()
+        self.hardware_interface.wind_sensor_module.process_wind_sensor_data()
 
         # do regular measurements for in config defined measurement interval
         self.logger.info(
             f"starting {self.config.measurement.procedure_seconds} seconds long CO2 measurement interval"
         )
-        self.co2_sensor_module.run_CO2_measurement_interval()
+        self.co2_measurement_interval()
         self.logger.info(f"finished CO2 measurement interval")
+
+    def co2_measurement_interval(self) -> None:
+        measurement_procedure_start_time = time.time()
+        while True:
+            # idle until next measurement period
+            seconds_to_wait_for_next_measurement = max(
+                self.config.hardware.gmp343_filter_seconds_averaging -
+                (time.time() - self.last_measurement_time),
+                0,
+            )
+            self.logger.debug(
+                f"sleeping {round(seconds_to_wait_for_next_measurement, 3)} seconds"
+            )
+            time.sleep(seconds_to_wait_for_next_measurement)
+            self.last_measurement_time = time.time()
+
+            measurement = self.hardware_interface.co2_measurement_module.perform_CO2_measurement(
+            )
+            self.hardware_interface.co2_measurement_module.send_CO2_measurement_data(
+                CO2_sensor_data=measurement)
+
+            # stop loop after defined measurement interval
+            if (self.last_measurement_time - measurement_procedure_start_time
+                ) >= self.config.measurement.procedure_seconds:
+                break

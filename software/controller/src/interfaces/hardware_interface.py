@@ -15,6 +15,8 @@ from hardware.sensors.grove_MCP9808 import GroveMCP9808
 from hardware.actors.ACL_201 import ACLValves
 from hardware.actors.SP_622_EC_BL import SchwarzerPrecisionPump
 
+from hardware.modules import co2_sensor, wind_sensor
+
 from utils import gpio_pin_factory
 
 
@@ -40,11 +42,7 @@ class HardwareInterface:
         """raise when trying to use the hardware, but it
         is used by another process"""
 
-    def __init__(
-        self,
-        config: config_types.Config,
-        simulate: bool = False,
-    ) -> None:
+    def __init__(self, config: config_types.Config) -> None:
         global_hw_lock["lock"] = filelock.FileLock(
             os.environ.get("ACROPOLIS_HARDWARE_LOCKFILE_PATH")
             or "/home/pi/Documents/acropolis/acropolis-hardware.lock",
@@ -74,6 +72,15 @@ class HardwareInterface:
                                            pin_factory=self.pin_factory)
         self.valves = ACLValves(config=self.config,
                                 pin_factory=self.pin_factory)
+
+        # hardware modules
+        self.co2_measurement_module = co2_sensor.CO2MeasurementModule(
+            config=config,
+            co2_sensor=self.co2_sensor,
+            inlet_bme280=self.air_inlet_bme280_sensor,
+            inlet_sht45=self.air_inlet_sht45_sensor)
+        self.wind_sensor_module = wind_sensor.WindSensorModule(
+            config=config, wind_sensor=self.wind_sensor)
 
     def check_errors(self) -> None:
         """checks for detectable hardware errors"""

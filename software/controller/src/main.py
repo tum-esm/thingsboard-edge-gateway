@@ -72,7 +72,7 @@ def run() -> None:
     logger.info("Initializing hardware interfaces.", forward=True)
 
     try:
-        hardware = hardware_interface.HardwareInterface(config=config, )
+        hardware = hardware_interface.HardwareInterface(config=config)
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",
@@ -109,6 +109,7 @@ def run() -> None:
             config=config, hardware_interface=hardware)
         measurement_procedure = measurement.MeasurementProcedure(
             config=config, hardware_interface=hardware)
+
     except Exception as e:
         logger.exception(e,
                          label="could not initialize procedures",
