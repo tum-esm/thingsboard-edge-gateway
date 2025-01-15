@@ -40,12 +40,17 @@ class HeatingBoxModule:
         self.heater.set(pwm_duty_cycle=0)
         self.ventilator.start_ventilation()
 
-    def run(self):
+    def run(self) -> None:
         """Runs the PID to control for temperature."""
+        last_log_timestamp = 0.0
 
         while True:
             # Calculate control output and update system state
-            temp = self.temperature_sensor.read_with_retry()
+            temp = self.temperature_sensor.read_with_retry()  #ignoreType
+            assert isinstance(
+                temp,
+                float), "Temperature should be a float after the None check."
+
             control = self.pid(temp)
 
             self.heater.set(pwm_duty_cycle=control)
@@ -54,14 +59,14 @@ class HeatingBoxModule:
             if time.time() - last_log_timestamp > 5:
                 self.logger.info(
                     f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}: "
-                    f"Temperature: {round(temp, 2)}, Control: {round(control, 2)}"
+                    f"Temperature: {round(temp, 2)}, Control: {round(control, 2)}"  # type: ignore[arg-type]
                 )
                 last_log_timestamp = time.time()
 
             # Control loop sleep
             time.sleep(0.1)
 
-    def teardown(self):
+    def teardown(self) -> None:
         """set default actor values"""
         self.heater.set(pwm_duty_cycle=0)
         self.ventilator.stop_ventilation()
