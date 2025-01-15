@@ -2,7 +2,8 @@ import time
 
 from custom_types import config_types, sensor_types
 from custom_types import mqtt_playload_types
-from interfaces import hardware_interface, logging_interface
+from interfaces import logging_interface
+from hardware.sensors.vaisala_wxt532 import VaisalaWXT532
 from utils import message_queue
 
 
@@ -17,22 +18,18 @@ class WindSensorModule:
 
     #TODO: Make it executeable as a thread
 
-    def __init__(
-            self, config: config_types.Config,
-            hardware_interface: hardware_interface.HardwareInterface) -> None:
+    def __init__(self, config: config_types.Config,
+                 wind_sensor: VaisalaWXT532) -> None:
 
         self.logger, self.config = logging_interface.Logger(
             config=config, origin="measurement-procedure"), config
-        self.hardware_interface = hardware_interface
-
-        # state variables
+        self.wind_sensor = wind_sensor
         self.message_queue = message_queue.MessageQueue()
 
     def process_wind_sensor_data(self) -> None:
         # wind measurement
 
-        wind_sensor_data, wind_sensor_status = self.hardware_interface.wind_sensor.read(
-        )
+        wind_sensor_data, wind_sensor_status = self.wind_sensor.read()
 
         self._send_wind_sensor_data(wind_sensor_data=wind_sensor_data)
         self._send_wind_sensor_status(wind_sensor_status=wind_sensor_status)
