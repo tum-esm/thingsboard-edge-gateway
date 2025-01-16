@@ -33,8 +33,13 @@ class CalibrationProcedure:
         sequence_calibration_bottle = self._alternate_bottle_for_drying()
 
         for gas in sequence_calibration_bottle:
+
             # clear ring buffers
             self.hardware_interface.co2_measurement_module.reset_ring_buffers()
+
+            self.logger.info(
+                f"Switching to calibration gas bottle ID: {gas.bottle_id} Valve:{gas.valve_number}",
+                forward=True)
 
             # switch to each calibration valve
             self.hardware_interface.valves.set(gas.valve_number)

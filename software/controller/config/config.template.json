@@ -1,5 +1,5 @@
 {
-    "version": "0.0.27",
+    "version": "0.0.29",
     "active_components": {
         "run_calibration_procedures": true,
         "send_messages_over_mqtt": true,
@@ -23,7 +23,7 @@
                 "bottle_id": "998"
             }
         ],
-        "sampling_per_cylinder_seconds": 600,
+        "sampling_per_cylinder_seconds": 60,
         "system_flushing_pump_pwm_duty_cycle": 0.5,
         "system_flushing_seconds": 300
 
