@@ -66,6 +66,20 @@ def test_initialize_sensor(sensor, mock_serial_interface):
         1] == expected_startup_message
 
 
+def test_wrong_startup_message(mock_config, mock_gpiozero):
+    """Test sensor initialization with wrong startup message."""
+    mock_serial = MagicMock()
+    mock_serial.wait_for_answer.return_value = (
+        "success", "This is not the expected startup message.")
+
+    with patch(
+            "hardware.sensors.vaisala_gmp343.serial_interfaces.SerialCO2SensorInterface",
+            return_value=mock_serial):
+        with pytest.raises(base_sensor.Sensor.SensorError,
+                           match="Sending command failed"):
+            VaisalaGMP343(config=mock_config, pin_factory=mock_gpiozero)
+
+
 def test_shutdown_sensor(sensor):
     """Test sensor shutdown."""
     # Arrange: Set the initial state of the mocked power pin
@@ -143,10 +157,13 @@ def test_read_with_retry_failure(sensor, mock_serial_interface):
         # Mock send_command to fail for all attempts
         mock_serial_interface.send_command.side_effect = [
             ("timeout", ""),
-            ("uncomplete", ""),
+            ("timeout", ""),
             ("timeout", ""),
         ]
 
         with pytest.raises(base_sensor.Sensor.SensorError,
                            match='All retries failed.'):
             sensor.read_with_retry()
+
+        # Assert the number of send_command calls
+        assert mock_serial_interface.send_command.call_count == 12 + 3
