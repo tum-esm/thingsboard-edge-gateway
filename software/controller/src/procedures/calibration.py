@@ -49,6 +49,7 @@ class CalibrationProcedure:
             # reset drying time extension for following bottles
             self.seconds_drying_with_first_bottle = 0
 
+        # rh offsets is calculated from median of humidity readings of last calibration bottle
         rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
         )
         self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)
