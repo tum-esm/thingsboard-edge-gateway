@@ -198,6 +198,8 @@ class Logger:
         assert (len(subject) <= 256)
         assert (len(details) <= 16384)
 
+        time.sleep(1)  # ensure that log message has unique timestamp
+
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),
             payload=mqtt_playload_types.MQTTLogMessage(
