@@ -48,9 +48,15 @@ class VaisalaGMP343(Sensor):
     def _shutdown_sensor(self) -> None:
         """Shutdown the sensor."""
 
-        self.power_pin.off()
-        # Shut down the device and release all associated resources (such as GPIO pins).
-        self.power_pin.close()
+        if hasattr(
+                self,
+                "power_pin") and self.power_pin and not self.power_pin.closed:
+            self.power_pin.off()
+            # Shut down the device and release all associated resources (such as GPIO pins).
+            self.power_pin.close()
+        else:
+            self.logger.warning(
+                "Power pin is uninitialized or already closed.")
 
     def _read(self, *args: Any,
               **kwargs: Optional[float]) -> sensor_types.CO2SensorData:
@@ -65,7 +71,15 @@ class VaisalaGMP343(Sensor):
 
         answer = self.serial_interface.send_command(
             "send", expected_regex=CO2_MEASUREMENT_REGEX, timeout=30)
-        sensor_data = tuple(map(float, answer[1].split()[:4]))
+
+        if not answer[1] or 'Unknown' in answer[1]:
+            raise self.SensorError(
+                "Invalid sensor response: data missing or corrupted.")
+        try:
+            sensor_data = tuple(map(float, answer[1].split()[:4]))
+        except ValueError as e:
+            self.logger.error(f"Failed to parse sensor data: {e}")
+            raise self.SensorError("Failed to parse sensor data.")
 
         return sensor_types.CO2SensorData(
             raw=sensor_data[0],
@@ -126,34 +140,22 @@ class VaisalaGMP343(Sensor):
 
         self.logger.info("Sending settings to the CO2 sensor.")
 
-        settings = {
-            'form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"':
-            None,
-            'echo off':
-            None,
-            'range 1':
-            None,
-            f"average {self.config.hardware.gmp343_filter_seconds_averaging}":
-            None,
-            f"smooth {self.config.hardware.gmp343_filter_smoothing_factor}":
-            None,
-            f"median {self.config.hardware.gmp343_filter_median_measurements}":
-            None,
-            f"heat {'on' if self.config.hardware.gmp343_optics_heating else 'off'}":
-            None,
-            f"linear {'on' if self.config.hardware.gmp343_linearisation else 'off'}":
-            None,
-            f"tc {'on' if self.config.hardware.gmp343_temperature_compensation else 'off'}":
-            None,
-            f"rhc {'on' if self.config.hardware.gmp343_relative_humidity_compensation else 'off'}":
-            None,
-            f"pc {'on' if self.config.hardware.gmp343_pressure_compensation else 'off'}":
-            None,
-            f"oc {'on' if self.config.hardware.gmp343_oxygen_compensation else 'off'}":
-            None
-        }
+        settings = [
+            'form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"',
+            'echo off',
+            'range 1',
+            f"average {self.config.hardware.gmp343_filter_seconds_averaging}",
+            f"smooth {self.config.hardware.gmp343_filter_smoothing_factor}",
+            f"median {self.config.hardware.gmp343_filter_median_measurements}",
+            f"heat {'on' if self.config.hardware.gmp343_optics_heating else 'off'}",
+            f"linear {'on' if self.config.hardware.gmp343_linearisation else 'off'}",
+            f"tc {'on' if self.config.hardware.gmp343_temperature_compensation else 'off'}",
+            f"rhc {'on' if self.config.hardware.gmp343_relative_humidity_compensation else 'off'}",
+            f"pc {'on' if self.config.hardware.gmp343_pressure_compensation else 'off'}",
+            f"oc {'on' if self.config.hardware.gmp343_oxygen_compensation else 'off'}",
+        ]
 
-        for command, _ in settings.items():
+        for command in settings:
             self._send_command_to_sensor(command=command)
 
         self.logger.info("Settings sent successfully.")
@@ -162,9 +164,11 @@ class VaisalaGMP343(Sensor):
                                   humidity: float) -> None:
         """update pressure, humidity in sensor for internal compensation."""
 
-        assert 0 <= humidity <= 100, f"humidity ({humidity} not in [0, 100])"
-        assert (700 <= pressure <=
-                1300), f"pressure ({pressure} not in [700, 1300])"
+        if not (0 <= humidity <= 100):
+            raise ValueError(f"Humidity {humidity} is out of range [0, 100].")
+        if not (700 <= pressure <= 1300):
+            raise ValueError(
+                f"Pressure {pressure} is out of range [700, 1300].")
 
         self._send_command_to_sensor(command=f"rh {round(humidity, 2)}")
         self._send_command_to_sensor(command=f"p {round(pressure, 2)}")
