@@ -8,3 +8,4 @@ class State(pydantic.BaseModel):
     last_calibration_time: Optional[float]
     current_config_revision: int
     next_calibration_cylinder: int = pydantic.Field(..., ge=0, le=3)
+    sht45_humidity_offset: float

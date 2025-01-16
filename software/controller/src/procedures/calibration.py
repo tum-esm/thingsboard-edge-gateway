@@ -52,6 +52,14 @@ class CalibrationProcedure:
         # rh offsets is calculated from median of humidity readings of last calibration bottle
         rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
         )
+        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(
+            rh_offset)
+
+        # persist humidity offset in state file
+        state = state_interface.StateInterface.read(config=self.config)
+        state.sht45_humidity_offset = rh_offset
+        state_interface.StateInterface.write(state)
+
         self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)
 
         # switch back to measurement inlet

@@ -9,6 +9,7 @@ except:
 
 from hardware.sensors.base_sensor import Sensor
 from custom_types import config_types, sensor_types
+from interfaces import state_interface
 
 
 class SensirionSHT45(Sensor):
@@ -16,6 +17,9 @@ class SensirionSHT45(Sensor):
 
     def __init__(self, config: config_types.Config):
         super().__init__(config=config)
+
+        state = state_interface.StateInterface.read(config=self.config)
+        self.sht.humidity_offset = state.sht45_humidity_offset
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
@@ -45,3 +49,8 @@ class SensirionSHT45(Sensor):
             temperature=random.uniform(20, 25),
             humidity=random.uniform(40, 60),
         )
+
+    def set_humidity_offset(self, rh_offset: float) -> None:
+        """Set the humidity offset."""
+        self.sht.humidity_offset = rh_offset
+        self.logger.debug(f"Set humidity offset to {rh_offset}.")
