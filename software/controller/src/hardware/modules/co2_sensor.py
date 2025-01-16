@@ -35,7 +35,7 @@ class CO2MeasurementModule:
 
         # perform a CO2 measurement
         CO2_sensor_data = (self.co2_sensor.read_with_retry(
-            timeout=30,
+            timeout=60,
             pressure=self.rb_pressure.avg(),
             humidity=self.rb_humidity.avg(),
         ))

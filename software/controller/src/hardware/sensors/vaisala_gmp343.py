@@ -70,7 +70,7 @@ class VaisalaGMP343(Sensor):
                                            humidity=humidity)
 
         answer = self.serial_interface.send_command(
-            "send", expected_regex=CO2_MEASUREMENT_REGEX, timeout=30)
+            "send", expected_regex=CO2_MEASUREMENT_REGEX, timeout=15)
 
         if not answer[1] or 'Unknown' in answer[1]:
             raise self.SensorError(
