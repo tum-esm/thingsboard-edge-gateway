@@ -2,7 +2,7 @@ import os
 from os.path import join
 
 
-def get_logs_archive_dir(project_dir: str):
+def get_logs_archive_dir(project_dir: str) -> str:
     """
     Determines the log directory based on availability.
     Defaults to '/root/logs', falls back to './logs' if unavailable.
