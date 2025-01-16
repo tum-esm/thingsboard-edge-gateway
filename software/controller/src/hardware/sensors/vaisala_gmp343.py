@@ -166,7 +166,7 @@ class VaisalaGMP343(Sensor):
 
         if not (0 <= humidity <= 100):
             raise ValueError(f"Humidity {humidity} is out of range [0, 100].")
-        if not (700 <= pressure <= 1300):
+        if not (600 <= pressure <= 1300):
             raise ValueError(
                 f"Pressure {pressure} is out of range [700, 1300].")
 
