@@ -28,14 +28,14 @@ class CalibrationProcedure:
             forward=True,
         )
 
-        # clear ring buffers
-        self.hardware_interface.co2_measurement_module.reset_ring_buffers()
-
         # alternate calibration bottle order every other day
         # first bottle receives additional time to dry air chamber
         sequence_calibration_bottle = self._alternate_bottle_for_drying()
 
         for gas in sequence_calibration_bottle:
+            # clear ring buffers
+            self.hardware_interface.co2_measurement_module.reset_ring_buffers()
+
             # switch to each calibration valve
             self.hardware_interface.valves.set(gas.valve_number)
 
@@ -43,6 +43,10 @@ class CalibrationProcedure:
 
             # reset drying time extension for following bottles
             self.seconds_drying_with_first_bottle = 0
+
+        rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
+        )
+        self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)
 
         # switch back to measurement inlet
         self.hardware_interface.valves.set(

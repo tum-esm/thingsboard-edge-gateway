@@ -25,5 +25,18 @@ class RingBuffer:
         else:
             return None
 
+    def median(self) -> Any:
+        if len(self.ring_buffer) > 0:
+            sorted_buffer = sorted(self.ring_buffer)
+            mid = len(sorted_buffer) // 2
+            if len(sorted_buffer) % 2 == 0:
+                # Average of two middle values for even length
+                return (sorted_buffer[mid - 1] + sorted_buffer[mid]) / 2
+            else:
+                # Middle value for odd length
+                return sorted_buffer[mid]
+        else:
+            return None
+
     def clear(self) -> None:
         self.ring_buffer = []

@@ -1,7 +1,7 @@
 {
     "version": "0.0.27",
     "active_components": {
-        "run_calibration_procedures": false,
+        "run_calibration_procedures": true,
         "send_messages_over_mqtt": true,
         "run_hardware_tests": false,
         "run_sensor_heating_control": false,  
