@@ -1,8 +1,9 @@
 import time
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
+import os
 import sys
 
 from custom_types import mqtt_playload_types, config_types
@@ -35,11 +36,11 @@ class Logger:
 
     def horizontal_line(self,
                         fill_char: Literal["-", "=", ".", "_"] = "=") -> None:
-        """writes a debug log line, used for verbose output"""
+        """Writes a debug log line, used for verbose output"""
         self._write_log_line("INFO", fill_char * 46)
 
     def debug(self, message: str) -> None:
-        """writes a debug log line, used for verbose output"""
+        """Writes a debug log line, used for verbose output"""
         self._write_log_line("DEBUG", message)
 
     def info(
@@ -66,9 +67,7 @@ class Logger:
         forward: bool = False,
         details: str = "",
     ) -> None:
-        """writes a warning log line, sends the message via
-        MQTT when config is passed (required for revision number)
-        """
+        """Writes a warning log line, sends the message via MQTT when set to True."""
         if len(details) == 0:
             self._write_log_line("WARNING", message)
         else:
@@ -85,9 +84,7 @@ class Logger:
         forward: bool = False,
         details: str = "",
     ) -> None:
-        """writes an error log line, sends the message via
-        MQTT when config is passed (required for revision number)
-        """
+        """Writes an error log line, sends the message via MQTT when set to True."""
         if len(details) == 0:
             self._write_log_line("ERROR", message)
         else:
@@ -111,20 +108,7 @@ class Logger:
         label: Optional[str] = None,
         forward: bool = False,
     ) -> None:
-        """logs the traceback of an exception, sends the message via
-        MQTT when config is passed (required for revision number).
-
-        exceptions will be formatted like this:
-
-        ```txt
-        (label, )ZeroDivisionError: division by zer
-        --- details: -----------------
-        ...
-        --- traceback: ---------------
-        ...
-        ------------------------------
-        ```
-        """
+        """Logs the traceback of an exception, sends the message via MQTT when set to True."""
         exception_name = traceback.format_exception_only(type(e), e)[0].strip()
         exception_traceback = "\n".join(
             traceback.format_exception(type(e), e, e.__traceback__)).strip()
@@ -152,25 +136,54 @@ class Logger:
             )
 
     def _write_log_line(self, level: str, message: str) -> None:
-        """formats the log line string and writes it to
-        `logs/current-logs.log`"""
-        now = datetime.now()
-        utc_offset = round(
-            (datetime.now() - datetime.utcnow()).total_seconds() / 3600, 1)
-        if round(utc_offset) == utc_offset:
-            utc_offset = round(utc_offset)
+        """Formats the log line string and writes it to the appropriate log file."""
+        # Get the current local time as a timezone-aware datetime object
+        now_local = datetime.now().astimezone()
 
-        log_string = (
-            f"{str(now)[:-3]} UTC{'' if utc_offset < 0 else '+'}{utc_offset} "
-            + f"- {_pad_str_right(self.origin, min_width=23)} " +
-            f"- {_pad_str_right(level, min_width=13)} " + f"- {message}\n")
+        # Calculate UTC offset in hours, rounded to one decimal place
+        utc_offset_td = now_local.utcoffset()
+        if utc_offset_td is not None:
+            utc_offset = round(utc_offset_td.total_seconds() / 3600, 1)
+        else:
+            # Fallback if utcoffset() returns None
+            utc_offset = 0.0
+
+        # If UTC offset is an integer, display without decimal
+        if utc_offset == int(utc_offset):
+            utc_offset = int(utc_offset)
+
+        # Format the timestamp to include milliseconds
+        timestamp = now_local.strftime(
+            '%Y-%m-%d %H:%M:%S.%f')[:-3]  # Trim microseconds to milliseconds
+
+        # Format UTC offset string
+        if utc_offset < 0:
+            offset_str = f"UTC{utc_offset}"
+        else:
+            offset_str = f"UTC+{utc_offset}"
+
+        # Construct the log string with proper formatting
+        log_string = (f"{timestamp} {offset_str} "
+                      f"- {_pad_str_right(self.origin, min_width=23)} "
+                      f"- {_pad_str_right(level, min_width=13)} "
+                      f"- {message}\n")
+
+        # Print to console if enabled
         if self.print_to_console:
             print(log_string, end="")
             sys.stdout.flush()
+
+        # Write to file if enabled
         if self.write_to_file:
             # YYYY-MM-DD.log
-            log_file_name = str(now)[:10] + ".log"
-            with open(join(LOGS_ARCHIVE_DIR, log_file_name), "a") as f1:
+            log_file_name = now_local.strftime('%Y-%m-%d') + ".log"
+            log_file_path = join(LOGS_ARCHIVE_DIR, log_file_name)
+
+            # Ensure the log directory exists
+            os.makedirs(LOGS_ARCHIVE_DIR, exist_ok=True)
+
+            # Append the log string to the file
+            with open(log_file_path, "a") as f1:
                 f1.write(log_string)
 
     def _enqueue_message(
@@ -194,7 +207,7 @@ class Logger:
         assert (len(subject) <= 256)
         assert (len(details) <= 16384)
 
-        time.sleep(1)  # ensure that log message has unique timestamp
+        time.sleep(1)  # Ensure that log message has a unique timestamp
 
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),
