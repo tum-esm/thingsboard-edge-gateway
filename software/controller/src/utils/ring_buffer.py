@@ -31,10 +31,11 @@ class RingBuffer:
             mid = len(sorted_buffer) // 2
             if len(sorted_buffer) % 2 == 0:
                 # Average of two middle values for even length
-                return (sorted_buffer[mid - 1] + sorted_buffer[mid]) / 2
+                return round((sorted_buffer[mid - 1] + sorted_buffer[mid]) / 2,
+                             2)
             else:
                 # Middle value for odd length
-                return sorted_buffer[mid]
+                return round(sorted_buffer[mid], 2)
         else:
             return None
 
