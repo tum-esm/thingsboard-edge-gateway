@@ -36,6 +36,8 @@ class VaisalaGMP343(Sensor):
             pin=self.config.hardware.gmp343_power_pin_out,
             pin_factory=self.pin_factory)
         self.last_powerup_time = time.time()
+        self.power_pin.off()
+        time.sleep(5)
         self.power_pin.on()
         self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
             port=str(self.config.hardware.gmp343_serial_port))
@@ -166,7 +168,7 @@ class VaisalaGMP343(Sensor):
 
         if not (0 <= humidity <= 100):
             raise ValueError(f"Humidity {humidity} is out of range [0, 100].")
-        if not (600 <= pressure <= 1300):
+        if not (700 <= pressure <= 1300):
             raise ValueError(
                 f"Pressure {pressure} is out of range [700, 1300].")
 

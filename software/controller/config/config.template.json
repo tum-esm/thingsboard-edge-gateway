@@ -1,5 +1,5 @@
 {
-    "version": "0.0.32",
+    "version": "0.0.33",
     "active_components": {
         "run_calibration_procedures": true,
         "send_messages_over_mqtt": true,
