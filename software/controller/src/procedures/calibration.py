@@ -38,11 +38,11 @@ class CalibrationProcedure:
             self.hardware_interface.co2_measurement_module.reset_ring_buffers()
 
             self.logger.info(
-                f"Switching to calibration gas bottle ID: {gas.bottle_id} Valve:{gas.valve_number}",
+                f"Switching to calibration gas bottle ID: {gas.bottle_id} Valve: {gas.valve_number}",
                 forward=True)
 
             # switch to each calibration valve
-            self.hardware_interface.valves.set(gas.valve_number)
+            self.hardware_interface.valves.set(number=gas.valve_number)
 
             self._co2_measurement_interval(gas=gas.valve_number)
 
@@ -55,7 +55,7 @@ class CalibrationProcedure:
 
         # switch back to measurement inlet
         self.hardware_interface.valves.set(
-            self.config.measurement.valve_number)
+            number=self.config.measurement.valve_number)
 
         # flush the system after calibration at max pump speed
         self.hardware_interface.pump.flush_system(

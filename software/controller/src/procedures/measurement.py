@@ -33,7 +33,7 @@ class MeasurementProcedure:
         if not (self.hardware_interface.valves.active_input
                 == self.config.measurement.valve_number):
             self.hardware_interface.valves.set(
-                self.config.measurement.valve_number)
+                number=self.config.measurement.valve_number)
 
         # Wind sensor data
         self.hardware_interface.wind_sensor_module.process_wind_sensor_data()
