@@ -37,9 +37,15 @@ class HeatBoxHeater(base_actor.Actor):
     def _shutdown_actor(self) -> None:
         """Shuts down the heat box heater."""
 
-        self.power_pin.off()
-        # Shut down the device and release all associated resources (such as GPIO pins).
-        self.power_pin.close()
+        if hasattr(
+                self,
+                "power_pin") and self.power_pin and not self.power_pin.closed:
+            self.power_pin.off()
+            # Shut down the device and release all associated resources (such as GPIO pins).
+            self.power_pin.close()
+        else:
+            self.logger.warning(
+                "Power pin is uninitialized or already closed.")
 
     def _set(self, *args: Any, **kwargs: float) -> None:
         """Sets the PWM signal for the heat box heater."""

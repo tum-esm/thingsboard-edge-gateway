@@ -38,7 +38,7 @@ class HeatingBoxModule:
 
         # default actor values
         self.heater.set(pwm_duty_cycle=0)
-        self.ventilator.start_ventilation()
+        self.ventilator.start()
 
     def run(self) -> None:
         """Runs the PID to control for temperature."""
@@ -81,4 +81,4 @@ class HeatingBoxModule:
     def teardown(self) -> None:
         """set default actor values"""
         self.heater.set(pwm_duty_cycle=0)
-        self.ventilator.stop_ventilation()
+        self.ventilator.stop()

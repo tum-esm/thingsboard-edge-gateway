@@ -118,9 +118,13 @@ class Sensor(ABC):
         """Check for any errors that might have occurred."""
         if self.simulate:
             self.logger.warning("No errors present in simulation mode.")
-
-        self._check_errors()
-        self.logger.info("No errors detected.")
+        try:
+            self._check_errors()
+            self.logger.info("No errors detected.")
+        except Exception:
+            self.reset_sensor()
+            self.logger.info("Errors failed. Restarting sensor.")
+            time.sleep(5)
 
     def _check_errors(self) -> None:
         """Abstract method to check for errors. Can be overridden by subclasses."""

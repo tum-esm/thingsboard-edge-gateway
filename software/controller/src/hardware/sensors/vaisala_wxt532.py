@@ -51,9 +51,15 @@ class VaisalaWXT532(Sensor):
 
     def _shutdown_sensor(self) -> None:
         """Shutdown the sensor."""
-        self.power_pin.off()
-        # Shut down the device and release all associated resources (such as GPIO pins).
-        self.power_pin.close()
+        if hasattr(
+                self,
+                "power_pin") and self.power_pin and not self.power_pin.closed:
+            self.power_pin.off()
+            # Shut down the device and release all associated resources (such as GPIO pins).
+            self.power_pin.close()
+        else:
+            self.logger.warning(
+                "Power pin is uninitialized or already closed.")
 
     def _read(
         self, *args: Any, **kwargs: Any

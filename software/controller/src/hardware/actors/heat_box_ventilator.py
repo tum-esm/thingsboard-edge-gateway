@@ -33,9 +33,15 @@ class HeatBoxVentilator(base_actor.Actor):
     def _shutdown_actor(self) -> None:
         """Shuts down the heat box ventilator."""
 
-        self.power_pin.off()
-        # Shut down the device and release all associated resources (such as GPIO pins).
-        self.power_pin.close()
+        if hasattr(
+                self,
+                "power_pin") and self.power_pin and not self.power_pin.closed:
+            self.power_pin.off()
+            # Shut down the device and release all associated resources (such as GPIO pins).
+            self.power_pin.close()
+        else:
+            self.logger.warning(
+                "Power pin is uninitialized or already closed.")
 
     def _set(self, *args: Any, **kwargs: bool) -> None:
         """Sets the PWM signal for the heat box ventilator."""
@@ -47,8 +53,8 @@ class HeatBoxVentilator(base_actor.Actor):
         else:
             self.power_pin.off()
 
-    def start_ventilation(self) -> None:
+    def start(self) -> None:
         self._set(run_ventilation=True)
 
-    def stop_ventilation(self) -> None:
+    def stop(self) -> None:
         self._set(run_ventilation=False)

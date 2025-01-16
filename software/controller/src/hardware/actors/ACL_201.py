@@ -54,7 +54,12 @@ class ACLValves(base_actor.Actor):
 
         for valve in self.valves.values():
             # Shut down the device and release all associated resources (such as GPIO pins).
-            valve.close()
+            if valve and not valve.closed:
+                # Shut down the device and release all associated resources (such as GPIO pins).
+                valve.close()
+            else:
+                self.logger.warning(
+                    "Valve pin is uninitialized or already closed.")
 
     def _set(self, *args: Any, **kwargs: Literal[1, 2, 3, 4]) -> None:
         """Sets the state of all solenoid valves

@@ -189,7 +189,6 @@ def run() -> None:
                     ebo.set_next_timer()
                     # reinitialize all hardware interfaces
                     logger.info("Performing hardware reset.", forward=True)
-                    hardware.teardown()
                     hardware.reinitialize(config)
                     logger.info("Hardware reset was successful.", forward=True)
 
@@ -199,6 +198,7 @@ def run() -> None:
                     label="exception during hard reset of hardware",
                     forward=True,
                 )
+                hardware.teardown()
                 exit(1)
 
 

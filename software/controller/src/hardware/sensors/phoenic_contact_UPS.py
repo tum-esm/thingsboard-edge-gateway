@@ -43,8 +43,13 @@ class PhoenixContactUPS(Sensor):
         """Shutdown the sensor."""
 
         for pin in self.pins.values():
-            # Shut down the device and release all associated resources (such as GPIO pins).
-            pin.close()
+
+            if pin and not pin.closed:
+                # Shut down the device and release all associated resources (such as GPIO pins).
+                pin.close()
+            else:
+                self.logger.warning(
+                    "Power pin is uninitialized or already closed.")
 
     def _read(self, *args: Any, **kwargs: Any) -> sensor_types.UPSSensorData:
         """Read the sensor value."""
