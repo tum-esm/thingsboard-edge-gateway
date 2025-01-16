@@ -45,6 +45,9 @@ class ACLValves(base_actor.Actor):
 
         # Set to sample from main air channel
         self._set(number=self.active_input)
+        self.logger.info(
+            f"initialized valves with active input from valve: {self.active_input}"
+        )
 
     def _shutdown_actor(self) -> None:
         """Shuts down the solenoid valves."""
@@ -98,4 +101,6 @@ class ACLValves(base_actor.Actor):
             self.valves[4].on()
 
         self.active_input = number
-        self.logger.info(f"switched to valve {self.active_input}")
+        self.logger.info(
+            f"switched measurement line to input: {self.active_input}",
+            forward=True)
