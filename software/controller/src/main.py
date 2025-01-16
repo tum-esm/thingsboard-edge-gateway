@@ -17,15 +17,9 @@ PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def run() -> None:
     """Entry point for the measurement automation
-
-    (e) Indicates possibility of an exception that blocks further execution
-
     INIT
-
-    - State Interface
-    - Timeouts
-    - Initialize Hardware Interface (e)
-    - Initialize Procedures (e) (System Checks, Measurement, Calibration)
+    - Initialize Config, Logger, State, Hardware Interface
+    - Initialize Procedures (System Checks, Measurement, Calibration)
 
     RUN INFINITE MAIN LOOP
     - Procedure: System Check
