@@ -6,14 +6,10 @@ from typing import Literal, Optional
 import sys
 
 from custom_types import mqtt_playload_types, config_types
-from utils import message_queue, shell_commands
+from utils import message_queue, shell_commands, log_path
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
-LOGS_ARCHIVE_DIR = "/root/logs"
-
-# The logging module behaved very weird with the setup we have
-# therefore I am just formatting and appending the log lines
-# manually. Doesn't really make a performance difference
+LOGS_ARCHIVE_DIR = log_path.get_logs_archive_dir(PROJECT_DIR)
 
 
 def _pad_str_right(text: str,
