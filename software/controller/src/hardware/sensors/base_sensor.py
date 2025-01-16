@@ -98,10 +98,11 @@ class Sensor(ABC):
         self.logger.info("Starting sensor shutdown.")
         self._shutdown_sensor()
         self.logger.info("Finished sensor shutdown.")
-        time.sleep(0.5)
+        time.sleep(1)
         self.logger.info("Starting initialization.")
         self._initialize_sensor()
         self.logger.info("Finished initialization.")
+        time.sleep(1)
 
     def teardown(self) -> None:
         """Shutdown the sensor and close all interfaces."""

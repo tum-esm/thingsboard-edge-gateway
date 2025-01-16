@@ -97,10 +97,11 @@ class Actor(ABC):
         self.logger.info("Starting actor shutdown.")
         self._shutdown_actor()
         self.logger.info("Finished actor shutdown.")
-        time.sleep(0.5)
+        time.sleep(1)
         self.logger.info("Starting initialization.")
         self._initialize_actor()
         self.logger.info("Finished initialization.")
+        time.sleep(1)
 
     def teardown(self) -> None:
         """Shutdown the actor and close all interfaces."""
