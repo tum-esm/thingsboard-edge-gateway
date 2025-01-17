@@ -29,7 +29,7 @@ class StateInterface:
         except Exception as e:
             logger.warning(f"state.json is invalid, creating a new one: {e}")
 
-        new_empty_state = state_types.State(last_calibration_time=None,
+        new_empty_state = state_types.State(last_calibration_attempt=None,
                                             current_config_revision=0,
                                             next_calibration_cylinder=0,
                                             sht45_humidity_offset=0.0)

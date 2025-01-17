@@ -28,6 +28,14 @@ class CalibrationProcedure:
             forward=True,
         )
 
+        # save last calibration attempt to only trigger calibrate procedure once a day
+        # if the calibration fails it will be triggered again the next day
+        self.logger.debug("updating state")
+
+        state = state_interface.StateInterface.read(config=self.config)
+        state.last_calibration_attempt = calibration_time
+        state_interface.StateInterface.write(state)
+
         # alternate calibration bottle order every other day
         # first bottle receives additional time to dry air chamber
         sequence_calibration_bottle = self._alternate_bottle_for_drying()
@@ -76,15 +84,10 @@ class CalibrationProcedure:
         # clear ring buffers
         self.hardware_interface.co2_measurement_module.reset_ring_buffers()
 
-        # save last calibration time
-        self.logger.debug("updating state")
         self.logger.info(
             f"finished calibration procedure at timestamp {datetime.utcnow().timestamp()}",
             forward=True,
         )
-        state = state_interface.StateInterface.read(config=self.config)
-        state.last_calibration_time = calibration_time
-        state_interface.StateInterface.write(state)
 
     def is_due(self) -> bool:
         """returns true when calibration procedure should run
@@ -101,13 +104,13 @@ class CalibrationProcedure:
 
         # if last calibration time is unknown, calibrate now
         # only happens when the state.json is recreated
-        if state.last_calibration_time is None:
+        if state.last_calibration_attempt is None:
             self.logger.info(
                 "last calibration time is unknown, calibrating now")
             return True
 
         last_calibration_day = datetime.fromtimestamp(
-            state.last_calibration_time).date()
+            state.last_calibration_attempt).date()
         days_since_last_calibration = (current_utc_day -
                                        last_calibration_day).days
 
