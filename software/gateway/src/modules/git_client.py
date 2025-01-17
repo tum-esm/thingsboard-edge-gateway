@@ -5,13 +5,19 @@ from utils.paths import ACROPOLIS_GATEWAY_GIT_PATH
 
 
 class GatewayGitClient:
+    instance = None
+
+    def __init__(self):
+        if self.__class__.instance is None:
+            print("[GIT-CLIENT] Initializing GatewayGitClient")
+            self.__class__.instance = self
+
     # Singleton pattern
     def __new__(cls):
-        if not hasattr(cls, 'instance') or cls.instance is None:
-            print("[GIT-CLIENT] Initializing GatewayGitClient")
-            cls.instance = super(GatewayGitClient, cls).__new__(cls)
-        return cls.instance
-    instance = None
+        if hasattr(cls, 'instance') and cls.instance is not None:
+            return cls.instance
+        return super(GatewayGitClient, cls).__new__(cls)
+
 
     def get_commit_from_hash_or_tag(self, hash_or_tag):
         commit_for_tag = self.get_commit_for_tag(hash_or_tag)

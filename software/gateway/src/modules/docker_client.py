@@ -11,17 +11,21 @@ CONTROLLER_CONTAINER_NAME = "acropolis_edge_controller"
 CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
 
 class GatewayDockerClient:
+    instance = None
+    last_launched_version = None
+
     def __init__(self):
-        self.docker_client = docker.from_env()
-        self.last_launched_version = None
+        if self.__class__.instance is None:
+            print("[DOCKER-CLIENT] Initializing GatewayDockerClient")
+            self.__class__.instance = self
+
+            self.docker_client = docker.from_env()
 
     # Singleton pattern
     def __new__(cls):
-        if not hasattr(cls, 'instance') or cls.instance is None:
-            print("[DOCKER-CLIENT] Initializing GatewayDockerClient")
-            cls.instance = super(GatewayDockerClient, cls).__new__(cls)
-        return cls.instance
-    instance = None
+        if hasattr(cls, 'instance') and cls.instance is not None:
+            return cls.instance
+        return super(GatewayDockerClient, cls).__new__(cls)
 
     def is_edge_running(self):
         containers = self.docker_client.containers.list()
