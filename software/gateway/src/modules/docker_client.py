@@ -104,7 +104,8 @@ class GatewayDockerClient:
             network_mode="host",
             environment={
                 "ACROPOLIS_DATA_PATH": "/root/data",
-                "ACROPOLIS_LOG_TO_CONSOLE": 1
+                "ACROPOLIS_LOG_TO_CONSOLE": 1,
+                "ACROPOLIS_SW_VERSION": version
             },
             volumes={
                 "/bin/vcgencmd": {
