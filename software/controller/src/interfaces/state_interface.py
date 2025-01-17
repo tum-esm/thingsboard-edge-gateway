@@ -1,6 +1,5 @@
 import json
 import os
-import time
 
 from custom_types import state_types, config_types
 from interfaces import logging_interface
@@ -16,12 +15,7 @@ class StateInterface:
     def init(config: config_types.Config) -> None:
         """create state file if it does not exist yet,
         add upgrade time if missing"""
-
-        state = StateInterface.read(config=config)
-        if state.last_upgrade_time is None:
-            state.last_upgrade_time = time.time()
-
-        StateInterface.write(state)
+        pass
 
     @staticmethod
     def read(config: config_types.Config) -> state_types.State:
@@ -35,8 +29,7 @@ class StateInterface:
         except Exception as e:
             logger.warning(f"state.json is invalid, creating a new one: {e}")
 
-        new_empty_state = state_types.State(last_upgrade_time=None,
-                                            last_calibration_time=None,
+        new_empty_state = state_types.State(last_calibration_time=None,
                                             current_config_revision=0,
                                             next_calibration_cylinder=0,
                                             sht45_humidity_offset=0.0)
