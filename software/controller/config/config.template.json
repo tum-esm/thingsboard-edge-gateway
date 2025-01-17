@@ -1,11 +1,11 @@
 {
-    "version": "0.0.37",
+    "version": "0.0.38",
     "active_components": {
-        "run_calibration_procedures": true,
+        "run_calibration_procedures": false,
         "send_messages_over_mqtt": true,
         "run_hardware_tests": false,
         "run_sensor_heating_control": false, 
-        "perform_sht45_offset_correction": true,
+        "perform_sht45_offset_correction": false,
         "log_to_file": true,
         "log_to_console": false,
         "simulation_mode": false
