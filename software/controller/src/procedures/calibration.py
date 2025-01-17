@@ -22,9 +22,9 @@ class CalibrationProcedure:
 
     def run(self) -> None:
         state = state_interface.StateInterface.read(config=self.config)
-        calibration_time = datetime.now().timestamp()  # Use local time
+        calibration_time = datetime.now().timestamp()
         self.logger.info(
-            f"starting calibration procedure at timestamp {calibration_time}",
+            "starting calibration procedure",
             forward=True,
         )
 
@@ -85,7 +85,7 @@ class CalibrationProcedure:
         self.hardware_interface.co2_measurement_module.reset_ring_buffers()
 
         self.logger.info(
-            f"finished calibration procedure at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"finished calibration procedure",
             forward=True,
         )
 
