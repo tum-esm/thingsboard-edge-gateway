@@ -4,8 +4,12 @@ import pathlib
 
 from custom_types import config_types
 
-PROJECT_DIR = pathlib.Path(os.path.abspath(__file__)).parents[2]
-CONFIG_PATH = os.path.join(PROJECT_DIR, "config", "config.json")
+DATA_PATH = os.path.join(os.environ.get("ACROPOLIS_DATA_PATH", "unknown"))
+
+if DATA_PATH == "unknown":
+    raise FileNotFoundError(f"Data path {DATA_PATH} does not exist.")
+else:
+    CONFIG_PATH = os.path.join(DATA_PATH, "config.json")
 
 
 class ConfigInterface:
