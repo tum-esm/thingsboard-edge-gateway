@@ -10,6 +10,7 @@ class ActiveComponentsConfig(BaseModel):
     send_messages_over_mqtt: bool
     run_hardware_tests: bool
     run_sensor_heating_control: bool
+    perform_sht45_offset_correction: bool
     log_to_file: bool
     log_to_console: bool
     simulation_mode: bool

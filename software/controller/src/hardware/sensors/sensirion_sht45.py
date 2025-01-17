@@ -19,7 +19,7 @@ class SensirionSHT45(Sensor):
         super().__init__(config=config)
 
         state = state_interface.StateInterface.read(config=self.config)
-        self.sht.humidity_offset = state.sht45_humidity_offset
+        self.humidity_offset = state.sht45_humidity_offset
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""
@@ -37,6 +37,10 @@ class SensirionSHT45(Sensor):
         """Read the sensor value."""
         temperature, relative_humidity = self.sht.measurements
 
+        if self.config.active_components.perform_sht45_offset_correction:
+            relative_humidity = self.apply_humidity_offset_correction(
+                relative_humidity)
+
         return sensor_types.SHT45SensorData(
             temperature=temperature,
             humidity=relative_humidity,
@@ -52,5 +56,14 @@ class SensirionSHT45(Sensor):
 
     def set_humidity_offset(self, rh_offset: float) -> None:
         """Set the humidity offset."""
-        self.sht.humidity_offset = rh_offset
+        self.humidity_offset = rh_offset
         self.logger.debug(f"Set humidity offset to {rh_offset}.")
+
+    def apply_humidity_offset_correction(self, read_value: float) -> float:
+        """Apply the humidity offset correction."""
+
+        if self.humidity_offset is None:
+            return read_value
+
+        corrected_value = read_value - self.humidity_offset
+        return max(corrected_value, 0.0)
