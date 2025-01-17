@@ -10,6 +10,8 @@ import utils.misc
 from args import parse_args
 from modules import sqlite, docker_client, git_client
 from modules import mqtt
+from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
+from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
 from self_provisioning import self_provisioning_get_access_token
 
 mqtt_client = None
@@ -67,33 +69,24 @@ try:
         sleep(5)
 
         while True:
+            # check if there are any new incoming mqtt messages in the queue, process them
+            if not mqtt_message_queue.empty():
+                msg = mqtt_message_queue.get()
+                msg_payload = utils.misc.get_maybe(msg, "payload", "shared") or utils.misc.get_maybe(msg, "payload")
+                if not on_msg_check_for_ota_update(msg_payload) \
+                        and not on_msg_check_for_config_update(msg_payload):
+                    print("Got message: " + str(msg))
+                    print("Invalid message, skipping...")
+                continue # process next message
+
+            if not docker_client.is_edge_running():
+                print("Controller is not running, starting new container...")
+                docker_client.start_edge()
+
             if not mqtt_client_thread.is_alive():
                 print("MQTT client thread died, exiting in 30 seconds...")
                 sleep(30)
                 exit()
-
-            # check if there are any new incoming mqtt messages in the queue
-            if not mqtt_message_queue.empty():
-                msg = mqtt_message_queue.get()
-                msg_payload = utils.misc.get_maybe(msg, "payload", "shared") or utils.misc.get_maybe(msg, "payload")
-                sw_title = utils.misc.get_maybe(msg_payload, "sw_title")
-                sw_url = utils.misc.get_maybe(msg_payload, "sw_url")
-                sw_version = utils.misc.get_maybe(msg_payload, "sw_version")
-                if sw_title is not None and sw_url is not None and sw_version is not None:
-                    if docker_client.is_edge_running():
-                        current_version = docker_client.get_edge_version()
-                        if current_version is None or current_version != sw_version:
-                            print("Software update available: " + sw_title + " from " + (current_version or "UNKNOWN") + " to " + sw_version)
-                            docker_client.start_edge(sw_version)
-                        else:
-                            print("Software is up to date (version '" + current_version + "')")
-                    else:
-                        print("Launching latest edge-software: " + sw_version + " (" + sw_title + ")")
-                        docker_client.start_edge(sw_version)
-                else:
-                    print("Got message: " + str(msg))
-                    print("Invalid message, skipping...")
-                continue
 
             # check if there are any new outgoing mqtt messages in the sqlite db
             if (communication_sqlite_db.does_table_exist(sqlite.SqliteTables.QUEUE_OUT.value)
@@ -110,5 +103,7 @@ try:
 
             # if nothing happened this iteration, sleep for a while
             sleep(1)
+
 except Exception as e:
     utils.misc.fatal_error(f"An error occurred in gateway main loop: {e}")
+

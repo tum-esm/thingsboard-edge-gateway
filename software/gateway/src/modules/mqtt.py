@@ -60,7 +60,7 @@ class GatewayMqttClient(Client):
         self.subscribe("v1/devices/me/attributes")
         self.subscribe("v2/fw/response/+")
 
-        self.publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+        self.publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version,controller_config"}')
         self.connected = True
 
     def __on_disconnect(self, _client, _userdata, _rc):
