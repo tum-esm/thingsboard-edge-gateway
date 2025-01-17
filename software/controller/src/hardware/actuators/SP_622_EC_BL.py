@@ -6,7 +6,7 @@ try:
 except Exception:
     pass
 
-from hardware.actuator import _base_actuator
+from hardware.actuators import _base_actuator
 from custom_types import config_types
 
 

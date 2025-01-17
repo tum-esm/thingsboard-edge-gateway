@@ -9,8 +9,8 @@ from custom_types import config_types
 from interfaces import logging_interface
 from utils import message_queue
 from hardware.sensors.grove_MCP9808 import GroveMCP9808
-from hardware.actuator.heat_box_heater import HeatBoxHeater
-from hardware.actuator.heat_box_ventilator import HeatBoxVentilator
+from hardware.actuators.heat_box_heater import HeatBoxHeater
+from hardware.actuators.heat_box_ventilator import HeatBoxVentilator
 
 # TODO: Run as thread
 

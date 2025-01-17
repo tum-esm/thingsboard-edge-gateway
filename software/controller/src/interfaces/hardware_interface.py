@@ -12,8 +12,8 @@ from hardware.sensors.phoenic_contact_UPS import PhoenixContactUPS
 from hardware.sensors.sensirion_sht45 import SensirionSHT45
 from hardware.sensors.grove_MCP9808 import GroveMCP9808
 
-from hardware.actuator.ACL_201 import ACLValves
-from hardware.actuator.SP_622_EC_BL import SchwarzerPrecisionPump
+from hardware.actuators.ACL_201 import ACLValves
+from hardware.actuators.SP_622_EC_BL import SchwarzerPrecisionPump
 
 from hardware.modules import co2_sensor, wind_sensor
 
