@@ -3,7 +3,7 @@ from datetime import datetime
 
 from custom_types import config_types
 from interfaces import logging_interface, state_interface, hardware_interface
-from utils import message_queue
+from utils import message_queue, ring_buffer
 
 
 class CalibrationProcedure:
@@ -57,18 +57,8 @@ class CalibrationProcedure:
             # reset drying time extension for following bottles
             self.seconds_drying_with_first_bottle = 0
 
-        # rh offsets is calculated from median of humidity readings of last calibration bottle
-        rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
-        )
-        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(
-            rh_offset)
-
-        # persist humidity offset in state file
-        state = state_interface.StateInterface.read(config=self.config)
-        state.sht45_humidity_offset = rh_offset
-        state_interface.StateInterface.write(state)
-
-        self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)
+        if self.config.active_components.perform_sht45_offset_correction:
+            self.calibrate_sht45_zero_point()
 
         # switch back to measurement inlet
         self.hardware_interface.valves.set(
@@ -225,3 +215,37 @@ class CalibrationProcedure:
 
         # 1 or 4+ calibration cylinders
         return self.config.calibration.gas_cylinders
+
+    def calibrate_sht45_zero_point(self) -> None:
+        """determines the humidity offset for the SHT45 sensor by measuring
+        the calibration tanks for a configured time. The offset is calculated by
+        the median of the last 60 measurements"""
+
+        self.logger.info("Calibrating SHT45 humidity offset", forward=True)
+        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(0.0)
+        duration = self.config.calibration.sht45_calibration_seconds
+
+        sht45_ring_buffer = ring_buffer.RingBuffer(size=duration)
+        calibration_start_time = time.time()
+        while (True):
+            measurement = self.hardware_interface.air_inlet_sht45_sensor.read()
+
+            sht45_ring_buffer.append(measurement.humidity)
+
+            if (time.time() - calibration_start_time) >= duration:
+                break
+
+            time.sleep(1)
+
+        # rh offsets is calculated from median of humidity readings of last calibration bottle
+        rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
+        )
+        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(
+            rh_offset)
+
+        # persist humidity offset in state file
+        state = state_interface.StateInterface.read(config=self.config)
+        state.sht45_humidity_offset = rh_offset
+        state_interface.StateInterface.write(state)
+
+        self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)

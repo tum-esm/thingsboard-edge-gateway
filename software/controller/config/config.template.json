@@ -26,7 +26,8 @@
         ],
         "sampling_per_cylinder_seconds": 600,
         "system_flushing_pump_pwm_duty_cycle": 0.5,
-        "system_flushing_seconds": 300
+        "system_flushing_seconds": 300,
+        "sht45_calibration_seconds": 30
 
     },
     "documentation": {

@@ -38,6 +38,7 @@ class CalibrationConfig(BaseModel):
     sampling_per_cylinder_seconds: int = Field(..., ge=6, le=1800)
     system_flushing_pump_pwm_duty_cycle: float = Field(ge=0, le=1)
     system_flushing_seconds: int = Field(..., ge=0, le=600)
+    sht45_calibration_seconds: int = Field(..., ge=10, le=600)
 
 
 # -----------------------------------------------------------------------------
