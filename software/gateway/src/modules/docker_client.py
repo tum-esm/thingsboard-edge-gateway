@@ -109,13 +109,13 @@ class GatewayDockerClient:
             else:
                 print("[DOCKER-CLIENT][FATAL] Unable to reset to commit " + commit_hash)
                 return
-            [image] = self.docker_client.images.build(
+            build_result = self.docker_client.images.build(
                 path=os.path.join(os.path.dirname(ACROPOLIS_GATEWAY_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
             )
             print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version_to_launch)
-            if image.tag(CONTROLLER_IMAGE_PREFIX + "unknown:latest"):
+            if build_result[0].tag(str(CONTROLLER_IMAGE_PREFIX + "unknown:latest")):
                 print('[DOCKER-CLIENT] Tagged image with "' + CONTROLLER_IMAGE_PREFIX + ':latest"')
             else:
                 print(f'[DOCKER-CLIENT][WARN] Unable to tag image with "' + CONTROLLER_IMAGE_PREFIX + ':latest"')
@@ -125,6 +125,7 @@ class GatewayDockerClient:
             GatewayMqttClient.instance().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
 
         # remove old containers and start the new one
+        self.last_launched_version = version_to_launch
         self.prune_containers()
         self.docker_client.containers.run(
             image_tag,
