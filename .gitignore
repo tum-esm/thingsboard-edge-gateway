@@ -12,3 +12,5 @@ __pycache__
 **tb_access_token
 **.db
 setup/.DS_Store
+*.zip
+.DS_Store
