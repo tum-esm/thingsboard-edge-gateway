@@ -21,9 +21,10 @@ def fatal_error(msg):
     error = str(msg)
     error += "\n" + traceback.format_exc()
 
-    GatewayMqttClient.instance().log_message('ERROR', f'FATAL ERROR: {msg}')
+    GatewayMqttClient.instance().publish_log('ERROR', f'FATAL ERROR: {msg}')
     print("FATAL ERROR:")
     print(msg)
+    sys.stdout.flush()
     sleep(1)
 
     # Trigger the graceful shutdown handler
