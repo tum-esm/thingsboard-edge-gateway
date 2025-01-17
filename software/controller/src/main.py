@@ -13,6 +13,7 @@ from procedures import calibration, measurement, system_check
 from utils import alarms, expontential_backoff, system_info
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SW_VERSION = os.environ.get("ACROPOLIS_SW_VERSION", "unknown")
 
 
 def run() -> None:
@@ -36,7 +37,7 @@ def run() -> None:
     logger.horizontal_line()
 
     logger.info(
-        f"Started new automation process with SW version {config.version} and PID {os.getpid()}.",
+        f"Started new automation process with SW version {SW_VERSION} and PID {os.getpid()}.",
         forward=True,
     )
 
