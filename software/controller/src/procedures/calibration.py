@@ -3,7 +3,7 @@ from datetime import datetime
 
 from custom_types import config_types
 from interfaces import logging_interface, state_interface, hardware_interface
-from utils import message_queue
+from utils import message_queue, ring_buffer
 
 
 class CalibrationProcedure:
@@ -22,11 +22,19 @@ class CalibrationProcedure:
 
     def run(self) -> None:
         state = state_interface.StateInterface.read(config=self.config)
-        calibration_time = datetime.utcnow().timestamp()
+        calibration_time = datetime.now().timestamp()
         self.logger.info(
-            f"starting calibration procedure at timestamp {calibration_time}",
+            "starting calibration procedure",
             forward=True,
         )
+
+        # save last calibration attempt to only trigger calibrate procedure once a day
+        # if the calibration fails it will be triggered again the next day
+        self.logger.debug("updating state")
+
+        state = state_interface.StateInterface.read(config=self.config)
+        state.last_calibration_attempt = calibration_time
+        state_interface.StateInterface.write(state)
 
         # alternate calibration bottle order every other day
         # first bottle receives additional time to dry air chamber
@@ -49,18 +57,8 @@ class CalibrationProcedure:
             # reset drying time extension for following bottles
             self.seconds_drying_with_first_bottle = 0
 
-        # rh offsets is calculated from median of humidity readings of last calibration bottle
-        rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
-        )
-        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(
-            rh_offset)
-
-        # persist humidity offset in state file
-        state = state_interface.StateInterface.read(config=self.config)
-        state.sht45_humidity_offset = rh_offset
-        state_interface.StateInterface.write(state)
-
-        self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)
+        if self.config.active_components.perform_sht45_offset_correction:
+            self.calibrate_sht45_zero_point()
 
         # switch back to measurement inlet
         self.hardware_interface.valves.set(
@@ -76,15 +74,10 @@ class CalibrationProcedure:
         # clear ring buffers
         self.hardware_interface.co2_measurement_module.reset_ring_buffers()
 
-        # save last calibration time
-        self.logger.debug("updating state")
         self.logger.info(
-            f"finished calibration procedure at timestamp {datetime.utcnow().timestamp()}",
+            f"finished calibration procedure",
             forward=True,
         )
-        state = state_interface.StateInterface.read(config=self.config)
-        state.last_calibration_time = calibration_time
-        state_interface.StateInterface.write(state)
 
     def is_due(self) -> bool:
         """returns true when calibration procedure should run
@@ -96,34 +89,34 @@ class CalibrationProcedure:
 
         # load state, kept during configuration procedures
         state = state_interface.StateInterface.read(config=self.config)
-        current_utc_day = datetime.utcnow().date()
-        current_utc_hour = datetime.utcnow().hour
+        current_local_time = datetime.now()
+        current_local_day = current_local_time.date()
+        current_local_hour = current_local_time.hour
 
         # if last calibration time is unknown, calibrate now
         # only happens when the state.json is recreated
-        if state.last_calibration_time is None:
+        if state.last_calibration_attempt is None:
             self.logger.info(
                 "last calibration time is unknown, calibrating now")
             return True
 
         last_calibration_day = datetime.fromtimestamp(
-            state.last_calibration_time).date()
-        days_since_last_calibration = (current_utc_day -
+            state.last_calibration_attempt).date()
+        days_since_last_calibration = (current_local_day -
                                        last_calibration_day).days
 
         # check if a calibration was already performed on the same day
-        if current_utc_day == last_calibration_day:
+        if current_local_day == last_calibration_day:
             self.logger.info("last calibration was already done today")
             return False
 
         # compare scheduled calibration day to today
-        if (days_since_last_calibration
-                < self.config.calibration.calibration_frequency_days):
+        if days_since_last_calibration < self.config.calibration.calibration_frequency_days:
             self.logger.info(f"next scheduled calibration is not due today.")
             return False
 
         # check if current hour is past the scheduled hour of day
-        if current_utc_hour < self.config.calibration.calibration_hour_of_day:
+        if current_local_hour < self.config.calibration.calibration_hour_of_day:
             self.logger.info("next calibration is scheduled for later today")
             return False
 
@@ -135,7 +128,7 @@ class CalibrationProcedure:
         if seconds_since_last_co2_sensor_boot < 1800:
             self.logger.info(
                 f"skipping calibration, sensor is still warming up (co2 sensor"
-                + f" booted {seconds_since_last_co2_sensor_boot} seconds ago)")
+                f" booted {seconds_since_last_co2_sensor_boot} seconds ago)")
             return False
 
         self.logger.info("next calibration is due, calibrating now")
@@ -222,3 +215,37 @@ class CalibrationProcedure:
 
         # 1 or 4+ calibration cylinders
         return self.config.calibration.gas_cylinders
+
+    def calibrate_sht45_zero_point(self) -> None:
+        """determines the humidity offset for the SHT45 sensor by measuring
+        the calibration tanks for a configured time. The offset is calculated by
+        the median of the last 60 measurements"""
+
+        self.logger.info("Calibrating SHT45 humidity offset", forward=True)
+        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(0.0)
+        duration = self.config.calibration.sht45_calibration_seconds
+
+        sht45_ring_buffer = ring_buffer.RingBuffer(size=duration)
+        calibration_start_time = time.time()
+        while (True):
+            measurement = self.hardware_interface.air_inlet_sht45_sensor.read()
+
+            sht45_ring_buffer.append(measurement.humidity)
+
+            if (time.time() - calibration_start_time) >= duration:
+                break
+
+            time.sleep(1)
+
+        # rh offsets is calculated from median of humidity readings of last calibration bottle
+        rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
+        )
+        self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(
+            rh_offset)
+
+        # persist humidity offset in state file
+        state = state_interface.StateInterface.read(config=self.config)
+        state.sht45_humidity_offset = rh_offset
+        state_interface.StateInterface.write(state)
+
+        self.logger.info(f"STH45 humidity offset: {rh_offset}", forward=True)

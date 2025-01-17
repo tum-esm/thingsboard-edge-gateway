@@ -10,6 +10,7 @@ class ActiveComponentsConfig(BaseModel):
     send_messages_over_mqtt: bool
     run_hardware_tests: bool
     run_sensor_heating_control: bool
+    perform_sht45_offset_correction: bool
     log_to_file: bool
     log_to_console: bool
     simulation_mode: bool
@@ -37,6 +38,7 @@ class CalibrationConfig(BaseModel):
     sampling_per_cylinder_seconds: int = Field(..., ge=6, le=1800)
     system_flushing_pump_pwm_duty_cycle: float = Field(ge=0, le=1)
     system_flushing_seconds: int = Field(..., ge=0, le=600)
+    sht45_calibration_seconds: int = Field(..., ge=10, le=600)
 
 
 # -----------------------------------------------------------------------------
