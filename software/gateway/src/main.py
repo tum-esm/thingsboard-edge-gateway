@@ -12,7 +12,9 @@ from modules import sqlite, docker_client, git_client
 from modules import mqtt
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
+from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
+from utils.misc import get_maybe
 
 mqtt_client = None
 archive_sqlite_db = None
@@ -72,11 +74,24 @@ try:
             # check if there are any new incoming mqtt messages in the queue, process them
             if not mqtt_message_queue.empty():
                 msg = mqtt_message_queue.get()
+                topic = get_maybe(msg, "topic") or "unknown"
                 msg_payload = utils.misc.get_maybe(msg, "payload", "shared") or utils.misc.get_maybe(msg, "payload")
-                if not on_msg_check_for_ota_update(msg_payload) \
+
+                # check for incoming RPC requests
+                if "v1/devices/me/rpc/request" in topic:
+                    print("Got RPC request: " + str(msg))
+                    rpc_method = get_maybe(msg_payload, "method")
+                    rpc_params = get_maybe(msg_payload, "params")
+                    rpc_msg_id = topic.split("/")[-1]
+                    on_rpc_request(rpc_msg_id, rpc_method, rpc_params)
+
+                # check for attribute updates
+                elif "v1/devices/me/attributes" in topic:
+                    if      not on_msg_check_for_ota_update(msg_payload) \
                         and not on_msg_check_for_config_update(msg_payload):
-                    print("Got message: " + str(msg))
-                    print("Invalid message, skipping...")
+                        print("Got message: " + str(msg))
+                        print("Invalid message, skipping...")
+
                 continue # process next message
 
             if not docker_client.is_edge_running():

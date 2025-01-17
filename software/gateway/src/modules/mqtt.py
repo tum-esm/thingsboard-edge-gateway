@@ -56,6 +56,7 @@ class GatewayMqttClient(Client):
             return
 
         print("Successfully connected to ThingsBoard!")
+        self.subscribe("v1/devices/me/rpc/request/+")
         self.subscribe("v1/devices/me/attributes/response/+")
         self.subscribe("v1/devices/me/attributes")
         self.subscribe("v2/fw/response/+")
@@ -75,11 +76,14 @@ class GatewayMqttClient(Client):
         })
 
     def publish_message(self, message):
+        return self.publish_message_raw("v1/devices/me/telemetry", message)
+
+    def publish_message_raw(self, topic, message):
         if not self.initialized or not self.connected:
-            print(f'MQTT client is not connected/initialized, cannot publish message "{message}"')
+            print(f'MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
             return False
         print(f'Publishing message: {message}')
-        self.publish("v1/devices/me/telemetry", message)
+        self.publish(topic, message)
         return True
 
     def publish_log(self, log_level, log_message):
