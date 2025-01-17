@@ -56,7 +56,7 @@ class Logger:
             self._write_log_line("INFO", f"{message}, details: {details}")
         if forward:
             self._enqueue_message(
-                level="info",
+                level="INFO",
                 subject=message,
                 details=details,
             )
@@ -74,7 +74,7 @@ class Logger:
             self._write_log_line("WARNING", f"{message}, details: {details}")
         if forward:
             self._enqueue_message(
-                level="warning",
+                level="WARNING",
                 subject=message,
             )
 
@@ -98,7 +98,7 @@ class Logger:
                 ]),
             )
         if forward:
-            self._enqueue_message(level="error",
+            self._enqueue_message(level="ERROR",
                                   subject=message,
                                   details=details)
 
@@ -130,7 +130,7 @@ class Logger:
                              f"{subject_string}\n{details_string}")
         if forward:
             self._enqueue_message(
-                level="error",
+                level="ERROR",
                 subject=subject_string,
                 details=details_string,
             )
