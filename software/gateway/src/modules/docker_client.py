@@ -60,12 +60,12 @@ class GatewayDockerClient:
         self.docker_client.containers.prune()
         print("[DOCKER-CLIENT] Pruned containers")
 
-    def start_edge(self, version_to_launch=None):
+    def start_controller(self, version_to_launch=None):
         if self.is_edge_running():
             current_version = self.get_edge_version()
             if current_version is None or current_version != version_to_launch:
                 self.stop_edge()
-                self.start_edge(version_to_launch)
+                self.start_controller(version_to_launch)
             else:
                 print("[DOCKER-CLIENT] Software already running with version " + version_to_launch)
                 self.last_launched_version = current_version

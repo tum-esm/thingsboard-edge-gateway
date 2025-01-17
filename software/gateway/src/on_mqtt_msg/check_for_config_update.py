@@ -36,7 +36,7 @@ def on_msg_check_for_config_update(msg_payload):
             print("Config is outdated, updating...")
 
             docker_client = dockerc.GatewayDockerClient()
-            print("Stopping docker container...")
+            print("Stopping acropolis-controller docker container...")
             docker_client.stop_edge()
 
             print("Writing new config to file...")

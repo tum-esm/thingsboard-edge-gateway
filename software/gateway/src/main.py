@@ -96,7 +96,7 @@ try:
 
             if not docker_client.is_edge_running():
                 print("Controller is not running, starting new container...")
-                docker_client.start_edge()
+                docker_client.start_controller()
 
             if not mqtt_client_thread.is_alive():
                 print("MQTT client thread died, exiting in 30 seconds...")
