@@ -12,8 +12,8 @@ from hardware.sensors.phoenic_contact_UPS import PhoenixContactUPS
 from hardware.sensors.sensirion_sht45 import SensirionSHT45
 from hardware.sensors.grove_MCP9808 import GroveMCP9808
 
-from hardware.actors.ACL_201 import ACLValves
-from hardware.actors.SP_622_EC_BL import SchwarzerPrecisionPump
+from hardware.actuator.ACL_201 import ACLValves
+from hardware.actuator.SP_622_EC_BL import SchwarzerPrecisionPump
 
 from hardware.modules import co2_sensor, wind_sensor
 
@@ -51,7 +51,9 @@ class HardwareInterface:
         self.config = config
         self.logger = logging_interface.Logger(config=config,
                                                origin="hardware-interface")
-        self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
+
+        if not self.config.active_components.simulation_mode:
+            self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
         acquire_hardware_lock()
 
         # measurement sensors
@@ -108,7 +110,8 @@ class HardwareInterface:
         self.pump.teardown()
         self.valves.teardown()
 
-        self.pin_factory.close()
+        if not self.config.active_components.simulation_mode:
+            self.pin_factory.close()
 
         # release lock
         global_hw_lock["lock"].release()
@@ -128,5 +131,5 @@ class HardwareInterface:
         self.air_inlet_sht45_sensor.reset_sensor()
 
         # measurement actors
-        self.pump.reset_actor()
-        self.valves.reset_actor()
+        self.pump.reset_actuator()
+        self.valves.reset_actuator()

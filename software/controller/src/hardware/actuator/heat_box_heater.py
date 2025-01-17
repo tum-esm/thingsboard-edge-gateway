@@ -5,11 +5,11 @@ try:
 except Exception:
     pass
 
-from hardware.actors import base_actor
+from hardware.actuator import _base_actuator
 from custom_types import config_types
 
 
-class HeatBoxHeater(base_actor.Actor):
+class HeatBoxHeater(_base_actuator.Actuator):
     """Class for controlling the heat box heater."""
 
     def __init__(self,
@@ -23,7 +23,7 @@ class HeatBoxHeater(base_actor.Actor):
                          retry_delay=retry_delay,
                          pin_factory=pin_factory)
 
-    def _initialize_actor(self) -> None:
+    def _initialize_actuator(self) -> None:
         """Initializes the heat box heater."""
 
         self.power_pin = gpiozero.PWMOutputDevice(
@@ -34,7 +34,7 @@ class HeatBoxHeater(base_actor.Actor):
             pin_factory=self.pin_factory,
         )
 
-    def _shutdown_actor(self) -> None:
+    def _shutdown_actuator(self) -> None:
         """Shuts down the heat box heater."""
 
         if hasattr(

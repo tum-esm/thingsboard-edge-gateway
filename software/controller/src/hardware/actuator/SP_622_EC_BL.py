@@ -6,11 +6,11 @@ try:
 except Exception:
     pass
 
-from hardware.actors import base_actor
+from hardware.actuator import _base_actuator
 from custom_types import config_types
 
 
-class SchwarzerPrecisionPump(base_actor.Actor):
+class SchwarzerPrecisionPump(_base_actuator.Actuator):
     """Class for controlling the SP 622 EC_BL membrane pump."""
 
     def __init__(
@@ -28,7 +28,7 @@ class SchwarzerPrecisionPump(base_actor.Actor):
                          retry_delay=retry_delay,
                          pin_factory=pin_factory)
 
-    def _initialize_actor(self) -> None:
+    def _initialize_actuator(self) -> None:
         """Initializes the membrane pump."""
 
         # initialize device and reserve GPIO pin
@@ -43,7 +43,7 @@ class SchwarzerPrecisionPump(base_actor.Actor):
         # start pump to run continuously
         self.set(pwm_duty_cycle=self.default_pwm_duty_cycle)
 
-    def _shutdown_actor(self) -> None:
+    def _shutdown_actuator(self) -> None:
         """Shuts down the membrane pump."""
 
         if hasattr(

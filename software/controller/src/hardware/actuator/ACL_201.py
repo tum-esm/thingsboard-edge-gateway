@@ -2,12 +2,12 @@ import time
 from typing import Literal, Any
 import gpiozero
 
-from hardware.actors import base_actor
+from hardware.actuator import _base_actuator
 from custom_types import config_types
 
 
-class ACLValves(base_actor.Actor):
-    """Class for controlling the ACL Type 201 solenoid vales."""
+class ACLValves(_base_actuator.Actuator):
+    """Class for controlling the ACL Type 201 solenoid valves."""
 
     def __init__(self,
                  config: config_types.Config,
@@ -24,7 +24,7 @@ class ACLValves(base_actor.Actor):
                          retry_delay=retry_delay,
                          pin_factory=pin_factory)
 
-    def _initialize_actor(self) -> None:
+    def _initialize_actuator(self) -> None:
         """Initializes the solenoid valves."""
 
         # initialize device and reserve GPIO pin
@@ -49,7 +49,7 @@ class ACLValves(base_actor.Actor):
             f"initialized valves with active input from valve: {self.active_input}"
         )
 
-    def _shutdown_actor(self) -> None:
+    def _shutdown_actuator(self) -> None:
         """Shuts down the solenoid valves."""
 
         # Reset to sample from main air channel

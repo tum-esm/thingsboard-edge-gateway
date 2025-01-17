@@ -3,7 +3,7 @@ try:
 except ImportError:
     pass
 
-from hardware.sensors.base_sensor import Sensor
+from hardware.sensors._base_sensor import Sensor
 from custom_types import config_types
 
 
