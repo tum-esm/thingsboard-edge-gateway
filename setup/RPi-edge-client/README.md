@@ -37,6 +37,7 @@ nano /etc/docker/daemon.json
 
 ```
 sudo usermod -aG docker $USER
+sudo git config --system --add safe.directory '*'
 sudo reboot
 ```
 
