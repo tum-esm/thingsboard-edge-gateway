@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 from datetime import datetime
+import pytz
 
 # Ensure the project root is added to the Python path to allow absolute imports from src
 sys.path.insert(0, str(Path(__file__).parent))
@@ -47,6 +48,9 @@ def run() -> None:
     logger.info(f"datetime.now().astimezone(): {datetime.now().astimezone()}", forward=True)
     logger.info(f"datetime.now().astimezone().strftime: {datetime.now().astimezone().strftime(
             '%Y-%m-%d %H:%M:%S.%f')[:-3]}", forward=True)
+    
+    logger.info(f"datetime.now().astimezone(): {datetime.now().astimezone(pytz.timezone("Europe/Berlin"))}", forward=True)
+    
 
     # -------------------------------------------------------------------------
 
