@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+import pytz
 
 from custom_types import config_types
 from interfaces import logging_interface, state_interface, hardware_interface
@@ -89,7 +90,9 @@ class CalibrationProcedure:
 
         # load state, kept during configuration procedures
         state = state_interface.StateInterface.read(config=self.config)
-        current_local_time = datetime.now()
+
+        current_local_time = datetime.now().astimezone(
+            pytz.timezone(self.config.local_time_zone))
         current_local_date = current_local_time.date()
         current_local_hour = current_local_time.hour
 
