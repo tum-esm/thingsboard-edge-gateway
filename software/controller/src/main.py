@@ -43,14 +43,9 @@ def run() -> None:
         forward=True,
     )
 
-    logger.info(f"time.time() {time.time()}", forward=True) 
-    logger.info(f"datetime.now(): {datetime.now()}", forward=True)
-    logger.info(f"datetime.now().astimezone(): {datetime.now().astimezone()}", forward=True)
-    logger.info(f"datetime.now().astimezone().strftime: {datetime.now().astimezone().strftime(
-            '%Y-%m-%d %H:%M:%S.%f')[:-3]}", forward=True)
-    
-    logger.info(f"datetime.now().astimezone(): {datetime.now().astimezone(pytz.timezone("Europe/Berlin"))}", forward=True)
-    
+    logger.info(
+        f"Local time is: {datetime.now().astimezone(pytz.timezone(config.local_time_zone))}",
+        forward=True)
 
     # -------------------------------------------------------------------------
 
