@@ -1,10 +1,11 @@
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import os
 import sys
+import pytz
 
 from custom_types import mqtt_playload_types, config_types
 from utils import message_queue, shell_commands, log_path
@@ -138,7 +139,8 @@ class Logger:
     def _write_log_line(self, level: str, message: str) -> None:
         """Formats the log line string and writes it to the appropriate log file."""
         # Get the current local time as a timezone-aware datetime object
-        now_local = datetime.now().astimezone()
+        now_local = datetime.now().astimezone(
+            pytz.timezone(self.config.local_time_zone))
 
         # Format the timestamp to include milliseconds
         timestamp = now_local.strftime(
