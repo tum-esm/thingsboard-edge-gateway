@@ -56,7 +56,7 @@ class Logger:
             self._write_log_line("INFO", f"{message}, details: {details}")
         if forward:
             self._enqueue_message(
-                level="info",
+                level="INFO",
                 subject=message,
                 details=details,
             )
@@ -74,7 +74,7 @@ class Logger:
             self._write_log_line("WARNING", f"{message}, details: {details}")
         if forward:
             self._enqueue_message(
-                level="warning",
+                level="WARNING",
                 subject=message,
             )
 
@@ -98,7 +98,7 @@ class Logger:
                 ]),
             )
         if forward:
-            self._enqueue_message(level="error",
+            self._enqueue_message(level="ERROR",
                                   subject=message,
                                   details=details)
 
@@ -130,7 +130,7 @@ class Logger:
                              f"{subject_string}\n{details_string}")
         if forward:
             self._enqueue_message(
-                level="error",
+                level="ERROR",
                 subject=subject_string,
                 details=details_string,
             )
@@ -140,27 +140,11 @@ class Logger:
         # Get the current local time as a timezone-aware datetime object
         now_local = datetime.now().astimezone()
 
-        # Calculate UTC offset in hours, rounded to one decimal place
-        utc_offset_td = now_local.utcoffset()
-        if utc_offset_td is not None:
-            utc_offset = round(utc_offset_td.total_seconds() / 3600, 1)
-        else:
-            # Fallback if utcoffset() returns None
-            utc_offset = 0.0
-
-        # If UTC offset is an integer, display without decimal
-        if utc_offset == int(utc_offset):
-            utc_offset = int(utc_offset)
-
         # Format the timestamp to include milliseconds
         timestamp = now_local.strftime(
             '%Y-%m-%d %H:%M:%S.%f')[:-3]  # Trim microseconds to milliseconds
 
-        # Format UTC offset string
-        if utc_offset < 0:
-            offset_str = f"UTC{utc_offset}"
-        else:
-            offset_str = f"UTC+{utc_offset}"
+        offset_str = self.determine_UTC_offset(now_local=now_local)
 
         # Construct the log string with proper formatting
         log_string = (f"{timestamp} {offset_str} "
@@ -186,9 +170,29 @@ class Logger:
             with open(log_file_path, "a") as f1:
                 f1.write(log_string)
 
+    def determine_UTC_offset(self, now_local: datetime) -> str:
+
+        # Calculate UTC offset in hours, rounded to one decimal place
+        utc_offset_td = now_local.utcoffset()
+        if utc_offset_td is not None:
+            utc_offset = round(utc_offset_td.total_seconds() / 3600, 1)
+        else:
+            # Fallback if utcoffset() returns None
+            utc_offset = 0.0
+
+        # If UTC offset is an integer, display without decimal
+        if utc_offset == int(utc_offset):
+            utc_offset = int(utc_offset)
+
+        # Format UTC offset string
+        if utc_offset < 0:
+            return f"UTC{utc_offset}"
+        else:
+            return f"UTC+{utc_offset}"
+
     def _enqueue_message(
         self,
-        level: Literal["info", "warning", "error"],
+        level: Literal["INFO", "WARNING", "ERROR"],
         subject: str,
         details: str = "",
     ) -> None:

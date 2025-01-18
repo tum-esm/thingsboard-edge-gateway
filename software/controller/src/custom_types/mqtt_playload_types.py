@@ -6,7 +6,7 @@ from typing import Optional, Literal
 class MQTTLogMessage():
     """message body which is sent to server"""
 
-    severity: Literal["info", "warning", "error"]
+    severity: Literal["INFO", "WARNING", "ERROR"]
     message: str
 
 
