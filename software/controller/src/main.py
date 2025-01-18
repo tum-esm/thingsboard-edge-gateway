@@ -4,6 +4,7 @@ import signal
 import time
 from pathlib import Path
 from typing import Any
+from datetime import datetime
 
 # Ensure the project root is added to the Python path to allow absolute imports from src
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,6 +41,12 @@ def run() -> None:
         f"Started new automation process with SW version {SW_VERSION} and PID {os.getpid()}.",
         forward=True,
     )
+
+    logger.info(f"time.time() {time.time()}", forward=True) 
+    logger.info(f"datetime.now(): {datetime.now()}", forward=True)
+    logger.info(f"datetime.now().astimezone(): {datetime.now().astimezone()}", forward=True)
+    logger.info(f"datetime.now().astimezone().strftime: {datetime.now().astimezone().strftime(
+            '%Y-%m-%d %H:%M:%S.%f')[:-3]}", forward=True)
 
     # -------------------------------------------------------------------------
 
