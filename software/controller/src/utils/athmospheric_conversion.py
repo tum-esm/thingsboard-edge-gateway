@@ -9,7 +9,7 @@ It also includes some useful constants
 Refactored by Patrick Aigner
 """
 
-from typing import Final
+from typing import Final, Any
 import numpy as np
 
 T0: Final = 273.15  # T0: float = The 0 C temperature in K
@@ -50,7 +50,7 @@ def saturation_vapor_pressure(t: float) -> float:
         TC / t *
         (coef_1 * theta + coef_2 * theta**1.5 + coef_3 * theta**3 +
          coef_4 * theta**3.5 + coef_5 * theta**4 + coef_6 * theta**7.5)) * PC)
-    return pw
+    return float(pw)
 
 
 def rh_to_ah(rh: float, t: float) -> float:
@@ -83,7 +83,7 @@ def rh_to_molar_mixing(rh: float, t: float, p: float) -> float:
 
 
 def calculate_co2dry(co2wet: float, temperature: float, rh: float,
-                     pressure: float):
+                     pressure: float) -> float:
     """
     Convert CO2 wet concentration to dry concentration in ppm.
 
