@@ -71,6 +71,7 @@ class MeasurementProcedure:
             else:
                 gmp343_edge_corrected = None
 
+            # send out measurement data
             self.hardware_interface.co2_measurement_module.send_CO2_measurement_data(
                 CO2_sensor_data=measurement,
                 edge_corrected=gmp343_edge_corrected)
