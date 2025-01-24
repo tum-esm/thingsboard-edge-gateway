@@ -23,6 +23,7 @@ pigpio = "^1.78"
 pytest = "^8.3.3"
 simple-pid = "2.0.1"
 pytz = "^2024.2"
+numpy = "^2.2.2"
 
 
 [tool.poetry.group.dev]
