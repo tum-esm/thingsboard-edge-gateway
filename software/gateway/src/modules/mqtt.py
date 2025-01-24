@@ -11,7 +11,7 @@ GatewayMqttClientInstance = None
 class GatewayMqttClient(Client):
     initialized = False
     connected = False
-    message_queue = Queue.queue()
+    message_queue = Queue()
 
     def __init__(self):
         if self.__class__.instance is None:
