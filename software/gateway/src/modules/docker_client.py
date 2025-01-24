@@ -82,7 +82,7 @@ class GatewayDockerClient:
             else:
                 version_to_launch = self.last_launched_version
 
-        image_tag = CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
+        image_tag : str = CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
 
         # edge container is not running
         # check if the image is available already, if not build it
@@ -139,7 +139,7 @@ class GatewayDockerClient:
             network_mode="host",
             environment={
                 "ACROPOLIS_DATA_PATH": "/root/data",
-                "ACROPOLIS_LOG_TO_CONSOLE": 1,
+                "ACROPOLIS_LOG_TO_CONSOLE": "1",
                 "ACROPOLIS_SW_VERSION": version_to_launch
             },
             volumes={
