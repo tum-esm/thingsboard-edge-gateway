@@ -52,6 +52,8 @@ class GatewayDockerClient:
                     version = container.attrs["Config"]["Image"].split("-")[-1]
                     if version.__len__() > 0 and (version[0] == "v"
                                                   or version.__len__() == 40):
+                        if version.endswith(":latest"):
+                            version = version[:-7]
                         return version
         return None
 
