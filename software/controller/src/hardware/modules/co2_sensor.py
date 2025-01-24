@@ -52,7 +52,8 @@ class CO2MeasurementModule:
         return CO2_sensor_data
 
     def perform_edge_correction(
-            self, CO2_sensor_data: sensor_types.CO2SensorData) -> float:
+            self, CO2_sensor_data: sensor_types.CO2SensorData
+    ) -> tuple[float, float]:
         """Performs wet -> dry conversion and calibration correction and returns corrected CO2 value"""
 
         # Apply wet -> dry conversion
@@ -66,7 +67,7 @@ class CO2MeasurementModule:
         # Apply calibration slope and offset
         co2_corrected = self.slope * co2_dry + self.offset
 
-        return co2_corrected
+        return co2_dry, co2_corrected
 
     def _update_air_inlet_parameters(self) -> None:
         """
@@ -140,6 +141,7 @@ class CO2MeasurementModule:
     def send_CO2_measurement_data(
             self,
             CO2_sensor_data: sensor_types.CO2SensorData,
+            edge_dry: Optional[float] = None,
             edge_corrected: Optional[float] = None) -> None:
 
         # send out MQTT measurement message
@@ -150,6 +152,7 @@ class CO2MeasurementModule:
                 gmp343_compensated=CO2_sensor_data.compensated,
                 gmp343_filtered=CO2_sensor_data.filtered,
                 gmp343_temperature=CO2_sensor_data.temperature,
+                gmp343_edge_dry=edge_dry,
                 gmp343_edge_corrected=edge_corrected,
                 bme280_temperature=self.air_inlet_bme280_data.temperature,
                 bme280_humidity=self.air_inlet_bme280_data.humidity,

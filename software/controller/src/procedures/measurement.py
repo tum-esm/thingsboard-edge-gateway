@@ -66,14 +66,15 @@ class MeasurementProcedure:
 
             # perform edge correction
             if self.config.active_components.perform_co2_calibration_correction:
-                gmp343_edge_corrected = self.hardware_interface.co2_measurement_module.perform_edge_correction(
+                gmp343_edge_dry, gmp343_edge_corrected = self.hardware_interface.co2_measurement_module.perform_edge_correction(
                     CO2_sensor_data=measurement)
             else:
-                gmp343_edge_corrected = None
+                gmp343_edge_dry, gmp343_edge_corrected = None, None
 
             # send out measurement data
             self.hardware_interface.co2_measurement_module.send_CO2_measurement_data(
                 CO2_sensor_data=measurement,
+                edge_dry=gmp343_edge_dry,
                 edge_corrected=gmp343_edge_corrected)
 
             # stop loop after defined measurement interval
