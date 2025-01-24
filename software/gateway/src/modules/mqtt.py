@@ -2,7 +2,7 @@ import ssl
 import json
 import time
 from queue import Queue
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from paho.mqtt.client import Client
 
@@ -74,6 +74,14 @@ class GatewayMqttClient(Client):
             "topic": msg.topic,
             "payload": json.loads(msg.payload)
         })
+
+    def publish_sw_state(self, version: str, state: str, msg : Optional[str]=None) -> None:
+        self.publish_message(json.dumps({
+            "current_sw_title": version,
+            "current_sw_version": version,
+            "sw_state": state,
+            "sw_error": msg or ""
+        }))
 
     def publish_message(self, message: str) -> bool:
         return self.publish_message_raw("v1/devices/me/telemetry", message)

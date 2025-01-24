@@ -101,10 +101,14 @@ class GatewayDockerClient:
                 print("[DOCKER-CLIENT][FATAL] No previous version available to build from")
                 print("[DOCKER-CLIENT][FATAL] Requesting version from ThingsBoard...")
                 GatewayMqttClient().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+                GatewayMqttClient().publish_sw_state(
+                    version_to_launch,"FAILED",
+                    "No previous version available to build from, requested version info from ThingsBoard")
                 print("[DOCKER-CLIENT][FATAL] Delaying main loop by 30s...")
                 sleep(30) # it is unlikely that the version to build will be available immediately
                 return
             print("[DOCKER-CLIENT] Building image for version '" + version_to_launch + "'")
+            GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADING")
             GatewayGitClient().execute_fetch()
             commit_hash = GatewayGitClient().get_commit_from_hash_or_tag(version_to_launch)
             if commit_hash is None:
@@ -118,6 +122,7 @@ class GatewayDockerClient:
             else:
                 print("[DOCKER-CLIENT][FATAL] Unable to reset to commit " + commit_hash)
                 return
+            GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             build_result = self.docker_client.images.build(
                 path=os.path.join(os.path.dirname(ACROPOLIS_GATEWAY_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
@@ -133,6 +138,7 @@ class GatewayDockerClient:
             print("[DOCKER-CLIENT][FATAL] Version to launch is 'unknown', requesting version from ThingsBoard...")
             GatewayMqttClient().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
 
+        GatewayMqttClient().publish_sw_state(version_to_launch, "UPDATING")
         # remove old containers and start the new one
         self.last_launched_version = version_to_launch
         self.prune_containers()
@@ -174,4 +180,5 @@ class GatewayDockerClient:
                 },
             }
         )
+        GatewayMqttClient().publish_sw_state(version_to_launch, "UPDATED")
         print("[DOCKER-CLIENT] Started Acropolis Edge container with version '" + version_to_launch + "'")
