@@ -72,7 +72,7 @@ class CO2MeasurementModule:
         # Apply calibration slope and offset
         co2_corrected = self.slope * co2_dry + self.offset
 
-        return co2_dry, co2_corrected
+        return round(co2_dry, 1), round(co2_corrected, 1)
 
     def _update_air_inlet_parameters(self) -> None:
         """
