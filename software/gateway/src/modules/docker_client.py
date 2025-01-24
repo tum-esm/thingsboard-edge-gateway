@@ -125,7 +125,7 @@ class GatewayDockerClient:
             )
             print("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version_to_launch)
             if build_result[0].tag(str(CONTROLLER_IMAGE_PREFIX + "unknown:latest")):
-                print('[DOCKER-CLIENT] Tagged image with "' + CONTROLLER_IMAGE_PREFIX + ':latest"')
+                print('[DOCKER-CLIENT] Tagged image with "' + CONTROLLER_IMAGE_PREFIX + "unknown:latest")
             else:
                 print(f'[DOCKER-CLIENT][WARN] Unable to tag image with "' + CONTROLLER_IMAGE_PREFIX + ':latest"')
 
