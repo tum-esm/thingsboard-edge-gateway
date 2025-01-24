@@ -6,8 +6,6 @@ from typing import Any
 
 from paho.mqtt.client import Client
 
-from utils.misc import fatal_error
-
 GatewayMqttClientInstance = None
 
 class GatewayMqttClient(Client):
