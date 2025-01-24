@@ -66,7 +66,7 @@ class CO2MeasurementModule:
             co2wet=CO2_sensor_data.filtered,
             temperature=CO2_sensor_data.temperature,
             rh=self.rb_humidity.avg(),
-            pressure=self.rb_pressure.avg(),
+            pressure=self.rb_pressure.avg() * 100,
         )
 
         # Apply calibration slope and offset
