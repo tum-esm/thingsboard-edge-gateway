@@ -22,7 +22,7 @@ def fatal_error(msg) -> None:
     error = str(msg)
     error += "\n" + traceback.format_exc()
 
-    GatewayMqttClient.instance().publish_log('ERROR', f'FATAL ERROR: {error}')
+    GatewayMqttClient().publish_log('ERROR', f'FATAL ERROR: {error}')
     print("FATAL ERROR:")
     print(error)
     sys.stdout.flush()

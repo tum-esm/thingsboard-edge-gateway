@@ -67,7 +67,7 @@ try:
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
         # create and run the mqtt client in a separate thread
-        mqtt_client = GatewayMqttClient.instance().init(access_token)
+        mqtt_client = GatewayMqttClient().init(access_token)
         mqtt_client.connect(args.tb_host, args.tb_port)
         mqtt_client_thread: threading.Thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()

@@ -2,6 +2,7 @@ import ssl
 import json
 import time
 from queue import Queue
+from typing import Any
 
 from paho.mqtt.client import Client
 
@@ -14,20 +15,17 @@ class GatewayMqttClient(Client):
     connected = False
     message_queue = Queue.queue()
 
-    @staticmethod
-    def instance():
-        global GatewayMqttClientInstance
-        if GatewayMqttClientInstance is None:
-            GatewayMqttClientInstance = GatewayMqttClient.__new__(GatewayMqttClient)
-        return GatewayMqttClientInstance
-
     def __init__(self):
-        super().__init__()
-        GatewayMqttClient.__call__(self)
+        if self.__class__.instance is None:
+            print("[MQTT] Initializing GatewayMqttClient")
+            super().__init__()
+            self.__class__.instance = self
 
-    def __call__(self, *args, **kwargs):
-        fatal_error("GatewayMqttClient is a singleton and cannot be instantiated directly. "
-                           "Use GatewayMqttClient.instance() instead.")
+    # Singleton pattern
+    def __new__(cls: Any) -> "GatewayMqttClient":
+        if hasattr(cls, 'instance') and cls.instance is not None:
+            return cls.instance
+        return super(GatewayMqttClient, cls).__new__(cls)
 
     def init(self, access_token: str):
         super().__init__()
@@ -47,13 +45,13 @@ class GatewayMqttClient(Client):
         return self
 
     def graceful_exit(self) -> None:
-        print("Exiting MQTT-client gracefully...")
+        print("[MQTT] Exiting MQTT-client gracefully...")
         self.disconnect()
         self.loop_stop()
 
     def __on_connect(self, _client, _userdata, _flags, _result_code, *_extra_params) -> None:
         if _result_code != 0:
-            print(f"Failed to connect to ThingsBoard with result code: {_result_code}")
+            print(f"[MQTT] Failed to connect to ThingsBoard with result code: {_result_code}")
             self.graceful_exit()
             return
 
@@ -68,7 +66,7 @@ class GatewayMqttClient(Client):
 
     def __on_disconnect(self, _client, _userdata, result_code) -> None:
         self.connected = False
-        print(f"Disconnected from ThingsBoard with result code: {result_code}")
+        print(f"[MQTT] Disconnected from ThingsBoard with result code: {result_code}")
         self.graceful_exit()
 
     def __on_message(self, _client, _userdata, msg) -> None:
@@ -82,9 +80,9 @@ class GatewayMqttClient(Client):
 
     def publish_message_raw(self, topic: str, message: str) -> bool:
         if not self.initialized or not self.connected:
-            print(f'MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
+            print(f'[MQTT] MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
             return False
-        print(f'Publishing message: {message}')
+        print(f'[MQTT] Publishing message: {message}')
         self.publish(topic, message)
         return True
 

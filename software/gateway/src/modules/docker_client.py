@@ -18,8 +18,8 @@ class GatewayDockerClient:
     def __init__(self) -> None:
         if self.__class__.instance is None:
             print("[DOCKER-CLIENT] Initializing GatewayDockerClient")
+            super().__init__()
             self.__class__.instance = self
-
             self.docker_client = docker.from_env()
 
     # Singleton pattern
@@ -93,7 +93,7 @@ class GatewayDockerClient:
             if version_to_launch == "unknown":
                 print("[DOCKER-CLIENT][FATAL] No previous version available to build from")
                 print("[DOCKER-CLIENT][FATAL] Requesting version from ThingsBoard...")
-                GatewayMqttClient.instance().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+                GatewayMqttClient().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
                 print("[DOCKER-CLIENT][FATAL] Delaying main loop by 30s...")
                 sleep(30) # it is unlikely that the version to build will be available immediately
                 return
@@ -124,7 +124,7 @@ class GatewayDockerClient:
 
         if version_to_launch == "unknown":
             print("[DOCKER-CLIENT][FATAL] Version to launch is 'unknown', requesting version from ThingsBoard...")
-            GatewayMqttClient.instance().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+            GatewayMqttClient().publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version"}')
 
         # remove old containers and start the new one
         self.last_launched_version = version_to_launch

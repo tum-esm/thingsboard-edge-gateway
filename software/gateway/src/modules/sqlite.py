@@ -13,7 +13,7 @@ class SqliteTables(Enum):
 
 
 class SqliteConnection:
-    def __init__(self, path, nr_retries=3):
+    def __init__(self, path : str, nr_retries : int = 3):
         self.path = path
         try:
             self.conn = sqlite3.connect(path, cached_statements=0, isolation_level=None, autocommit=True)
@@ -45,8 +45,8 @@ class SqliteConnection:
         self.conn.close()
 
     def reset_db_conn(self, error_msg, nr_retries=3) -> None:
-        GatewayMqttClient.instance().publish_log('WARN', f'WARNING: SQLite error at "{self.path}": {str(error_msg)}')
-        GatewayMqttClient.instance().publish_log('WARN', f'WARNING: resetting sqlite db at "{self.path}"')
+        GatewayMqttClient().publish_log('WARN', f'WARNING: SQLite error at "{self.path}": {str(error_msg)}')
+        GatewayMqttClient().publish_log('WARN', f'WARNING: resetting sqlite db at "{self.path}"')
         try:
             self.close()
             os.remove(self.path)
@@ -54,6 +54,6 @@ class SqliteConnection:
             fatal_error(f'Failed to reset sqlite db at "{self.path}": {e}')
 
         try:
-            self.__init__(self.path, nr_retries - 1)
+            self.__init__(self.path, nr_retries - 1)  # type: ignore[misc]
         except Exception as e:
             fatal_error(f'Failed to reset sqlite db at "{self.path}": {e}')
