@@ -160,7 +160,8 @@ class CalibrationProcedure:
 
             # perform measurement
             measurement = self.hardware_interface.co2_measurement_module.perform_CO2_measurement(
-            )
+                calibration_mode=True)
+
             # send measurement
             self.hardware_interface.co2_measurement_module.send_CO2_calibration_data(
                 CO2_sensor_data=measurement, gas_bottle_id=bottle_id)

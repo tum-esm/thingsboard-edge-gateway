@@ -35,17 +35,22 @@ class CO2MeasurementModule:
         self.inlet_bme280 = inlet_bme280
         self.inlet_sht45 = inlet_sht45
 
-    def perform_CO2_measurement(self) -> Any:
+    def perform_CO2_measurement(self, calibration_mode: bool = False) -> Any:
         """do regular measurements for in config defined measurement interval"""
 
         # Get latest auxiliary sensor data information
         self._update_air_inlet_parameters()
 
+        if not calibration_mode:
+            humidity = self.rb_humidity.avg()
+        else:
+            humidity = 0.0
+
         # perform a CO2 measurement
         CO2_sensor_data = (self.co2_sensor.read_with_retry(
             timeout=60,
             pressure=self.rb_pressure.avg(),
-            humidity=self.rb_humidity.avg(),
+            humidity=humidity,
         ))
         self.logger.debug(f"new measurement: {CO2_sensor_data}")
 
