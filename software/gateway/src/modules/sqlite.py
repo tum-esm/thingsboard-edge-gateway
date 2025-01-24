@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from enum import Enum
+from typing import Any
 
 from modules.mqtt import GatewayMqttClient
 from utils.misc import fatal_error
@@ -40,7 +41,7 @@ class SqliteConnection:
             return self.execute(query)
         return fetch
 
-    def close(self):
+    def close(self) -> None:
         self.conn.close()
 
     def reset_db_conn(self, error_msg, nr_retries=3):

@@ -1,7 +1,9 @@
 import utils
 from modules import docker_client as dockerc
+from typing import Optional, Any
 
-def on_msg_check_for_ota_update(msg_payload):
+
+def on_msg_check_for_ota_update(msg_payload: Optional[Any]) -> Optional[bool]:
     sw_title = utils.misc.get_maybe(msg_payload, "sw_title")
     sw_url = utils.misc.get_maybe(msg_payload, "sw_url")
     sw_version = utils.misc.get_maybe(msg_payload, "sw_version")

@@ -1,8 +1,10 @@
-import json
+from typing import Optional, Any
+import queue
 import ssl
+import json
 import time
-
-from paho.mqtt.client import Client
+from paho.mqtt.client import Client, MQTTMessage
+from typing import Literal
 
 GatewayMqttClientInstance = None
 
@@ -44,7 +46,7 @@ class GatewayMqttClient(Client):
 
         return self
 
-    def graceful_exit(self):
+    def graceful_exit(self) -> None:
         print("Exiting MQTT-client gracefully...")
         self.disconnect()
         self.loop_stop()
@@ -75,10 +77,10 @@ class GatewayMqttClient(Client):
             "payload": json.loads(msg.payload)
         })
 
-    def publish_message(self, message):
+    def publish_message(self, message: str) -> bool:
         return self.publish_message_raw("v1/devices/me/telemetry", message)
 
-    def publish_message_raw(self, topic, message):
+    def publish_message_raw(self, topic: str, message: str) -> bool:
         if not self.initialized or not self.connected:
             print(f'MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
             return False

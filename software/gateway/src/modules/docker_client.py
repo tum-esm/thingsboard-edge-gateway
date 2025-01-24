@@ -1,5 +1,6 @@
 import os
 from time import sleep
+from typing import Any, Optional
 
 import docker
 
@@ -14,7 +15,7 @@ class GatewayDockerClient:
     instance = None
     last_launched_version = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         if self.__class__.instance is None:
             print("[DOCKER-CLIENT] Initializing GatewayDockerClient")
             self.__class__.instance = self
@@ -22,35 +23,34 @@ class GatewayDockerClient:
             self.docker_client = docker.from_env()
 
     # Singleton pattern
-    def __new__(cls):
+    def __new__(cls: Any) -> Any:
         if hasattr(cls, 'instance') and cls.instance is not None:
             return cls.instance
         return super(GatewayDockerClient, cls).__new__(cls)
 
-    def is_edge_running(self):
+    def is_edge_running(self) -> Any:
         containers = self.docker_client.containers.list()
         for container in containers:
             if container.name == CONTROLLER_CONTAINER_NAME:
                 return container.attrs["State"]["Running"]
 
-    def is_image_available(self, image_tag):
+    def is_image_available(self, image_tag: str) -> bool:
         for image in self.docker_client.images.list():
             if image_tag in image.tags:
                 return True
         return False
 
-    def get_edge_version(self):
+    def get_edge_version(self) -> Any:
         if self.is_edge_running():
             containers = self.docker_client.containers.list()
             for container in containers:
                 if container.name == CONTROLLER_CONTAINER_NAME:
                     version = container.attrs["Config"]["Image"].split("-")[-1]
-                    if version.__len__() > 0 and (
-                            version[0] == "v" or version.__len__() == 40
-                    ):
+                    if version.__len__() > 0 and (version[0] == "v"
+                                                  or version.__len__() == 40):
                         return version
 
-    def stop_edge(self):
+    def stop_edge(self) -> None:
         if self.is_edge_running():
             containers = self.docker_client.containers.list()
             for container in containers:
@@ -60,11 +60,11 @@ class GatewayDockerClient:
         else:
             print("[DOCKER-CLIENT] Acropolis Edge Controller container is not running")
 
-    def prune_containers(self):
+    def prune_containers(self) -> None:
         self.docker_client.containers.prune()
         print("[DOCKER-CLIENT] Pruned containers")
 
-    def start_controller(self, version_to_launch=None):
+    def start_controller(self, version_to_launch: Optional[str] = None):
         if self.is_edge_running():
             current_version = self.get_edge_version()
             if current_version is None or current_version != version_to_launch:

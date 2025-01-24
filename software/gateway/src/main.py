@@ -4,24 +4,27 @@ import signal
 import sys
 import threading
 from time import sleep
+from typing import Any
 
 import utils.paths
 import utils.misc
 from args import parse_args
-from modules import sqlite, docker_client, git_client
-from modules import mqtt
+from modules import sqlite
+from modules.docker_client import GatewayDockerClient
+from modules.git_client import GatewayGitClient
+from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
 from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
-mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
 
+
 # Set up signal handling for safe shutdown
-def shutdown_handler(sig, frame):
+def shutdown_handler(sig: Any, frame: Any) -> None:
     """Handle program exit gracefully"""
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
@@ -37,11 +40,14 @@ def shutdown_handler(sig, frame):
     sys.stdout.flush()
     sys.exit(sig)
 
+
 # Set up signal handling for forced shutdown in case graceful shutdown fails
-def forced_shutdown_handler(sig, frame):
+def forced_shutdown_handler(sig: Any, frame: Any) -> None:
     print("FORCEFUL SHUTDOWN")
     sys.stdout.flush()
     os._exit(1)
+
+
 signal.signal(signal.SIGALRM, forced_shutdown_handler)
 
 signal.signal(signal.SIGINT, shutdown_handler)
@@ -50,9 +56,9 @@ signal.signal(signal.SIGTERM, shutdown_handler)
 try:
     if __name__ == '__main__':
         # setup
-        mqtt_message_queue = queue.Queue()
-        docker_client = docker_client.GatewayDockerClient()
-        git_client = git_client.GatewayGitClient()
+        mqtt_message_queue: queue.Queue = queue.Queue()
+        docker_client: GatewayDockerClient = GatewayDockerClient()
+        git_client: GatewayGitClient = GatewayGitClient()
         args = parse_args()
         print(f"Args: {args}")
         access_token = self_provisioning_get_access_token(args)
@@ -63,9 +69,11 @@ try:
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
         # create and run the mqtt client in a separate thread
-        mqtt_client = mqtt.GatewayMqttClient.instance().init(mqtt_message_queue, access_token)
+        mqtt_client = GatewayMqttClient.instance().init(
+            mqtt_message_queue, access_token)
         mqtt_client.connect(args.tb_host, args.tb_port)
-        mqtt_client_thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
+        mqtt_client_thread: threading.Thread = threading.Thread(
+            target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()
 
         sleep(5)

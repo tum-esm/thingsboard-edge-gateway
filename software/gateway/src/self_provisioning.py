@@ -4,14 +4,17 @@ import socket
 import ssl
 from random import randrange
 from time import sleep
+import argparse
+from typing import Any
 
-from paho.mqtt.client import Client
+from paho.mqtt.client import Client, MQTTMessage
 
 # global variable to contain the reply from the self-provisioning request
 provision_reply = None
 
+
 # Perform self-provisioning if needed to get an access-token for the gateway
-def self_provisioning_get_access_token(args):
+def self_provisioning_get_access_token(args: argparse.Namespace) -> str:
     global provision_reply
     # check if access token exists
     access_token_path_env_var = os.environ.get("THINGSBOARD_GATEWAY_ACCESS_TOKEN") or "./tb_access_token"
@@ -80,7 +83,7 @@ def self_provisioning_get_access_token(args):
     exit(1)
 
 
-def get_device_name(args):
+def get_device_name(args: argparse.Namespace) -> str:
     return (
             getattr(args, "device_name", None)
         or os.environ.get("THINGSBOARD_DEVICE_NAME")
