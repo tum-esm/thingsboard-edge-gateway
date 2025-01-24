@@ -91,10 +91,12 @@ try:
 
                 # check for attribute updates
                 elif "v1/devices/me/attributes" in topic:
-                    if      not on_msg_check_for_ota_update(msg_payload) \
-                        and not on_msg_check_for_config_update(msg_payload):
-                        print("Got message: " + str(msg))
-                        print("Invalid message, skipping...")
+                    if not any([
+                        on_msg_check_for_config_update(msg_payload),
+                        on_msg_check_for_ota_update(msg_payload),
+                    ]):
+                        print("[MAIN][WARN] Got invalid message: " + str(msg))
+                        print("[MAIN][WARN] Skipping invalid message...")
 
                 continue # process next message
 
