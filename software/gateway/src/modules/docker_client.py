@@ -11,21 +11,24 @@ from utils.paths import ACROPOLIS_GATEWAY_GIT_PATH, ACROPOLIS_DATA_PATH, ACROPOL
 CONTROLLER_CONTAINER_NAME = "acropolis_edge_controller"
 CONTROLLER_IMAGE_PREFIX = "acropolis-edge-controller-"
 
+singleton_instance : Optional["GatewayDockerClient"] = None
+
 class GatewayDockerClient:
-    instance = None
     last_launched_version = None
 
     def __init__(self) -> None:
-        if self.__class__.instance is None:
+        global singleton_instance
+        if singleton_instance is None:
             print("[DOCKER-CLIENT] Initializing GatewayDockerClient")
             super().__init__()
-            self.__class__.instance = self
+            singleton_instance = self
             self.docker_client = docker.from_env()
 
     # Singleton pattern
     def __new__(cls: Any) -> Any:
-        if hasattr(cls, 'instance') and cls.instance is not None:
-            return cls.instance
+        global singleton_instance
+        if singleton_instance is not None:
+            return singleton_instance
         return super(GatewayDockerClient, cls).__new__(cls)
 
     def is_edge_running(self) -> bool:

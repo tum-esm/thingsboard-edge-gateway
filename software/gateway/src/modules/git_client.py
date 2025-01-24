@@ -4,18 +4,21 @@ from typing import Optional, Any
 
 from utils.paths import ACROPOLIS_GATEWAY_GIT_PATH
 
+singleton_instance : Optional["GatewayGitClient"] = None
 
 class GatewayGitClient:
     def __init__(self):
-        if self.__class__.instance is None:
+        global singleton_instance
+        if singleton_instance is None:
             print("[GIT-CLIENT] Initializing GatewayGitClient")
             super().__init__()
-            self.__class__.instance = self
+            singleton_instance = self
 
     # Singleton pattern
     def __new__(cls: Any) -> "GatewayGitClient":
-        if hasattr(cls, 'instance') and cls.instance is not None:
-            return cls.instance
+        global singleton_instance
+        if singleton_instance is not None:
+            return singleton_instance
         return super(GatewayGitClient, cls).__new__(cls)
 
     def get_commit_from_hash_or_tag(self, hash_or_tag: str) -> Optional[str]:

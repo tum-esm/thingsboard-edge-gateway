@@ -2,27 +2,29 @@ import ssl
 import json
 import time
 from queue import Queue
-from typing import Any
+from typing import Any, Optional
 
 from paho.mqtt.client import Client
 
-GatewayMqttClientInstance = None
+singleton_instance : Optional["GatewayMqttClient"] = None
 
 class GatewayMqttClient(Client):
     initialized = False
     connected = False
-    message_queue = Queue()
+    message_queue : Queue = Queue()
 
     def __init__(self):
-        if self.__class__.instance is None:
+        global singleton_instance
+        if singleton_instance is None:
             print("[MQTT] Initializing GatewayMqttClient")
             super().__init__()
-            self.__class__.instance = self
+            singleton_instance = self
 
     # Singleton pattern
     def __new__(cls: Any) -> "GatewayMqttClient":
-        if hasattr(cls, 'instance') and cls.instance is not None:
-            return cls.instance
+        global singleton_instance
+        if singleton_instance is not None:
+            return singleton_instance
         return super(GatewayMqttClient, cls).__new__(cls)
 
     def init(self, access_token: str):
