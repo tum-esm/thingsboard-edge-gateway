@@ -8,6 +8,7 @@ from utils.extract_true_bottle_value import extract_true_bottle_value
 from hardware.sensors.vaisala_gmp343 import VaisalaGMP343
 from hardware.sensors.bosch_bme280 import BoschBME280
 from hardware.sensors.sensirion_sht45 import SensirionSHT45
+from interfaces import state_interface
 
 
 class CO2MeasurementModule:
@@ -23,8 +24,11 @@ class CO2MeasurementModule:
         self.message_queue = message_queue.MessageQueue()
         self.reset_ring_buffers()
         self.calibration_reading: Dict[Any, Any] = {}
-        self.slope = 1
-        self.offset = 0
+
+        # read slope and offset from state file
+        state = state_interface.StateInterface.read()
+        self.slope = state.co2_sensor_slope
+        self.offset = state.co2_sensor_offset
 
         # hardware
         self.co2_sensor = co2_sensor
@@ -105,6 +109,12 @@ class CO2MeasurementModule:
             self.slope = (true_values[0] - true_values[1]) / (
                 measured_values[0] - measured_values[1])
             self.offset = true_values[1] - self.slope * measured_values[1]
+
+        # persist slope and offset to state file
+        state = state_interface.StateInterface.read()
+        state.co2_sensor_slope = self.slope
+        state.co2_sensor_offset = self.offset
+        state_interface.StateInterface.write(state)
 
         self.logger.info(
             f"Calculated CO2 calibration slope: {self.slope} and offset: {self.offset}",
