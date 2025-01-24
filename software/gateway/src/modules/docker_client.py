@@ -74,7 +74,7 @@ class GatewayDockerClient:
     def start_controller(self, version_to_launch: Optional[str] = None) -> None:
         if self.is_edge_running():
             current_version = self.get_edge_version()
-            if current_version is None or current_version != version_to_launch:
+            if current_version is None or current_version != version_to_launch or current_version == "unknown":
                 self.stop_edge()
                 self.start_controller(version_to_launch)
             else:
