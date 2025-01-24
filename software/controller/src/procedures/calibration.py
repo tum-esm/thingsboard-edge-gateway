@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+import pytz
 
 from custom_types import config_types
 from interfaces import logging_interface, state_interface, hardware_interface
@@ -89,9 +90,22 @@ class CalibrationProcedure:
 
         # load state, kept during configuration procedures
         state = state_interface.StateInterface.read(config=self.config)
-        current_local_time = datetime.now()
-        current_local_day = current_local_time.date()
+
+        current_local_time = datetime.now().astimezone(
+            pytz.timezone(self.config.local_time_zone))
+        current_local_date = current_local_time.date()
         current_local_hour = current_local_time.hour
+
+        # skip calibration when sensor has had power for less than 30
+        # minutes (a full warming up is required for maximum accuracy)
+        seconds_since_last_co2_sensor_boot = round(
+            time.time() - self.hardware_interface.co2_sensor.last_powerup_time)
+
+        if seconds_since_last_co2_sensor_boot < 1800:
+            self.logger.info(
+                f"skipping calibration, sensor is still warming up (co2 sensor"
+                f" booted {seconds_since_last_co2_sensor_boot} seconds ago)")
+            return False
 
         # if last calibration time is unknown, calibrate now
         # only happens when the state.json is recreated
@@ -100,17 +114,18 @@ class CalibrationProcedure:
                 "last calibration time is unknown, calibrating now")
             return True
 
-        last_calibration_day = datetime.fromtimestamp(
-            state.last_calibration_attempt).date()
-        days_since_last_calibration = (current_local_day -
-                                       last_calibration_day).days
-
         # check if a calibration was already performed on the same day
-        if current_local_day == last_calibration_day:
+        last_calibration_date = datetime.fromtimestamp(
+            state.last_calibration_attempt).date()
+
+        if current_local_date == last_calibration_date:
             self.logger.info("last calibration was already done today")
             return False
 
         # compare scheduled calibration day to today
+        days_since_last_calibration = (current_local_date -
+                                       last_calibration_date).days
+
         if days_since_last_calibration < self.config.calibration.calibration_frequency_days:
             self.logger.info(f"next scheduled calibration is not due today.")
             return False
@@ -118,17 +133,6 @@ class CalibrationProcedure:
         # check if current hour is past the scheduled hour of day
         if current_local_hour < self.config.calibration.calibration_hour_of_day:
             self.logger.info("next calibration is scheduled for later today")
-            return False
-
-        # skip calibration when sensor has had power for less than 30
-        # minutes (a full warming up is required for maximum accuracy)
-        seconds_since_last_co2_sensor_boot = round(
-            time.time() - self.hardware_interface.co2_sensor.last_powerup_time,
-            2)
-        if seconds_since_last_co2_sensor_boot < 1800:
-            self.logger.info(
-                f"skipping calibration, sensor is still warming up (co2 sensor"
-                f" booted {seconds_since_last_co2_sensor_boot} seconds ago)")
             return False
 
         self.logger.info("next calibration is due, calibrating now")

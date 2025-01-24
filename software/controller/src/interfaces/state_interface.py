@@ -4,9 +4,11 @@ import os
 from custom_types import state_types, config_types
 from interfaces import logging_interface
 
-dirname = os.path.dirname
-PROJECT_DIR = dirname(dirname(dirname(os.path.abspath(__file__))))
-STATE_PATH = os.path.join(PROJECT_DIR, "config", "state.json")
+DATA_PATH = os.path.join(os.environ.get("ACROPOLIS_DATA_PATH", "unknown"))
+if DATA_PATH == "unknown":
+    raise FileNotFoundError(f"Data path {DATA_PATH} does not exist.")
+else:
+    STATE_PATH = os.path.join(DATA_PATH, "state.json")
 
 
 class StateInterface:

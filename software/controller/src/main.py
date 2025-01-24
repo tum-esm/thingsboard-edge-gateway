@@ -4,6 +4,8 @@ import signal
 import time
 from pathlib import Path
 from typing import Any
+from datetime import datetime
+import pytz
 
 # Ensure the project root is added to the Python path to allow absolute imports from src
 sys.path.insert(0, str(Path(__file__).parent))
@@ -40,6 +42,10 @@ def run() -> None:
         f"Started new automation process with SW version {SW_VERSION} and PID {os.getpid()}.",
         forward=True,
     )
+
+    logger.info(
+        f"Local time is: {datetime.now().astimezone(pytz.timezone(config.local_time_zone))}",
+        forward=True)
 
     # -------------------------------------------------------------------------
 

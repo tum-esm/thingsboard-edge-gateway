@@ -1,10 +1,11 @@
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime
 from os.path import dirname, abspath, join
 from typing import Literal, Optional
 import os
 import sys
+import pytz
 
 from custom_types import mqtt_playload_types, config_types
 from utils import message_queue, shell_commands, log_path
@@ -138,29 +139,14 @@ class Logger:
     def _write_log_line(self, level: str, message: str) -> None:
         """Formats the log line string and writes it to the appropriate log file."""
         # Get the current local time as a timezone-aware datetime object
-        now_local = datetime.now().astimezone()
-
-        # Calculate UTC offset in hours, rounded to one decimal place
-        utc_offset_td = now_local.utcoffset()
-        if utc_offset_td is not None:
-            utc_offset = round(utc_offset_td.total_seconds() / 3600, 1)
-        else:
-            # Fallback if utcoffset() returns None
-            utc_offset = 0.0
-
-        # If UTC offset is an integer, display without decimal
-        if utc_offset == int(utc_offset):
-            utc_offset = int(utc_offset)
+        now_local = datetime.now().astimezone(
+            pytz.timezone(self.config.local_time_zone))
 
         # Format the timestamp to include milliseconds
         timestamp = now_local.strftime(
             '%Y-%m-%d %H:%M:%S.%f')[:-3]  # Trim microseconds to milliseconds
 
-        # Format UTC offset string
-        if utc_offset < 0:
-            offset_str = f"UTC{utc_offset}"
-        else:
-            offset_str = f"UTC+{utc_offset}"
+        offset_str = self.determine_UTC_offset(now_local=now_local)
 
         # Construct the log string with proper formatting
         log_string = (f"{timestamp} {offset_str} "
@@ -186,9 +172,29 @@ class Logger:
             with open(log_file_path, "a") as f1:
                 f1.write(log_string)
 
+    def determine_UTC_offset(self, now_local: datetime) -> str:
+
+        # Calculate UTC offset in hours, rounded to one decimal place
+        utc_offset_td = now_local.utcoffset()
+        if utc_offset_td is not None:
+            utc_offset = round(utc_offset_td.total_seconds() / 3600, 1)
+        else:
+            # Fallback if utcoffset() returns None
+            utc_offset = 0.0
+
+        # If UTC offset is an integer, display without decimal
+        if utc_offset == int(utc_offset):
+            utc_offset = int(utc_offset)
+
+        # Format UTC offset string
+        if utc_offset < 0:
+            return f"UTC{utc_offset}"
+        else:
+            return f"UTC+{utc_offset}"
+
     def _enqueue_message(
         self,
-        level: Literal["info", "warning", "error"],
+        level: Literal["INFO", "WARNING", "ERROR"],
         subject: str,
         details: str = "",
     ) -> None:

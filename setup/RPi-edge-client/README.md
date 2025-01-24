@@ -133,3 +133,11 @@ sudo ./build_gateway_runner_docker_image.sh
 ```
 dd status=progress bs=4M  if=/dev/disk4 | gzip > //Users/.../acropolis-edge-image.gz
 ```
+
+# Flash image back to SDCard
+
+```
+diskutil list
+diskutil umountDisk /dev/disk{i}
+gzip -dc //Users/.../acropolis-edge-image.gz | sudo dd of=/dev/disk4 bs=4M status=progres
+```

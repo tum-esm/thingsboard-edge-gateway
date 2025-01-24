@@ -111,6 +111,7 @@ class Config(BaseModel):
 
     version: str = Field(pattern=r"^\d+\.\d+\.\d+(?:-(?:alpha|beta)\.\d+)?$"
                          )  # e.g., "1.2.3" or "99.0.1" or "42.1.0-alpha.6"
+    local_time_zone: str
     active_components: ActiveComponentsConfig
     calibration: CalibrationConfig
     documentation: DocumentationConfig
