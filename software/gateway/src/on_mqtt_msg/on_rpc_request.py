@@ -27,6 +27,9 @@ def on_rpc_request(rpc_msg_id: str, method: Any, params: Any) -> None:
         send_rpc_response(rpc_msg_id, "UNKNOWN_METHOD")
 
 
-def send_rpc_response(rpc_msg_id: str, response: str) -> None:
+def send_rpc_response(rpc_msg_id: str, response: str) -> bool:
     """Send an RPC response"""
-    GatewayMqttClient.instance().publish_message_raw("v1/devices/me/rpc/response/" + rpc_msg_id, "{\"message\": \"" + response + "\"}")
+    return GatewayMqttClient.instance().publish_message_raw(
+        "v1/devices/me/rpc/response/" + rpc_msg_id,
+        "{\"message\": \"" + response + "\"}"
+    )

@@ -2,18 +2,19 @@ import signal
 import sys
 import traceback
 from time import sleep
+from typing import Any
 
 from modules.mqtt import GatewayMqttClient
 
 
-def get_maybe(dictionary, *properties):
+def get_maybe(dictionary, *properties) -> Any:
     for prop in properties:
         if dictionary is None:
             return None
         dictionary = dictionary.get(prop)
     return dictionary
 
-def fatal_error(msg):
+def fatal_error(msg) -> None:
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
 

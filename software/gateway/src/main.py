@@ -24,7 +24,7 @@ communication_sqlite_db = None
 
 
 # Set up signal handling for safe shutdown
-def shutdown_handler(sig: Any, frame: Any) -> None:
+def shutdown_handler(sig: any, _frame: Any) -> None:
     """Handle program exit gracefully"""
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
@@ -42,7 +42,7 @@ def shutdown_handler(sig: Any, frame: Any) -> None:
 
 
 # Set up signal handling for forced shutdown in case graceful shutdown fails
-def forced_shutdown_handler(sig: Any, frame: Any) -> None:
+def forced_shutdown_handler(_sig: Any, _frame: Any) -> None:
     print("FORCEFUL SHUTDOWN")
     sys.stdout.flush()
     os._exit(1)

@@ -5,9 +5,8 @@ import ssl
 from random import randrange
 from time import sleep
 import argparse
-from typing import Any
 
-from paho.mqtt.client import Client, MQTTMessage
+from paho.mqtt.client import Client
 
 # global variable to contain the reply from the self-provisioning request
 provision_reply = None

@@ -22,16 +22,16 @@ class SqliteConnection:
         except Exception as e:
             self.reset_db_conn(e, nr_retries - 1)
 
-    def does_table_exist(self, table):
+    def does_table_exist(self, table) -> bool:
         return len(self.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")) > 0
 
-    def is_table_empty(self, table):
+    def is_table_empty(self, table) -> bool:
         return self.execute(f"SELECT COUNT(*) FROM {table}")[0][0] == 0
 
-    def check(self):
+    def check(self) -> None:
         return self.execute("SELECT name FROM sqlite_master WHERE type='table';")
 
-    def execute(self, query):
+    def execute(self, query) -> Any:
         try:
             cursor = self.conn.cursor()
             cursor.execute(query)
@@ -44,7 +44,7 @@ class SqliteConnection:
     def close(self) -> None:
         self.conn.close()
 
-    def reset_db_conn(self, error_msg, nr_retries=3):
+    def reset_db_conn(self, error_msg, nr_retries=3) -> None:
         GatewayMqttClient.instance().publish_log('WARN', f'WARNING: SQLite error at "{self.path}": {str(error_msg)}')
         GatewayMqttClient.instance().publish_log('WARN', f'WARNING: resetting sqlite db at "{self.path}"')
         try:

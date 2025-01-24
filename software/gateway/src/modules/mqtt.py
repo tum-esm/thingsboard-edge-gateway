@@ -1,10 +1,9 @@
-from typing import Optional, Any
-import queue
 import ssl
 import json
 import time
-from paho.mqtt.client import Client, MQTTMessage
-from typing import Literal
+from paho.mqtt.client import Client
+
+from utils.misc import fatal_error
 
 GatewayMqttClientInstance = None
 
@@ -51,7 +50,7 @@ class GatewayMqttClient(Client):
         self.disconnect()
         self.loop_stop()
 
-    def __on_connect(self, _client, _userdata, _flags, _result_code, *_extra_params):
+    def __on_connect(self, _client, _userdata, _flags, _result_code, *_extra_params) -> None:
         if _result_code != 0:
             print(f"Failed to connect to ThingsBoard with result code: {_result_code}")
             self.graceful_exit()
@@ -66,12 +65,12 @@ class GatewayMqttClient(Client):
         self.publish('v1/devices/me/attributes/request/1', '{"sharedKeys":"sw_title,sw_url,sw_version,controller_config"}')
         self.connected = True
 
-    def __on_disconnect(self, _client, _userdata, _rc):
+    def __on_disconnect(self, _client, _userdata, result_code) -> None:
         self.connected = False
-        print(f"Disconnected from ThingsBoard with result code: {_rc}")
+        print(f"Disconnected from ThingsBoard with result code: {result_code}")
         self.graceful_exit()
 
-    def __on_message(self, _client, _userdata, msg):
+    def __on_message(self, _client, _userdata, msg) -> None:
         self.message_queue.put({
             "topic": msg.topic,
             "payload": json.loads(msg.payload)
@@ -88,7 +87,7 @@ class GatewayMqttClient(Client):
         self.publish(topic, message)
         return True
 
-    def publish_log(self, log_level, log_message):
+    def publish_log(self, log_level, log_message) -> None:
         self.publish_message(json.dumps({
             "ts": int(time.time()) * 1000,
             "values": {

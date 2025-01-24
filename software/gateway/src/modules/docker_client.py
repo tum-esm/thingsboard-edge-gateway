@@ -28,11 +28,12 @@ class GatewayDockerClient:
             return cls.instance
         return super(GatewayDockerClient, cls).__new__(cls)
 
-    def is_edge_running(self) -> Any:
+    def is_edge_running(self) -> bool:
         containers = self.docker_client.containers.list()
         for container in containers:
             if container.name == CONTROLLER_CONTAINER_NAME:
                 return container.attrs["State"]["Running"]
+        return False
 
     def is_image_available(self, image_tag: str) -> bool:
         for image in self.docker_client.images.list():
@@ -40,7 +41,7 @@ class GatewayDockerClient:
                 return True
         return False
 
-    def get_edge_version(self) -> Any:
+    def get_edge_version(self) -> str:
         if self.is_edge_running():
             containers = self.docker_client.containers.list()
             for container in containers:
@@ -64,7 +65,7 @@ class GatewayDockerClient:
         self.docker_client.containers.prune()
         print("[DOCKER-CLIENT] Pruned containers")
 
-    def start_controller(self, version_to_launch: Optional[str] = None):
+    def start_controller(self, version_to_launch: Optional[str] = None) -> None:
         if self.is_edge_running():
             current_version = self.get_edge_version()
             if current_version is None or current_version != version_to_launch:
