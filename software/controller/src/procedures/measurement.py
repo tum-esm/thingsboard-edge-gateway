@@ -60,10 +60,20 @@ class MeasurementProcedure:
             time.sleep(seconds_to_wait_for_next_measurement)
             self.last_measurement_time = time.time()
 
+            # perform a CO2 measurement
             measurement = self.hardware_interface.co2_measurement_module.perform_CO2_measurement(
             )
+
+            # perform edge correction
+            if self.config.active_components.perform_co2_calibration_correction:
+                gmp343_edge_corrected = self.hardware_interface.co2_measurement_module.perform_edge_correction(
+                    CO2_sensor_data=measurement)
+            else:
+                gmp343_edge_corrected = None
+
             self.hardware_interface.co2_measurement_module.send_CO2_measurement_data(
-                CO2_sensor_data=measurement)
+                CO2_sensor_data=measurement,
+                edge_corrected=gmp343_edge_corrected)
 
             # stop loop after defined measurement interval
             if (self.last_measurement_time - measurement_procedure_start_time
