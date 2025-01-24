@@ -492,6 +492,19 @@ files = [
 ]
 
 [[package]]
+name = "numpy-typing"
+version = "1.1.1"
+description = "Improved numpy typing anotations"
+optional = false
+python-versions = "*"
+files = [
+    {file = "numpy_typing-1.1.1.tar.gz", hash = "sha256:023005afafbc72d84b450d23a2f110cfca255bddd1ef55aa8ef87207a9dbf83c"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "packaging"
 version = "24.1"
 description = "Core utilities for Python packages"
@@ -979,4 +992,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12.4"
-content-hash = "5b6aea2d807fa6959a5ba646790581864d25e2782d911dd13efc599b64902cc2"
+content-hash = "780c6f9fa97cbcd5bf2732c1b8a2a861f92f858845266827d6ac8b9d379f97b2"
