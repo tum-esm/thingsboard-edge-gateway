@@ -1,13 +1,14 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import time
 
 from custom_types import config_types, sensor_types, mqtt_playload_types
 from interfaces import logging_interface
-from utils import ring_buffer, message_queue
+from utils import ring_buffer, message_queue, athmospheric_conversion
 from utils.extract_true_bottle_value import extract_true_bottle_value
 from hardware.sensors.vaisala_gmp343 import VaisalaGMP343
 from hardware.sensors.bosch_bme280 import BoschBME280
 from hardware.sensors.sensirion_sht45 import SensirionSHT45
+from interfaces import state_interface
 
 
 class CO2MeasurementModule:
@@ -23,29 +24,55 @@ class CO2MeasurementModule:
         self.message_queue = message_queue.MessageQueue()
         self.reset_ring_buffers()
         self.calibration_reading: Dict[Any, Any] = {}
-        self.slope = 1
-        self.offset = 0
+
+        # read slope and offset from state file
+        state = state_interface.StateInterface.read(config=self.config)
+        self.slope = state.co2_sensor_slope
+        self.offset = state.co2_sensor_offset
 
         # hardware
         self.co2_sensor = co2_sensor
         self.inlet_bme280 = inlet_bme280
         self.inlet_sht45 = inlet_sht45
 
-    def perform_CO2_measurement(self) -> Any:
+    def perform_CO2_measurement(self, calibration_mode: bool = False) -> Any:
         """do regular measurements for in config defined measurement interval"""
 
         # Get latest auxiliary sensor data information
         self._update_air_inlet_parameters()
 
+        if not calibration_mode:
+            humidity = self.rb_humidity.avg()
+        else:
+            humidity = 0.0
+
         # perform a CO2 measurement
         CO2_sensor_data = (self.co2_sensor.read_with_retry(
             timeout=60,
             pressure=self.rb_pressure.avg(),
-            humidity=self.rb_humidity.avg(),
+            humidity=humidity,
         ))
         self.logger.debug(f"new measurement: {CO2_sensor_data}")
 
         return CO2_sensor_data
+
+    def perform_edge_correction(
+            self, CO2_sensor_data: sensor_types.CO2SensorData
+    ) -> tuple[float, float]:
+        """Performs wet -> dry conversion and calibration correction and returns corrected CO2 value"""
+
+        # Apply wet -> dry conversion
+        co2_dry = athmospheric_conversion.calculate_co2dry(
+            co2wet=CO2_sensor_data.filtered,
+            temperature=CO2_sensor_data.temperature,
+            rh=self.rb_humidity.avg(),
+            pressure=self.rb_pressure.avg(),
+        )
+
+        # Apply calibration slope and offset
+        co2_corrected = self.slope * co2_dry + self.offset
+
+        return co2_dry, co2_corrected
 
     def _update_air_inlet_parameters(self) -> None:
         """
@@ -106,12 +133,21 @@ class CO2MeasurementModule:
                 measured_values[0] - measured_values[1])
             self.offset = true_values[1] - self.slope * measured_values[1]
 
+        # persist slope and offset to state file
+        state = state_interface.StateInterface.read(config=self.config)
+        state.co2_sensor_slope = self.slope
+        state.co2_sensor_offset = self.offset
+        state_interface.StateInterface.write(state)
+
         self.logger.info(
             f"Calculated CO2 calibration slope: {self.slope} and offset: {self.offset}",
             forward=True)
 
     def send_CO2_measurement_data(
-            self, CO2_sensor_data: sensor_types.CO2SensorData) -> None:
+            self,
+            CO2_sensor_data: sensor_types.CO2SensorData,
+            edge_dry: Optional[float] = None,
+            edge_corrected: Optional[float] = None) -> None:
 
         # send out MQTT measurement message
         self.message_queue.enqueue_message(
@@ -121,6 +157,8 @@ class CO2MeasurementModule:
                 gmp343_compensated=CO2_sensor_data.compensated,
                 gmp343_filtered=CO2_sensor_data.filtered,
                 gmp343_temperature=CO2_sensor_data.temperature,
+                gmp343_edge_dry=edge_dry,
+                gmp343_edge_corrected=edge_corrected,
                 bme280_temperature=self.air_inlet_bme280_data.temperature,
                 bme280_humidity=self.air_inlet_bme280_data.humidity,
                 bme280_pressure=self.air_inlet_bme280_data.pressure,

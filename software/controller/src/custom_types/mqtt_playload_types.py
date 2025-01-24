@@ -15,6 +15,8 @@ class MQTTCO2Data():
     gmp343_raw: float
     gmp343_compensated: float
     gmp343_filtered: float
+    gmp343_edge_corrected: Optional[float]
+    gmp343_edge_dry: Optional[float]
     gmp343_temperature: Optional[float]
     bme280_temperature: Optional[float]
     bme280_humidity: Optional[float]
