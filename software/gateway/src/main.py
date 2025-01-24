@@ -1,5 +1,4 @@
 import os
-import queue
 import signal
 import sys
 import threading
@@ -24,7 +23,7 @@ communication_sqlite_db = None
 
 
 # Set up signal handling for safe shutdown
-def shutdown_handler(sig: any, _frame: Any) -> None:
+def shutdown_handler(sig: Any, _frame: Any) -> None:
     """Handle program exit gracefully"""
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
@@ -56,7 +55,6 @@ signal.signal(signal.SIGTERM, shutdown_handler)
 try:
     if __name__ == '__main__':
         # setup
-        mqtt_message_queue: queue.Queue = queue.Queue()
         docker_client: GatewayDockerClient = GatewayDockerClient()
         git_client: GatewayGitClient = GatewayGitClient()
         args = parse_args()
@@ -69,19 +67,17 @@ try:
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
         # create and run the mqtt client in a separate thread
-        mqtt_client = GatewayMqttClient.instance().init(
-            mqtt_message_queue, access_token)
+        mqtt_client = GatewayMqttClient.instance().init(access_token)
         mqtt_client.connect(args.tb_host, args.tb_port)
-        mqtt_client_thread: threading.Thread = threading.Thread(
-            target=lambda: mqtt_client.loop_forever())
+        mqtt_client_thread: threading.Thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()
 
         sleep(5)
 
         while True:
             # check if there are any new incoming mqtt messages in the queue, process them
-            if not mqtt_message_queue.empty():
-                msg = mqtt_message_queue.get()
+            if not mqtt_client.message_queue.empty():
+                msg = mqtt_client.message_queue.get()
                 topic = get_maybe(msg, "topic") or "unknown"
                 msg_payload = utils.misc.get_maybe(msg, "payload", "shared") or utils.misc.get_maybe(msg, "payload")
 

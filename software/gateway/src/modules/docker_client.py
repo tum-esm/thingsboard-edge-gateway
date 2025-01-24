@@ -41,7 +41,7 @@ class GatewayDockerClient:
                 return True
         return False
 
-    def get_edge_version(self) -> str:
+    def get_edge_version(self) -> Optional[str]:
         if self.is_edge_running():
             containers = self.docker_client.containers.list()
             for container in containers:
@@ -50,6 +50,7 @@ class GatewayDockerClient:
                     if version.__len__() > 0 and (version[0] == "v"
                                                   or version.__len__() == 40):
                         return version
+        return None
 
     def stop_edge(self) -> None:
         if self.is_edge_running():

@@ -1,6 +1,8 @@
 import ssl
 import json
 import time
+from queue import Queue
+
 from paho.mqtt.client import Client
 
 from utils.misc import fatal_error
@@ -10,7 +12,7 @@ GatewayMqttClientInstance = None
 class GatewayMqttClient(Client):
     initialized = False
     connected = False
-    message_queue = None
+    message_queue = Queue.queue()
 
     @staticmethod
     def instance():
@@ -27,7 +29,7 @@ class GatewayMqttClient(Client):
         fatal_error("GatewayMqttClient is a singleton and cannot be instantiated directly. "
                            "Use GatewayMqttClient.instance() instead.")
 
-    def init(self, message_queue, access_token):
+    def init(self, access_token: str):
         super().__init__()
 
         # set up the client
@@ -39,7 +41,6 @@ class GatewayMqttClient(Client):
         self.on_message = self.__on_message
         self.on_disconnect = self.__on_disconnect
 
-        self.message_queue = message_queue
         self.initialized = True
         self.connected = False
 
