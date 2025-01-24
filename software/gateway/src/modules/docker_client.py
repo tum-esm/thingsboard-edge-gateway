@@ -62,6 +62,8 @@ class GatewayDockerClient:
             containers = self.docker_client.containers.list()
             for container in containers:
                 if container.name == CONTROLLER_CONTAINER_NAME:
+                    if self.last_launched_version is None:
+                        self.last_launched_version = self.get_edge_version()
                     container.stop(timeout=60)
                     print("[DOCKER-CLIENT] Stopped Acropolis Edge Controller container")
         else:
