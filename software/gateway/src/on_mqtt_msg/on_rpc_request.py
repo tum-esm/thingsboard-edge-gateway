@@ -2,7 +2,7 @@ import json
 import os
 import signal
 from time import sleep
-from typing import Any
+from typing import Any, Callable
 
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
@@ -41,8 +41,7 @@ def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
     GatewayFileWriter().upsert_file(params["identifier"], params["path"])
     send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
 
-
-RPC_METHODS={
+RPC_METHODS = {
     "reboot": {
         "description": "Reboot the device",
         "exec": rpc_reboot
@@ -72,7 +71,7 @@ def on_rpc_request(rpc_msg_id: str, method: str, params: Any) -> None:
     GatewayMqttClient().publish_log("INFO", f"RPC request: {method} ({params})")
     if method in RPC_METHODS:
         try:
-            RPC_METHODS[method]["exec"](rpc_msg_id, method, params)
+            RPC_METHODS[method]["exec"](rpc_msg_id, method, params) # type: ignore[operator]
         except Exception as e:
             print(f"Error executing RPC method '{method}': {e}")
             GatewayMqttClient().publish_log("ERROR", f"Error executing RPC method '{method}': {e}")
