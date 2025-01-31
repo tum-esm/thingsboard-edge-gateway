@@ -7,12 +7,12 @@ from typing import Union
 from custom_types import mqtt_playload_types
 
 PROJECT_DIR = dirname(dirname(os.path.abspath(__file__)))
-ACROPOLIS_DATA_PATH = os.environ.get(
-    "ACROPOLIS_DATA_PATH") or os.path.join(
-        dirname(PROJECT_DIR), "data")
+ACROPOLIS_DATA_PATH = os.environ.get("ACROPOLIS_DATA_PATH") or os.path.join(
+    dirname(PROJECT_DIR), "data")
 
 THINGSBOARD_PAYLOADS = Union[mqtt_playload_types.MQTTCO2Data,
                              mqtt_playload_types.MQTTCO2CalibrationData,
+                             mqtt_playload_types.MQTTCalibrationCorrectionData,
                              mqtt_playload_types.MQTTSystemData,
                              mqtt_playload_types.MQTTWindData,
                              mqtt_playload_types.MQTTWindSensorInfo,
@@ -23,8 +23,7 @@ class MessageQueue:
     """Uses an SQLite database to store messages to be forwarded to the ThingsBoard server by the gateway"""
 
     def __init__(self) -> None:
-        db_path = os.path.join(ACROPOLIS_DATA_PATH,
-                               "acropolis_comm_db.db")
+        db_path = os.path.join(ACROPOLIS_DATA_PATH, "acropolis_comm_db.db")
 
         self.con = sqlite3.connect(db_path,
                                    isolation_level=None,

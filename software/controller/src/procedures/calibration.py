@@ -63,8 +63,12 @@ class CalibrationProcedure:
             self.calibrate_sht45_zero_point()
 
         if self.config.active_components.perform_co2_calibration_correction:
-            self.hardware_interface.co2_measurement_module.calculate_offset_slope(
+            self.hardware_interface.co2_measurement_module.calculate_intercept_slope(
             )
+
+        # send active calibration correction values
+        self.hardware_interface.co2_measurement_module.send_calibration_correction_data(
+        )
 
         # switch back to measurement inlet
         self.hardware_interface.valves.set(

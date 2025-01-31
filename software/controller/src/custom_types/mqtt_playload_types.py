@@ -40,6 +40,13 @@ class MQTTCO2CalibrationData():
 
 
 @dataclasses.dataclass
+class MQTTCalibrationCorrectionData():
+    cal_gmp343_slope: float
+    cal_gmp343_intercept: float
+    cal_sht_45_offset: float
+
+
+@dataclasses.dataclass
 class MQTTSystemData():
     enclosure_bme280_temperature: Optional[float]
     enclosure_bme280_humidity: Optional[float]
