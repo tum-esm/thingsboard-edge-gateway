@@ -24,21 +24,31 @@ class GatewayFileWriter:
 
     def set_files(self, files: dict) -> None:
         self.files = files
+        self.update_all_files_content_client_attributes()
 
     def upsert_file(self, file_identifier: str, file_path: str) -> None:
         if self.files is None:
             raise Exception("Files definition is not available")
         self.files[file_identifier] = file_path
-        self.update_files_client_attribute()
+        self.update_file_content_client_attribute(file_identifier, self.read_file(file_path))
 
     def remove_file(self, file_identifier: str) -> None:
         if self.files is None:
             raise Exception("Files definition is not available")
+        if file_identifier not in self.files:
+            raise Exception(f"File with identifier '{file_identifier}' not found")
         del self.files[file_identifier]
-        self.update_files_client_attribute()
+        self.update_file_content_client_attribute(file_identifier, "")
 
-    def update_files_client_attribute(self) -> None:
-        GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({"files": self.files}))
+    def update_all_files_content_client_attributes(self) -> None:
+        if self.files is None:
+            raise Exception("Files definition is not available")
+        for file_identifier in self.files:
+            print(f"Updating file content for file: {file_identifier}")
+            self.update_file_content_client_attribute(file_identifier, self.read_file(self.files[file_identifier]))
+
+    def update_file_content_client_attribute(self, file_identifier: str, file_content) -> None:
+        GatewayMqttClient().publish_message_raw(f"v1/devices/me/attributes/file_{file_identifier}", file_content)
 
     # Read file contents into string
     def read_file(self, file_path: str) -> str:

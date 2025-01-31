@@ -14,5 +14,7 @@ def on_msg_check_for_files_update(msg_payload: Any) -> bool:
         GatewayFileWriter().set_files(new_files_definition)
     except json.JSONDecodeError:
         print("Failed to parse files definition")
+    except Exception as e:
+        print(f"Failed to update files definition: {e}")
 
     return True

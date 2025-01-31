@@ -41,6 +41,14 @@ def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
     GatewayFileWriter().upsert_file(params["identifier"], params["path"])
     send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
 
+def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not str:
+        return send_rpc_method_error(rpc_msg_id, "Removing file definition failed: params is not a string")
+
+    print(f"[RPC] Removing file definition '{params}'")
+    GatewayFileWriter().remove_file(params)
+    send_rpc_response(rpc_msg_id, f"OK - File definition removed - '{params}'")
+
 RPC_METHODS = {
     "reboot": {
         "description": "Reboot the device",
@@ -61,6 +69,10 @@ RPC_METHODS = {
     "files_upsert": {
         "description": "Upsert file definition",
         "exec": rpc_files_upsert
+    },
+    "files_remove": {
+        "description": "Remove file definition",
+        "exec": rpc_files_remove
     }
 }
 
