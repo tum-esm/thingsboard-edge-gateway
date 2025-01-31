@@ -2,7 +2,7 @@ import json
 import os
 import signal
 from time import sleep
-from typing import Any, Callable
+from typing import Any
 
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
@@ -49,6 +49,14 @@ def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
     GatewayFileWriter().remove_file(params)
     send_rpc_response(rpc_msg_id, f"OK - File definition removed - '{params}'")
 
+def rpc_files_overwrite(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Overwriting file definitions failed: params is not a dict")
+
+    print(f"[RPC] Overwriting file definitions")
+    GatewayFileWriter().overwrite_files(params)
+    send_rpc_response(rpc_msg_id, "OK - File definitions overwritten")
+
 RPC_METHODS = {
     "reboot": {
         "description": "Reboot the device",
@@ -73,6 +81,10 @@ RPC_METHODS = {
     "files_remove": {
         "description": "Remove file definition",
         "exec": rpc_files_remove
+    },
+    "files_overwrite": {
+        "description": "Overwrite file definitions",
+        "exec": rpc_files_overwrite
     }
 }
 

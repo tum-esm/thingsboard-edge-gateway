@@ -10,7 +10,6 @@ import utils.misc
 from args import parse_args
 from modules import sqlite
 from modules.docker_client import GatewayDockerClient
-from modules.file_writer import GatewayFileWriter
 from modules.git_client import GatewayGitClient
 from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
