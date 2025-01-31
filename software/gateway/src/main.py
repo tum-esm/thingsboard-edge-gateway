@@ -13,6 +13,7 @@ from modules.docker_client import GatewayDockerClient
 from modules.git_client import GatewayGitClient
 from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
+from on_mqtt_msg.check_for_files_update import on_msg_check_for_files_update
 from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
 from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
@@ -79,7 +80,7 @@ try:
             if not mqtt_client.message_queue.empty():
                 msg = mqtt_client.message_queue.get()
                 topic = get_maybe(msg, "topic") or "unknown"
-                msg_payload = utils.misc.get_maybe(msg, "payload", "shared") or utils.misc.get_maybe(msg, "payload")
+                msg_payload = utils.misc.get_maybe(msg, "payload")
 
                 # check for incoming RPC requests
                 if "v1/devices/me/rpc/request" in topic:
@@ -94,6 +95,7 @@ try:
                     if not any([
                         on_msg_check_for_config_update(msg_payload),
                         on_msg_check_for_ota_update(msg_payload),
+                        on_msg_check_for_files_update(msg_payload),
                     ]):
                         print("[MAIN][WARN] Got invalid message: " + str(msg))
                         print("[MAIN][WARN] Skipping invalid message...")

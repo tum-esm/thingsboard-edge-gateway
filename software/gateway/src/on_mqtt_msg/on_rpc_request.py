@@ -4,6 +4,7 @@ import signal
 from time import sleep
 from typing import Any
 
+from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
 def rpc_reboot(rpc_msg_id: str, _method: Any, _params: Any):
@@ -29,6 +30,17 @@ def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any):
     print("[RPC] Pong")
     send_rpc_response(rpc_msg_id, "Pong")
 
+def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Upserting file definition failed: params is not a dictionary")
+
+    if "identifier" not in params or "path" not in params:
+        return send_rpc_method_error(rpc_msg_id, "Upserting file definition failed: missing 'identifier' or 'path' in params")
+
+    print(f"[RPC] Upserting file definition - {params['identifier']} -> {params['path']}")
+    GatewayFileWriter().upsert_file(params["identifier"], params["path"])
+    send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
+
 
 RPC_METHODS={
     "reboot": {
@@ -46,11 +58,15 @@ RPC_METHODS={
     "ping": {
         "description": "Ping the device (returns 'pong' reply)",
         "exec": rpc_ping
+    },
+    "files_upsert": {
+        "description": "Upsert file definition",
+        "exec": rpc_files_upsert
     }
 }
 
 
-def on_rpc_request(rpc_msg_id: str, method: Any, params: Any) -> None:
+def on_rpc_request(rpc_msg_id: str, method: str, params: Any) -> None:
     """Handle incoming RPC requests"""
     print(f"RPC request: {rpc_msg_id} {method} ({params})")
     GatewayMqttClient().publish_log("INFO", f"RPC request: {method} ({params})")
@@ -78,3 +94,7 @@ def send_rpc_response(rpc_msg_id: str, response: Any) -> bool:
         "v1/devices/me/rpc/response/" + rpc_msg_id,
         json.dumps({"message": response})
     )
+
+def send_rpc_method_error(rpc_msg_id, msg):
+    print(f"[RPC] {msg}")
+    send_rpc_response(rpc_msg_id, f"Error - {msg}")
