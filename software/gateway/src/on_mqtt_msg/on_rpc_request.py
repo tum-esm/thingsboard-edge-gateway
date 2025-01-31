@@ -55,7 +55,12 @@ def on_rpc_request(rpc_msg_id: str, method: Any, params: Any) -> None:
     print(f"RPC request: {rpc_msg_id} {method} ({params})")
     GatewayMqttClient().publish_log("INFO", f"RPC request: {method} ({params})")
     if method in RPC_METHODS:
-        RPC_METHODS[method]["exec"](rpc_msg_id, method, params)
+        try:
+            RPC_METHODS[method]["exec"](rpc_msg_id, method, params)
+        except Exception as e:
+            print(f"Error executing RPC method '{method}': {e}")
+            GatewayMqttClient().publish_log("ERROR", f"Error executing RPC method '{method}': {e}")
+            send_rpc_response(rpc_msg_id, f"Error executing RPC method '{method}': {e}")
     elif method == "list":
         help_text = ["Available RPC methods:"]
         for method_name, method_data in RPC_METHODS.items():
