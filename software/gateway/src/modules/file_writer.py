@@ -26,10 +26,11 @@ class GatewayFileWriter:
         self.files = files
         self.update_all_files_content_client_attributes()
 
-    def overwrite_files(self, files: dict) -> None:
-        self.files = files
+    def initialize_files(self) -> None:
+        if self.files is not None:
+            raise Exception("Files definition is already available")
+        self.files = {}
         self.write_files_definition_to_client_attribute()
-        self.update_all_files_content_client_attributes()
 
     def upsert_file(self, file_identifier: str, file_path: str) -> None:
         if self.files is None:
@@ -69,3 +70,35 @@ class GatewayFileWriter:
             print(f"No file found at path: {file_path}")
             file_contents = ""
         return file_contents
+
+    def append_file_line(self, identifier, line):
+        if self.files is None:
+            raise Exception("Files definition is not available")
+        if identifier not in self.files:
+            raise Exception(f"File with identifier '{identifier}' not found")
+        with open(self.files[identifier], "a") as f:
+            f.write("\n" + line)
+
+        self.write_file_content_to_client_attribute(identifier, self.read_file(self.files[identifier]))
+
+    def remove_file_line(self, identifier, line):
+        if self.files is None:
+            raise Exception("Files definition is not available")
+        if identifier not in self.files:
+            raise Exception(f"File with identifier '{identifier}' not found")
+        with open(self.files[identifier], "r") as f:
+            lines = f.readlines()
+        with open(self.files[identifier], "w") as f:
+            for l in lines:
+                if l.strip() != line:
+                    f.write(line)
+        self.write_file_content_to_client_attribute(identifier, self.read_file(self.files[identifier]))
+
+    def overwrite_file_content(self, identifier, content):
+        if self.files is None:
+            raise Exception("Files definition is not available")
+        if identifier not in self.files:
+            raise Exception(f"File with identifier '{identifier}' not found")
+        with open(self.files[identifier], "w") as f:
+            f.write(content)
+        self.write_file_content_to_client_attribute(identifier, self.read_file(self.files[identifier]))

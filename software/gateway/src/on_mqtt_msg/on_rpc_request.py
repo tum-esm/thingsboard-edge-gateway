@@ -49,13 +49,49 @@ def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
     GatewayFileWriter().remove_file(params)
     send_rpc_response(rpc_msg_id, f"OK - File definition removed - '{params}'")
 
-def rpc_files_overwrite(rpc_msg_id: str, _method: Any, params: Any):
-    if type(params) is not dict:
-        return send_rpc_method_error(rpc_msg_id, "Overwriting file definitions failed: params is not a dict")
+def rpc_files_init(rpc_msg_id: str, _method: Any, _params: Any):
+    print(f"[RPC] Initializing file definitions")
+    GatewayFileWriter().initialize_files()
+    send_rpc_response(rpc_msg_id, "OK - File definitions initialized")
 
-    print(f"[RPC] Overwriting file definitions")
-    GatewayFileWriter().overwrite_files(params)
-    send_rpc_response(rpc_msg_id, "OK - File definitions overwritten")
+def rpc_file_append_line(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Appending file line failed: params is not a dictionary")
+
+    if "identifier" not in params or "line" not in params:
+        return send_rpc_method_error(rpc_msg_id, "Appending file line failed: missing 'identifier' or 'line' in params")
+    if type(params["identifier"]) is not str or type(params["line"]) is not str:
+        return send_rpc_method_error(rpc_msg_id, "Appending file line failed: 'identifier' and 'line' must be strings")
+
+    print(f"[RPC] Appending file line - '{params['identifier']}' += '{params['line']}'")
+    GatewayFileWriter().append_file_line(params["identifier"], params["line"])
+    send_rpc_response(rpc_msg_id, f"OK - File line appended - '{params['identifier']}' += '{params['line']}'")
+
+def rpc_file_remove_line(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Removing file line failed: params is not a dictionary")
+
+    if "identifier" not in params or "line" not in params:
+        return send_rpc_method_error(rpc_msg_id, "Removing file line failed: missing 'identifier' or 'line' in params")
+    if type(params["identifier"]) is not str or type(params["line"]) is not str:
+        return send_rpc_method_error(rpc_msg_id, "Removing file line failed: 'identifier' and 'line' must be strings")
+
+    print(f"[RPC] Removing file line - '{params['identifier']}' -= '{params['line']}'")
+    GatewayFileWriter().remove_file_line(params["identifier"], params["line"])
+    send_rpc_response(rpc_msg_id, f"OK - File line removed - '{params['identifier']}' -= '{params['line']}'")
+
+def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: params is not a dictionary")
+
+    if "identifier" not in params or "content" not in params:
+        return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: missing 'identifier' or 'content' in params")
+    if type(params["identifier"]) is not str or type(params["content"]) is not str:
+        return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: 'identifier' and 'content' must be strings")
+
+    print(f"[RPC] Overwriting file content - '{params['identifier']}' = '{params['content']}'")
+    GatewayFileWriter().overwrite_file_content(params["identifier"], params["content"])
+    send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
 
 RPC_METHODS = {
     "reboot": {
@@ -75,16 +111,28 @@ RPC_METHODS = {
         "exec": rpc_ping
     },
     "files_upsert": {
-        "description": "Upsert file definition",
+        "description": "Upsert file definition ({identifier: str, path: str})",
         "exec": rpc_files_upsert
     },
     "files_remove": {
-        "description": "Remove file definition",
+        "description": "Remove file definition ({identifier: str})",
         "exec": rpc_files_remove
     },
-    "files_overwrite": {
-        "description": "Overwrite file definitions",
-        "exec": rpc_files_overwrite
+    "files_init": {
+        "description": "Initialize file definitions",
+        "exec": rpc_files_init
+    },
+    "file_append_line": {
+        "description": "Append line to file ({identifier: str, line: str})",
+        "exec": rpc_file_append_line
+    },
+    "file_remove_line": {
+        "description": "Remove line from file ({identifier: str, line: str})",
+        "exec": rpc_file_remove_line
+    },
+    "file_overwrite_content": {
+        "description": "Overwrite file content ({identifier: str, content: str})",
+        "exec": rpc_file_overwrite_content
     }
 }
 
