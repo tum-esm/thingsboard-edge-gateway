@@ -3,6 +3,7 @@ from time import sleep
 from typing import Any, Optional
 
 import docker
+from docker.types import LogConfig
 
 from modules.git_client import GatewayGitClient
 from modules.mqtt import GatewayMqttClient
@@ -150,6 +151,10 @@ class GatewayDockerClient:
                 "Name": "always",
                 "MaximumRetryCount": 0
             },
+            log_config=LogConfig(type=LogConfig.types.JSON, config={
+                "max-size": "10m",
+                "max-file": "5"
+            }),
             privileged=True,
             network_mode="host",
             environment={
