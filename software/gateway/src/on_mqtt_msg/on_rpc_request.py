@@ -7,27 +7,30 @@ from typing import Any
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
+from modules.logging import info, error
+
+
 def rpc_reboot(rpc_msg_id: str, _method: Any, _params: Any):
     """Reboot the device"""
-    print("[RPC] Rebooting...")
+    info("[RPC] Rebooting...")
     send_rpc_response(rpc_msg_id, "OK - Rebooting")
     sleep(3)
     os.system("reboot")
 
 def rpc_shutdown(rpc_msg_id: str, _method: Any, _params: Any):
-    print("[RPC] Shutting down...")
+    info("[RPC] Shutting down...")
     send_rpc_response(rpc_msg_id, "OK - Shutting down")
     sleep(3)
     os.system("shutdown now")
 
 def rpc_exit(rpc_msg_id: str, _method: Any, _params: Any):
-    print("[RPC] Exiting...")
+    info("[RPC] Exiting...")
     send_rpc_response(rpc_msg_id, "OK - Exiting")
     sleep(3)
     signal.raise_signal(signal.SIGTERM)
 
 def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any):
-    print("[RPC] Pong")
+    info("[RPC] Pong")
     send_rpc_response(rpc_msg_id, "Pong")
 
 def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
@@ -37,7 +40,7 @@ def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
     if "identifier" not in params or "path" not in params:
         return send_rpc_method_error(rpc_msg_id, "Upserting file definition failed: missing 'identifier' or 'path' in params")
 
-    print(f"[RPC] Upserting file definition - {params['identifier']} -> {params['path']}")
+    info(f"[RPC] Upserting file definition - {params['identifier']} -> {params['path']}")
     GatewayFileWriter().upsert_file(params["identifier"], params["path"])
     send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
 
@@ -45,12 +48,12 @@ def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
     if type(params) is not str:
         return send_rpc_method_error(rpc_msg_id, "Removing file definition failed: params is not a string")
 
-    print(f"[RPC] Removing file definition '{params}'")
+    info(f"[RPC] Removing file definition '{params}'")
     GatewayFileWriter().remove_file(params)
     send_rpc_response(rpc_msg_id, f"OK - File definition removed - '{params}'")
 
 def rpc_files_init(rpc_msg_id: str, _method: Any, _params: Any):
-    print(f"[RPC] Initializing file definitions")
+    info(f"[RPC] Initializing file definitions")
     GatewayFileWriter().initialize_files()
     send_rpc_response(rpc_msg_id, "OK - File definitions initialized")
 
@@ -63,7 +66,7 @@ def rpc_file_append_line(rpc_msg_id: str, _method: Any, params: Any):
     if type(params["identifier"]) is not str or type(params["line"]) is not str:
         return send_rpc_method_error(rpc_msg_id, "Appending file line failed: 'identifier' and 'line' must be strings")
 
-    print(f"[RPC] Appending file line - '{params['identifier']}' += '{params['line']}'")
+    info(f"[RPC] Appending file line - '{params['identifier']}' += '{params['line']}'")
     GatewayFileWriter().append_file_line(params["identifier"], params["line"])
     send_rpc_response(rpc_msg_id, f"OK - File line appended - '{params['identifier']}' += '{params['line']}'")
 
@@ -76,7 +79,7 @@ def rpc_file_remove_line(rpc_msg_id: str, _method: Any, params: Any):
     if type(params["identifier"]) is not str or type(params["line"]) is not str:
         return send_rpc_method_error(rpc_msg_id, "Removing file line failed: 'identifier' and 'line' must be strings")
 
-    print(f"[RPC] Removing file line - '{params['identifier']}' -= '{params['line']}'")
+    info(f"[RPC] Removing file line - '{params['identifier']}' -= '{params['line']}'")
     GatewayFileWriter().remove_file_line(params["identifier"], params["line"])
     send_rpc_response(rpc_msg_id, f"OK - File line removed - '{params['identifier']}' -= '{params['line']}'")
 
@@ -89,7 +92,7 @@ def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
     if type(params["identifier"]) is not str or type(params["content"]) is not str:
         return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: 'identifier' and 'content' must be strings")
 
-    print(f"[RPC] Overwriting file content - '{params['identifier']}' = '{params['content']}'")
+    info(f"[RPC] Overwriting file content - '{params['identifier']}' = '{params['content']}'")
     GatewayFileWriter().overwrite_file_content(params["identifier"], params["content"])
     send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
 
@@ -139,13 +142,12 @@ RPC_METHODS = {
 
 def on_rpc_request(rpc_msg_id: str, method: str, params: Any) -> None:
     """Handle incoming RPC requests"""
-    print(f"RPC request: {rpc_msg_id} {method} ({params})")
-    GatewayMqttClient().publish_log("INFO", f"RPC request: {method} ({params})")
+    info(f"RPC request: {rpc_msg_id} {method} ({params})")
     if method in RPC_METHODS:
         try:
             RPC_METHODS[method]["exec"](rpc_msg_id, method, params) # type: ignore[operator]
         except Exception as e:
-            print(f"Error executing RPC method '{method}': {e}")
+            error(f"Error executing RPC method '{method}': {e}")
             GatewayMqttClient().publish_log("ERROR", f"Error executing RPC method '{method}': {e}")
             send_rpc_response(rpc_msg_id, f"Error executing RPC method '{method}': {e}")
     elif method == "list":
@@ -154,7 +156,7 @@ def on_rpc_request(rpc_msg_id: str, method: str, params: Any) -> None:
             help_text.append(f"{method_name}: {method_data['description']}")
         send_rpc_response(rpc_msg_id, help_text)
     else:
-        print(f"Unknown RPC method: {method}")
+        error(f"Unknown RPC method: {method}")
         GatewayMqttClient().publish_log("ERROR", f"Unknown RPC method: {method}")
         send_rpc_response(rpc_msg_id, f"Unknown RPC method: '{method}' - use command 'list' to get a list of available methods")
 
@@ -167,5 +169,5 @@ def send_rpc_response(rpc_msg_id: str, response: Any) -> bool:
     )
 
 def send_rpc_method_error(rpc_msg_id, msg):
-    print(f"[RPC] {msg}")
+    error(f"[RPC] {msg}")
     send_rpc_response(rpc_msg_id, f"Error - {msg}")

@@ -11,6 +11,7 @@ from args import parse_args
 from modules import sqlite
 from modules.docker_client import GatewayDockerClient
 from modules.git_client import GatewayGitClient
+from modules.logging import info, warn, debug
 from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_files_update import on_msg_check_for_files_update
@@ -29,7 +30,7 @@ def shutdown_handler(sig: Any, _frame: Any) -> None:
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
 
-    print("GRACEFUL SHUTDOWN")
+    info("GRACEFUL SHUTDOWN")
     if mqtt_client is not None:
         mqtt_client.graceful_exit()
     if archive_sqlite_db is not None:
@@ -43,7 +44,7 @@ def shutdown_handler(sig: Any, _frame: Any) -> None:
 
 # Set up signal handling for forced shutdown in case graceful shutdown fails
 def forced_shutdown_handler(_sig: Any, _frame: Any) -> None:
-    print("FORCEFUL SHUTDOWN")
+    warn("FORCEFUL SHUTDOWN")
     sys.stdout.flush()
     os._exit(1)
 
@@ -59,12 +60,12 @@ try:
         docker_client: GatewayDockerClient = GatewayDockerClient()
         git_client: GatewayGitClient = GatewayGitClient()
         args = parse_args()
-        print(f"Args: {args}")
+        debug(f"Args: {args}")
         access_token = self_provisioning_get_access_token(args)
 
         archive_sqlite_db = sqlite.SqliteConnection("archive.db")
         comm_db_path = os.path.join(utils.paths.ACROPOLIS_DATA_PATH, "acropolis_comm_db.db")
-        print(f"Comm DB path: {comm_db_path}")
+        debug(f"Comm DB path: {comm_db_path}")
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
         # create and run the mqtt client in a separate thread
@@ -84,7 +85,6 @@ try:
 
                 # check for incoming RPC requests
                 if "v1/devices/me/rpc/request" in topic:
-                    print("Got RPC request: " + str(msg))
                     rpc_method = get_maybe(msg_payload, "method")
                     rpc_params = get_maybe(msg_payload, "params")
                     rpc_msg_id = topic.split("/")[-1]
@@ -97,17 +97,17 @@ try:
                         on_msg_check_for_ota_update(msg_payload),
                         on_msg_check_for_files_update(msg_payload),
                     ]):
-                        print("[MAIN][WARN] Got invalid message: " + str(msg))
-                        print("[MAIN][WARN] Skipping invalid message...")
+                        warn("[MAIN] Got invalid message: " + str(msg))
+                        warn("[MAIN] Skipping invalid message...")
 
                 continue # process next message
 
             if not docker_client.is_edge_running():
-                print("Controller is not running, starting new container...")
+                info("Controller is not running, starting new container...")
                 docker_client.start_controller()
 
             if not mqtt_client_thread.is_alive():
-                print("MQTT client thread died, exiting in 30 seconds...")
+                warn("MQTT client thread died, exiting in 30 seconds...")
                 sleep(30)
                 exit()
 
@@ -118,7 +118,7 @@ try:
                 message = communication_sqlite_db.execute(
                     f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")
                 if len(message) > 0:
-                    print('Sending message: ' + str(message[0]))
+                    debug('Sending message: ' + str(message[0]))
                     if not mqtt_client.publish_message(message[0][2]):
                         continue
                     communication_sqlite_db.execute(f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")

@@ -8,6 +8,8 @@ import argparse
 
 from paho.mqtt.client import Client
 
+from modules.logging import debug
+
 # global variable to contain the reply from the self-provisioning request
 provision_reply = None
 
@@ -22,15 +24,15 @@ def self_provisioning_get_access_token(args: argparse.Namespace) -> str:
         with open(access_token_path_env_var, "r") as f:
             access_token = f.read()
             if access_token is not None and len(access_token) > 3:
-                print("Access token found in file ", access_token_path_env_var)
+                debug(f"Access token found in file {access_token_path_env_var}")
             return access_token
 
     # else, perform self-provisioning
-    print("No access token found, performing self-provisioning...")
+    debug("No access token found, performing self-provisioning...")
     mqtt_client = Client()
     mqtt_client.username_pw_set("provision", None)
     mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
-    mqtt_client.on_connect = (lambda client, userdata, flags, rc: print(f"Connected to ThingsBoard for self-provisioning with result code {rc}"))
+    mqtt_client.on_connect = (lambda client, userdata, flags, rc: debug(f"Connected to ThingsBoard for self-provisioning with result code {rc}"))
     mqtt_client.connect(args.tb_host, args.tb_port)
 
     # set up the callback to receive the reply from the self-provisioning request
@@ -64,21 +66,21 @@ def self_provisioning_get_access_token(args: argparse.Namespace) -> str:
         # check for error
         status = provision_reply.get("status")
         if status is not None and status == "FAILURE":
-            print("Self-provisioning failed with error: ", provision_reply.get("errorMsg"))
+            debug(f"Self-provisioning failed with error: {provision_reply.get("errorMsg")}")
             exit(1)
 
         credentials_type = provision_reply.get("credentialsType")
         if credentials_type is not None and credentials_type == "ACCESS_TOKEN":
             credentials_value = provision_reply.get("credentialsValue")
             if credentials_value is not None:
-                print("Self-provisioning successful.")
-                print("Writing access token to file: ", access_token_path_env_var)
+                debug("Self-provisioning successful.")
+                debug(f"Writing access token to file: {access_token_path_env_var}")
                 with open(access_token_path_env_var, "w") as f:
                     f.write(credentials_value)
                 return credentials_value
 
-    print("Self-provisioning failed")
-    print("Reply: ", provision_reply)
+    debug("Self-provisioning failed")
+    debug(f"Reply: {provision_reply}")
     exit(1)
 
 
