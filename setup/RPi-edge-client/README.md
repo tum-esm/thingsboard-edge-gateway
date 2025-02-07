@@ -91,8 +91,15 @@ make
 ### Setup UDHCPC default script
 
 ```
-copy default.script to /usr/share/udhcpc/default.script
+copy default.script to /usr/share/udhcpc/
 sudo chmod -R 0777 /usr/share/udhcpc/
+```
+
+### Setup Offline trigger script
+
+```
+copy network_lost_reboot_trigger.sh to /home/pi/acropolis/
+sudo chmod a+x network_lost_reboot_trigger.sh
 ```
 
 ## Update Crontab
@@ -116,7 +123,7 @@ crontab -e
 @daily docker system prune -a --force --filter "until=8760h"
 
 # Reboot on connectivity loss
-* * * * * /bin/bash /home/pi/Documents/acropolis/network_lost_reboot_trigger.sh
+* * * * * /bin/bash /home/pi/acropolis/network_lost_reboot_trigger.sh
 ```
 
 # Setup Gateway
