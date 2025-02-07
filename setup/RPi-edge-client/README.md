@@ -95,7 +95,7 @@ copy default.script to /usr/share/udhcpc/
 sudo chmod -R 0777 /usr/share/udhcpc/
 ```
 
-### Setup Offline trigger script
+### Setup offline trigger script
 
 ```
 copy network_lost_reboot_trigger.sh to /home/pi/acropolis/
@@ -149,13 +149,13 @@ sudo ./build_gateway_runner_docker_image.sh
 docker logs --tail 50 -f acropolis_edge_gateway
 ```
 
-# Create Image of SDCard
+# Create Image of SD card
 
 ```
 dd status=progress bs=4M  if=/dev/disk4 | gzip > //Users/.../acropolis-edge-image.gz
 ```
 
-# Flash image back to SDCard
+# Flash image back to SD card
 
 ```
 diskutil list
