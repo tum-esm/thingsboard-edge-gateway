@@ -22,15 +22,17 @@ from utils.misc import get_maybe
 
 archive_sqlite_db = None
 communication_sqlite_db = None
-
+STOP_MAINLOOP = False
 
 # Set up signal handling for safe shutdown
 def shutdown_handler(sig: Any, _frame: Any) -> None:
+    global STOP_MAINLOOP
     """Handle program exit gracefully"""
     # Set a timer to force exit if graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
 
     info("GRACEFUL SHUTDOWN")
+    STOP_MAINLOOP = True
     if mqtt_client is not None:
         mqtt_client.graceful_exit()
     if archive_sqlite_db is not None:
@@ -76,7 +78,7 @@ try:
 
         sleep(5)
 
-        while True:
+        while not STOP_MAINLOOP:
             # check if there are any new incoming mqtt messages in the queue, process them
             if not mqtt_client.message_queue.empty():
                 msg = mqtt_client.message_queue.get()

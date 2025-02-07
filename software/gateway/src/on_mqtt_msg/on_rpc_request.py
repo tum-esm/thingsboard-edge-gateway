@@ -16,6 +16,7 @@ def rpc_reboot(rpc_msg_id: str, _method: Any, _params: Any):
     send_rpc_response(rpc_msg_id, "OK - Rebooting")
     sleep(3)
     os.system("reboot")
+    sleep(3)
 
 def rpc_shutdown(rpc_msg_id: str, _method: Any, _params: Any):
     info("[RPC] Shutting down...")
