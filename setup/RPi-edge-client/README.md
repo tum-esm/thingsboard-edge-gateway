@@ -99,10 +99,24 @@ sudo chmod -R 0777 /usr/share/udhcpc/
 
 ```
 crontab -e
-#Add:
+```
+
+### Add:
+
+```
+# GSM Modem
+@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm
+@reboot sudo -b udhcpc -i wwan0 -b
+
+
+# GPIO-Pins
 @reboot sudo pigpiod -n "127.0.0.1"
-@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm -f /home/pi/SIM8200_log.txt
-@reboot sleep 15 && sudo -b udhcpc -i wwan0 -b
+
+# Docker
+@daily docker system prune -a --force --filter "until=8760h"
+
+# Reboot on connectivity loss
+* * * * * /bin/bash /home/pi/Documents/acropolis/network_lost_reboot_trigger.sh
 ```
 
 # Setup Gateway
