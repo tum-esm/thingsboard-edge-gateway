@@ -5,13 +5,13 @@ import threading
 from time import sleep
 from typing import Any
 
+from modules.logging import info, warn, debug
 import utils.paths
 import utils.misc
 from args import parse_args
 from modules import sqlite
 from modules.docker_client import GatewayDockerClient
 from modules.git_client import GatewayGitClient
-from modules.logging import info, warn, debug
 from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_files_update import on_msg_check_for_files_update

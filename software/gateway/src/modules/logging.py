@@ -8,7 +8,7 @@ LOG_LEVEL = os.getenv('LOG_LEVEL') or 'INFO'
 
 def log(level, message):
     print(f'[{level}] {message}')
-    if level is 'DEBUG' and LOG_LEVEL is not 'DEBUG':
+    if level == 'DEBUG' and LOG_LEVEL != 'DEBUG':
         return
     try:
         GatewayMqttClient().publish_log(LOG_LEVEL, message)
