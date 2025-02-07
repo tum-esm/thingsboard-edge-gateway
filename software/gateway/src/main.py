@@ -105,7 +105,8 @@ try:
                 continue # process next message
 
             if not docker_client.is_edge_running():
-                info("Controller is not running, starting new container...")
+                info("Controller is not running, starting new container in 10s...")
+                sleep(10)
                 docker_client.start_controller()
 
             if not mqtt_client_thread.is_alive():
