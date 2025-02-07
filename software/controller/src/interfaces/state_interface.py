@@ -30,7 +30,7 @@ class StateInterface:
             last_calibration_attempt=None,
             next_calibration_cylinder=0,
             sht45_humidity_offset=0.0,
-            co2_sensor_offset=0.0,
+            co2_sensor_intercept=0.0,
             co2_sensor_slope=1.0,
         )
         StateInterface.write(new_empty_state)

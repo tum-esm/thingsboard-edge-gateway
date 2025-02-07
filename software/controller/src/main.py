@@ -46,6 +46,8 @@ def run() -> None:
         f"Local time is: {datetime.now().astimezone(pytz.timezone(config.local_time_zone))}",
         forward=True)
 
+    logger.info(f"Started with config: {config.dict()}", forward=True)
+
     # -------------------------------------------------------------------------
 
     # check and provide valid state file

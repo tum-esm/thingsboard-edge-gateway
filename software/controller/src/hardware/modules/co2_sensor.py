@@ -28,7 +28,7 @@ class CO2MeasurementModule:
         # read slope and offset from state file
         state = state_interface.StateInterface.read(config=self.config)
         self.slope = state.co2_sensor_slope
-        self.offset = state.co2_sensor_offset
+        self.intercept = state.co2_sensor_intercept
 
         # hardware
         self.co2_sensor = co2_sensor
@@ -70,7 +70,7 @@ class CO2MeasurementModule:
         )
 
         # Apply calibration slope and offset
-        co2_corrected = self.slope * co2_dry + self.offset
+        co2_corrected = self.slope * co2_dry + self.intercept
 
         return round(co2_dry, 1), round(co2_corrected, 1)
 
@@ -104,7 +104,7 @@ class CO2MeasurementModule:
             f"Calculated CO2 calibration bottle {bottle_id} median: {median}",
             forward=True)
 
-    def calculate_offset_slope(self) -> None:
+    def calculate_intercept_slope(self) -> None:
         # read true CO2 value for calibration gas bottle
         true_values = []
         measured_values = []
@@ -127,20 +127,20 @@ class CO2MeasurementModule:
         if true_values[1] > true_values[0]:
             self.slope = (true_values[1] - true_values[0]) / (
                 measured_values[1] - measured_values[0])
-            self.offset = true_values[0] - self.slope * measured_values[0]
+            self.intercept = true_values[0] - self.slope * measured_values[0]
         else:
             self.slope = (true_values[0] - true_values[1]) / (
                 measured_values[0] - measured_values[1])
-            self.offset = true_values[1] - self.slope * measured_values[1]
+            self.intercept = true_values[1] - self.slope * measured_values[1]
 
         # persist slope and offset to state file
         state = state_interface.StateInterface.read(config=self.config)
         state.co2_sensor_slope = self.slope
-        state.co2_sensor_offset = self.offset
+        state.co2_sensor_intercept = self.intercept
         state_interface.StateInterface.write(state)
 
         self.logger.info(
-            f"Calculated CO2 calibration slope: {self.slope} and offset: {self.offset}",
+            f"Calculated CO2 calibration slope: {self.slope} and intercept: {self.intercept}",
             forward=True)
 
     def send_CO2_measurement_data(
@@ -186,4 +186,15 @@ class CO2MeasurementModule:
                 cal_sht45_humidity=self.air_inlet_sht45_data.humidity,
                 cal_gmp343_temperature=CO2_sensor_data.temperature,
             ),
+        )
+
+    def send_calibration_correction_data(self) -> None:
+
+        # send out MQTT measurement message
+        self.message_queue.enqueue_message(
+            timestamp=int(time.time()),
+            payload=mqtt_playload_types.MQTTCalibrationCorrectionData(
+                cal_gmp343_slope=self.slope,
+                cal_gmp343_intercept=self.intercept,
+                cal_sht_45_offset=self.inlet_sht45.humidity_offset),
         )
