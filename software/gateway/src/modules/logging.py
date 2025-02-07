@@ -1,7 +1,7 @@
 import os
 
 
-from mqtt import GatewayMqttClient
+from modules.mqtt import GatewayMqttClient
 
 # get log level from env var
 LOG_LEVEL = os.getenv('LOG_LEVEL') or 'INFO'
