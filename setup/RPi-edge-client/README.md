@@ -126,6 +126,9 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 # Reboot on connectivity loss
 @daily /bin/bash /home/pi/acropolis/network_lost_reboot_trigger.sh
+
+# Delete old log files (older than 100 days)
+@daily /usr/bin/find /home/pi/acropolis/logs/ -type f -mtime +100 -delete
 ```
 
 # Setup Gateway
