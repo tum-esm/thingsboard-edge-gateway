@@ -2,6 +2,7 @@ import json
 from typing import Optional, Any
 
 from modules.mqtt import GatewayMqttClient
+from modules.logging import debug, info, error
 
 singleton_instance : Optional["GatewayFileWriter"] = None
 
@@ -11,7 +12,7 @@ class GatewayFileWriter:
     def __init__(self) -> None:
         global singleton_instance
         if singleton_instance is None:
-            print("[FILE-WRITER] Initializing GatewayFileWriter")
+            debug("[FILE-WRITER] Initializing GatewayFileWriter")
             super().__init__()
             singleton_instance = self
 
@@ -52,7 +53,7 @@ class GatewayFileWriter:
         if self.files is None:
             raise Exception("Files definition is not available")
         for file_identifier in self.files:
-            print(f"Updating file content for file: {file_identifier}")
+            info(f"Updating file content for file: {file_identifier}")
             self.write_file_content_to_client_attribute(file_identifier, self.read_file(self.files[file_identifier]))
 
     def write_files_definition_to_client_attribute(self) -> None:
@@ -67,7 +68,7 @@ class GatewayFileWriter:
             with open(file_path, "r") as f:
                 file_contents = f.read()
         except FileNotFoundError:
-            print(f"No file found at path: {file_path}")
+            error(f"No file found at path: {file_path}")
             file_contents = ""
         return file_contents
 
@@ -91,7 +92,7 @@ class GatewayFileWriter:
         with open(self.files[identifier], "w") as f:
             for l in lines:
                 if l.strip() != line:
-                    f.write(line)
+                    f.write(l)
         self.write_file_content_to_client_attribute(identifier, self.read_file(self.files[identifier]))
 
     def overwrite_file_content(self, identifier, content):

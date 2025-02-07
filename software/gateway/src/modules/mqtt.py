@@ -6,6 +6,8 @@ from typing import Any, Optional, Union
 
 from paho.mqtt.client import Client
 
+from modules.logging import info, error, debug
+
 singleton_instance : Optional["GatewayMqttClient"] = None
 
 class GatewayMqttClient(Client):
@@ -16,7 +18,7 @@ class GatewayMqttClient(Client):
     def __init__(self):
         global singleton_instance
         if singleton_instance is None:
-            print("[MQTT] Initializing GatewayMqttClient")
+            debug("[MQTT] Initializing GatewayMqttClient")
             super().__init__()
             singleton_instance = self
 
@@ -45,17 +47,17 @@ class GatewayMqttClient(Client):
         return self
 
     def graceful_exit(self) -> None:
-        print("[MQTT] Exiting MQTT-client gracefully...")
+        info("[MQTT] Exiting MQTT-client gracefully...")
         self.disconnect()
         self.loop_stop()
 
     def __on_connect(self, _client, _userdata, _flags, _result_code, *_extra_params) -> None:
         if _result_code != 0:
-            print(f"[MQTT] Failed to connect to ThingsBoard with result code: {_result_code}")
+            error(f"[MQTT] Failed to connect to ThingsBoard with result code: {_result_code}")
             self.graceful_exit()
             return
 
-        print("Successfully connected to ThingsBoard!")
+        info("Successfully connected to ThingsBoard!")
         self.subscribe("v1/devices/me/rpc/request/+")
         self.subscribe("v1/devices/me/attributes/response/+")
         self.subscribe("v1/devices/me/attributes")
@@ -66,7 +68,7 @@ class GatewayMqttClient(Client):
 
     def __on_disconnect(self, _client, _userdata, result_code) -> None:
         self.connected = False
-        print(f"[MQTT] Disconnected from ThingsBoard with result code: {result_code}")
+        info(f"[MQTT] Disconnected from ThingsBoard with result code: {result_code}")
         self.graceful_exit()
 
     def __on_message(self, _client, _userdata, msg) -> None:
@@ -90,7 +92,7 @@ class GatewayMqttClient(Client):
         if not self.initialized or not self.connected:
             print(f'[MQTT] MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
             return False
-        print(f'[MQTT] Publishing message: {message}')
+        debug(f'[MQTT] Publishing message: {message}')
         self.publish(topic, message)
         return True
 

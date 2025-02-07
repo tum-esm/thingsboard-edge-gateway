@@ -1,4 +1,5 @@
 import json
+from modules.logging import info, error
 from typing import Any
 import utils
 from modules.file_writer import GatewayFileWriter
@@ -9,12 +10,12 @@ def on_msg_check_for_files_update(msg_payload: Any) -> bool:
     if new_files_definition is None:
         return False
 
-    print("Files update received!")
+    info("Files update received!")
     try:
         GatewayFileWriter().set_files(new_files_definition)
     except json.JSONDecodeError:
-        print("Failed to parse files definition")
+        error("Failed to parse files definition")
     except Exception as e:
-        print(f"Failed to update files definition: {e}")
+        error(f"Failed to update files definition: {e}")
 
     return True
