@@ -92,7 +92,7 @@ class GatewayFileWriter:
         with open(self.files[identifier], "w") as f:
             for l in lines:
                 if l.strip() != line:
-                    f.write(line)
+                    f.write(l)
         self.write_file_content_to_client_attribute(identifier, self.read_file(self.files[identifier]))
 
     def overwrite_file_content(self, identifier, content):
