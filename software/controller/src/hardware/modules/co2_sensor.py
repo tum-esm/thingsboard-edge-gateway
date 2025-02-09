@@ -194,7 +194,7 @@ class CO2MeasurementModule:
         self.message_queue.enqueue_message(
             timestamp=int(time.time()),
             payload=mqtt_playload_types.MQTTCalibrationCorrectionData(
-                cal_gmp343_slope=self.slope,
-                cal_gmp343_intercept=self.intercept,
+                cal_gmp343_slope=round(self.slope, 4),
+                cal_gmp343_intercept=round(self.intercept, 2),
                 cal_sht_45_offset=self.inlet_sht45.humidity_offset),
         )
