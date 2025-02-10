@@ -4,8 +4,7 @@ import traceback
 from time import sleep
 from typing import Any
 
-from modules.mqtt import GatewayMqttClient
-
+from modules.logging import error
 
 def get_maybe(dictionary, *properties) -> Any:
     for prop in properties:
@@ -19,12 +18,10 @@ def fatal_error(msg) -> None:
     signal.setitimer(signal.ITIMER_REAL, 20)
 
     # Add stacktrace to error message
-    error = str(msg)
-    error += "\n" + traceback.format_exc()
+    error_msg = str(msg)
+    error_msg += "\n" + traceback.format_exc()
 
-    GatewayMqttClient().publish_log('ERROR', f'FATAL ERROR: {error}')
-    print("FATAL ERROR:")
-    print(error)
+    error(f'FATAL ERROR: {error}')
     sys.stdout.flush()
     sleep(1)
 
