@@ -41,7 +41,6 @@ jobs:
       - name: Install dependencies
         run: poetry install --with=dev
 
-
       - name: Run static type analysis
         run: 
-            poetry run mypy --explicit-package-bases src/
+            poetry run mypy --python-path=src --explicit-package-bases src/
