@@ -17,7 +17,7 @@ jobs:
     defaults:
       run:
         # Set working directory to the controller folder
-        working-directory: software/controller
+        working-directory: software/controller/src
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -42,6 +42,8 @@ jobs:
         run: poetry install --with=dev
 
       - name: Run static type analysis
-        run: |
-          chmod +x scripts/run_mypy.sh
-          ./scripts/run_mypy.sh
+        uses: sasanquaneuf/mypy-github-action@releases/v1
+        with:
+          checkName: 'test-controller'   # NOTE: this needs to be the same as the job name
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
