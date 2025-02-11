@@ -42,5 +42,6 @@ jobs:
         run: poetry install --with=dev
 
       - name: Run static type analysis
-        run: 
-            poetry run mypy --python-path=src --explicit-package-bases src/
+        run: |
+          chmod +x scripts/run_mypy.sh
+          ./scripts/run_mypy.sh
