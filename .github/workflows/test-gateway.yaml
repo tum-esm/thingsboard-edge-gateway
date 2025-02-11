@@ -43,6 +43,5 @@ jobs:
         run: .venv/bin/pip install mypy
 
       - name: Run static type analysis
-        run: |
-          chmod +x scripts/run_mypy.sh
-          ./scripts/run_mypy.sh
+        run: 
+            poetry run mypy --explicit-package-bases src/
