@@ -3,13 +3,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - software/controller/**
+    #paths:
+    #  - software/controller/**
   pull_request:
     branches:
       - main
-    paths:
-      - software/controller/**
+    #paths:
+    #  - software/controller/**
 
 jobs:
   test-codebase:
