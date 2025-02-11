@@ -1,0 +1,41 @@
+name: "test-gateway"
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-codebase:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Set working directory to the gateway folder
+        working-directory: software/gateway
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+
+      - name: Remove existing virtual environment (if any)
+        run: rm -rf .venv
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Upgrade pip inside virtual environment
+        run: .venv/bin/python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: .venv/bin/pip install -r requirements.txt
+
+      - name: Run static type analysis
+        run: |
+          chmod +x scripts/run_mypy.sh
+          ./scripts/run_mypy.sh
