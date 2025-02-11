@@ -3,9 +3,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - software/controller/**
   pull_request:
     branches:
       - main
+    paths:
+      - software/controller/**
 
 jobs:
   test-codebase:
@@ -37,5 +41,8 @@ jobs:
       - name: Install dependencies
         run: poetry install --with=dev
 
+
       - name: Run static type analysis
-        run: poetry run mypy --explicit-package-bases .
+        run: |
+          chmod +x scripts/run_mypy.sh
+          ./scripts/run_mypy.sh
