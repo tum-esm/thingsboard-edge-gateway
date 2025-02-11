@@ -41,10 +41,7 @@ jobs:
       - name: Install dependencies
         run: poetry install --with=dev
 
-      - name: updating PATH to enable importing
-        run: echo "PYTHONPATH=src/" >> $GITHUB_ENV
-        shell: bash
-  
       - name: Run static type analysis
-        run:
-          poetry run mypy --explicit-package-bases src/
+        run: |
+          source .venv/bin/activate
+          ./scripts/run_mypy.sh
