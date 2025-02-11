@@ -41,9 +41,12 @@ jobs:
       - name: Install dependencies
         run: poetry install --with=dev
 
+      - name: updating PATH to enable importing my package
+        run: echo "PYTHONPATH=src/" >> $GITHUB_ENV
+        shell: bash
+  
       - name: Run static type analysis
-        uses: sasanquaneuf/mypy-github-action@releases/v1
-        with:
-          checkName: 'test-controller'   # NOTE: this needs to be the same as the job name
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo %PYTHONPATH%
+          poetry run mypy --explicit-package-bases src/
+        shell: cmd
