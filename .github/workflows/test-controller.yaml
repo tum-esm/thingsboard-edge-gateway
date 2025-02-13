@@ -1,0 +1,47 @@
+name: "test-controller"
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - software/controller/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - software/controller/**
+
+jobs:
+  test-codebase:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Set working directory to the controller folder
+        working-directory: software/controller
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+
+      - name: Remove existing virtual environment (if any)
+        run: rm -rf .venv
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Install dependencies
+        run: poetry install --with=dev
+
+      - name: Run static type analysis
+        run: |
+          source .venv/bin/activate
+          ./scripts/run_mypy.sh

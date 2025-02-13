@@ -45,6 +45,7 @@ class Sensor(ABC):
 
     def read_with_retry(self,
                         timeout: float = 10,
+                        reduce_logs: bool = False,
                         *args: Any,
                         **kwargs: Any) -> Any:
         """Read the sensor value with retries, passing dynamic arguments.
@@ -54,9 +55,10 @@ class Sensor(ABC):
         start_time = time.time()
         for attempt in range(1, self.max_retries + 1):
             try:
-                self.logger.debug(
-                    f"Attempt {attempt} of {self.max_retries}: Reading sensor value."
-                )
+                if not reduce_logs:
+                    self.logger.debug(
+                        f"Attempt {attempt} of {self.max_retries}: Reading sensor value."
+                    )
                 return self.read(*args, **kwargs)
             except Exception as e:
                 self.logger.warning(f"Attempt {attempt} failed: {e}")

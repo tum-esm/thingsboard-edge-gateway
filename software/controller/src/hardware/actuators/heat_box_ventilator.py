@@ -27,7 +27,7 @@ class HeatBoxVentilator(_base_actuator.Actuator):
         """Initializes the heat box ventilator."""
 
         self.power_pin = gpiozero.OutputDevice(
-            self.config.hardware.heat_box_heater_power_pin_out,
+            self.config.hardware.heat_box_ventilator_power_pin_out,
             pin_factory=self.pin_factory)
 
     def _shutdown_actuator(self) -> None:

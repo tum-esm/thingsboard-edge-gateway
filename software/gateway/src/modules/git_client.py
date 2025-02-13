@@ -35,7 +35,7 @@ class GatewayGitClient:
         try:
             return subprocess.check_output(["git", "rev-parse", "HEAD"], encoding='utf-8', cwd=dirname(ACROPOLIS_GATEWAY_GIT_PATH)).strip()
         except subprocess.CalledProcessError as e:
-            error("[GIT-CLIENT] Unable to determine current commit hash: ", e, e.stderr, e.stdout)
+            error(f"[GIT-CLIENT] Unable to determine current commit hash: : {e} {e.stderr} {e.stdout}")
             return None
 
     def get_commit_for_tag(self, tag) -> Optional[str]:
