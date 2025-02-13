@@ -125,20 +125,32 @@ class CO2MeasurementModule:
 
         # Dynamically determine which value is higher and calculate slope
         if true_values[1] > true_values[0]:
-            self.slope = (true_values[1] - true_values[0]) / (
-                measured_values[1] - measured_values[0])
-            self.intercept = true_values[0] - self.slope * measured_values[0]
+            slope = (true_values[1] - true_values[0]) / (measured_values[1] -
+                                                         measured_values[0])
+            intercept = true_values[0] - self.slope * measured_values[0]
         else:
-            self.slope = (true_values[0] - true_values[1]) / (
-                measured_values[0] - measured_values[1])
-            self.intercept = true_values[1] - self.slope * measured_values[1]
+            slope = (true_values[0] - true_values[1]) / (measured_values[0] -
+                                                         measured_values[1])
+            intercept = true_values[1] - self.slope * measured_values[1]
 
-        # persist slope and offset to state file
+        # check validity of slope and intercept
         state = state_interface.StateInterface.read(config=self.config)
-        state.co2_sensor_slope = self.slope
-        state.co2_sensor_intercept = self.intercept
-        state_interface.StateInterface.write(state)
 
+        if not (state.co2_sensor_slope * 0.9 < slope <
+                state.co2_sensor_slope * 1.1):
+            self.logger.warning(
+                f"Calculated CO2 calibration slope: {self.slope} is not within 10% of previous value: {state.co2_sensor_slope}.",
+                forward=True)
+            self.logger.warning(
+                f"Calibration might have failed. State file will will not be updated with calibration results.",
+                forward=True)
+            return
+
+        # update slope and intercept
+        self.slope, self.intercept = slope, intercept
+        state.co2_sensor_slope, state.co2_sensor_intercept = slope, intercept
+        # persist slope and offset to state file
+        state_interface.StateInterface.write(state)
         self.logger.info(
             f"Calculated CO2 calibration slope: {self.slope} and intercept: {self.intercept}",
             forward=True)
