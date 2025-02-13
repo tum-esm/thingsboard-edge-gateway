@@ -14,8 +14,10 @@ from hardware.sensors.grove_MCP9808 import GroveMCP9808
 
 from hardware.actuators.ACL_201 import ACLValves
 from hardware.actuators.SP_622_EC_BL import SchwarzerPrecisionPump
+from hardware.actuators.heat_box_heater import HeatBoxHeater
+from hardware.actuators.heat_box_ventilator import HeatBoxVentilator
 
-from hardware.modules import co2_sensor, wind_sensor
+from hardware.modules import co2_sensor, wind_sensor, heated_sensor_box
 
 from utils import gpio_pin_factory
 
@@ -69,11 +71,20 @@ class HardwareInterface:
                                             variant="ioboard")
         self.air_inlet_sht45_sensor = SensirionSHT45(config=self.config)
 
-        # measurement actors
+        if self.config.active_components.run_sensor_heating_control:
+            self.heat_box_sensor = GroveMCP9808(config=self.config)
+
+        # measurement actuators
         self.pump = SchwarzerPrecisionPump(config=self.config,
                                            pin_factory=self.pin_factory)
         self.valves = ACLValves(config=self.config,
                                 pin_factory=self.pin_factory)
+
+        if self.config.active_components.run_sensor_heating_control:
+            self.heat_box_heater = HeatBoxHeater(config=self.config,
+                                                 pin_factory=self.pin_factory)
+            self.heat_box_ventilator = HeatBoxVentilator(
+                config=self.config, pin_factory=self.pin_factory)
 
         # hardware modules
         self.co2_measurement_module = co2_sensor.CO2MeasurementModule(
@@ -83,6 +94,15 @@ class HardwareInterface:
             inlet_sht45=self.air_inlet_sht45_sensor)
         self.wind_sensor_module = wind_sensor.WindSensorModule(
             config=config, wind_sensor=self.wind_sensor)
+
+        # modules run as threads
+        if self.config.active_components.run_sensor_heating_control:
+            self.heating_box_module = heated_sensor_box.HeatingBoxModule(
+                config=config,
+                temperature_sensor=self.heat_box_sensor,
+                heater=self.heat_box_heater,
+                ventilator=self.heat_box_ventilator)
+            self.heating_box_module.start()
 
     def check_errors(self) -> None:
         """checks for detectable hardware errors"""
@@ -97,6 +117,11 @@ class HardwareInterface:
         if not global_hw_lock["lock"].is_locked:
             self.logger.info("not tearing down due to disconnected hardware")
             return
+
+        # threads
+        if self.config.active_components.run_sensor_heating_control:
+            self.heating_box_module.stop()
+            self.heating_box_module.join()
 
         # measurement sensors
         self.co2_sensor.teardown()
