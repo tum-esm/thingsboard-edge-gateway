@@ -248,6 +248,7 @@ class CalibrationProcedure:
         the median of the last 60 measurements"""
 
         self.logger.info("Calibrating SHT45 humidity offset", forward=True)
+        # reset humidity offset before calibration
         self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(0.0)
         duration = self.config.calibration.sht45_calibration_seconds
 
@@ -264,8 +265,7 @@ class CalibrationProcedure:
             time.sleep(1)
 
         # rh offsets is calculated from median of humidity readings of last calibration bottle
-        rh_offset = self.hardware_interface.co2_measurement_module.rb_humidity.median(
-        )
+        rh_offset = sht45_ring_buffer.median()
 
         # check validity of calculated offset (>10% indicates leakage by ambient air)
         if rh_offset > 10.0:
