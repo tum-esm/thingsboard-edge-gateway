@@ -96,6 +96,7 @@ sudo chmod -R 0777 /usr/share/udhcpc/
 ```
 
 ## Make gateway scripts executable
+
 ```
 sudo chmod -R a+x /home/pi/documents/acropolis/acropolis-edge/software/gateway/scripts
 ```
@@ -106,7 +107,7 @@ sudo chmod -R a+x /home/pi/documents/acropolis/acropolis-edge/software/gateway/s
 crontab -e
 #Add:
 @reboot sudo pigpiod -n "127.0.0.1"
-@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm -f /home/pi/SIM8200_log.txt
+@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm
 @reboot sleep 15 && sudo -b udhcpc -i wwan0 -b
 @weekly sudo docker system prune -a --force --filter "until=8760h"
 @daily sudo /home/pi/documents/acropolis/acropolis-edge/software/gateway/scripts/network_lost_reboot_trigger.sh
