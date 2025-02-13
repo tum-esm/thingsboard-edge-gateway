@@ -47,7 +47,8 @@ class HeatingBoxModule(threading.Thread):
             last_log_timestamp = 0.0
 
             while not self._stop_event.is_set():
-                temp = self.temperature_sensor.read_with_retry()
+                temp = self.temperature_sensor.read_with_retry(
+                    reduce_logs=True)
                 assert isinstance(temp,
                                   float), "Temperature should be a float."
 
