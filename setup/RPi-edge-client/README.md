@@ -91,14 +91,15 @@ make
 ### Setup UDHCPC default script
 
 ```
-copy default.script to /usr/share/udhcpc/default.script
+copy default.script to /usr/share/udhcpc/
 sudo chmod -R 0777 /usr/share/udhcpc/
 ```
 
-## Make gateway scripts executable
+### Setup offline trigger script
 
 ```
-sudo chmod -R a+x /home/pi/documents/acropolis/acropolis-edge/software/gateway/scripts
+copy network_lost_reboot_trigger.sh to /home/pi/acropolis/
+sudo chmod a+x network_lost_reboot_trigger.sh
 ```
 
 ## Update Crontab
@@ -111,6 +112,29 @@ crontab -e
 @reboot sleep 15 && sudo -b udhcpc -i wwan0 -b
 @weekly sudo docker system prune -a --force --filter "until=8760h"
 @daily sudo /home/pi/documents/acropolis/acropolis-edge/software/gateway/scripts/network_lost_reboot_trigger.sh
+```
+
+### Add:
+
+```
+# Add binary folders to PATH
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+
+# GSM Modem
+@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm
+@reboot sudo -b udhcpc -i wwan0 -b
+
+# GPIO-Pins
+@reboot /usr/bin/pigpiod -n 127.0.0.1
+
+# Docker
+@daily docker system prune -a --force --filter "until=8760h"
+
+# Reboot on connectivity loss
+@daily /bin/bash /home/pi/acropolis/network_lost_reboot_trigger.sh
+
+# Delete old log files (older than 100 days)
+@daily /usr/bin/find /home/pi/acropolis/logs/ -type f -mtime +100 -delete
 ```
 
 # Setup Gateway
@@ -136,13 +160,13 @@ sudo ./build_gateway_runner_docker_image.sh
 docker logs --tail 50 -f acropolis_edge_gateway
 ```
 
-# Create Image of SDCard
+# Create Image of SD card
 
 ```
 dd status=progress bs=4M  if=/dev/disk4 | gzip > //Users/.../acropolis-edge-image.gz
 ```
 
-# Flash image back to SDCard
+# Flash image back to SD card
 
 ```
 diskutil list
