@@ -15,7 +15,7 @@ def log(level, message):
     if level == 'DEBUG' and LOG_LEVEL != 'DEBUG':
         return
     try:
-        GatewayMqttClient().publish_log(LOG_LEVEL, message)
+        GatewayMqttClient().publish_log(level, message)
     except Exception as e:
         print(f'Failed to publish log message via MQTT: {e}')
 
