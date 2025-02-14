@@ -214,7 +214,6 @@ class Logger:
         time.sleep(1)  # Ensure that log message has a unique timestamp
 
         self.message_queue.enqueue_message(
-            timestamp=int(time.time_ns() / 1000),
             payload=mqtt_playload_types.MQTTLogMessage(
                 severity=level,
                 message=subject + " " + details,

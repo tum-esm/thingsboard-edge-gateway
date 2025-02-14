@@ -3,6 +3,7 @@ import sqlite3
 from os.path import dirname
 import dataclasses
 from typing import Union
+import time
 
 from custom_types import mqtt_playload_types
 
@@ -37,10 +38,10 @@ class MessageQueue:
             """)
         self.con.execute("PRAGMA journal_mode=WAL;")
 
-    def enqueue_message(self, timestamp: int,
-                        payload: THINGSBOARD_PAYLOADS) -> None:
+    def enqueue_message(self, payload: THINGSBOARD_PAYLOADS) -> None:
         new_message = {
-            "ts": timestamp,  # ThingsBoard expects milliseconds
+            "ts":
+            int(time.time_ns() / 1000),  # ThingsBoard expects milliseconds
             "values": dataclasses.asdict(payload),
         }
         with self.con:

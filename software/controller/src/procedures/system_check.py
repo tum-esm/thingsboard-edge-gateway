@@ -1,4 +1,3 @@
-import time
 from typing import Optional, Any
 try:
     import psutil
@@ -44,7 +43,6 @@ class SystemCheckProcedure:
 
         # construct message and put it into message queue
         self.message_queue.enqueue_message(
-            timestamp=int(time.time_ns() / 1000),
             payload=mqtt_playload_types.MQTTSystemData(
                 enclosure_bme280_temperature=mainboard_sensor.temperature,
                 enclosure_bme280_humidity=mainboard_sensor.humidity,
