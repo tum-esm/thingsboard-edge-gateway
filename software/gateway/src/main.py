@@ -78,6 +78,8 @@ try:
 
         sleep(5)
 
+        info("Gateway started successfully")
+
         while not STOP_MAINLOOP:
             # check if there are any new incoming mqtt messages in the queue, process them
             if not mqtt_client.message_queue.empty():
