@@ -9,7 +9,7 @@ from utils.paths import ACROPOLIS_DATA_PATH
 
 
 def on_msg_check_for_config_update(msg_payload: Any) -> bool:
-    controller_config = utils.misc.get_maybe(msg_payload, "shared", "controller_config")
+    controller_config = utils.misc.get_maybe(msg_payload, "controller_config") or utils.misc.get_maybe(msg_payload, "shared", "controller_config")
     config_path = path.join(ACROPOLIS_DATA_PATH, "config.json")
 
     if controller_config is None:
