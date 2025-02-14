@@ -40,8 +40,8 @@ class MessageQueue:
 
     def enqueue_message(self, payload: THINGSBOARD_PAYLOADS) -> None:
         new_message = {
-            "ts":
-            int(time.time_ns() / 1000),  # ThingsBoard expects milliseconds
+            "ts": int(time.time_ns() /
+                      1_000_000),  # ThingsBoard expects milliseconds
             "values": dataclasses.asdict(payload),
         }
         with self.con:
