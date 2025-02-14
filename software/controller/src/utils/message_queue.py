@@ -48,3 +48,5 @@ class MessageQueue:
             sql_statement: str = "INSERT INTO queue_out (type, message) VALUES(?, ?);"
             self.con.execute(sql_statement, ("MQTT_message", str(new_message)))
             self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
+
+        time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps
