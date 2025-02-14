@@ -97,7 +97,7 @@ class GatewayMqttClient(Client):
         return True
 
     def publish_log(self, log_level, log_message) -> None:
-        self.publish_message(json.dumps({
+        self.publish_telemetry(json.dumps({
             "ts": int(time.time_ns() / 1000_000),
             "values": {
                 "severity": log_level,
