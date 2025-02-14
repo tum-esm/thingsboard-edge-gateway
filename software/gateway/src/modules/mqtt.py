@@ -98,9 +98,10 @@ class GatewayMqttClient(Client):
 
     def publish_log(self, log_level, log_message) -> None:
         self.publish_message(json.dumps({
-            "ts": int(time.time()) * 1000,
+            "ts": int(time.time_ns() / 1000),
             "values": {
                 "severity": log_level,
                 "message": "GATEWAY - " + log_message
             }
         }))
+        time.sleep(1/1000) # sleep for 1ms to avoid duplicate timestamps
