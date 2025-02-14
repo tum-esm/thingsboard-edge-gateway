@@ -6,7 +6,7 @@ from typing import Any, Optional, Union
 
 from paho.mqtt.client import Client
 
-from modules.logging import info, error, debug
+from modules.logging import info, error, debug, warn
 
 singleton_instance : Optional["GatewayMqttClient"] = None
 
@@ -78,14 +78,14 @@ class GatewayMqttClient(Client):
         })
 
     def publish_sw_state(self, version: str, state: str, msg : Optional[str]=None) -> None:
-        self.publish_message(json.dumps({
+        self.publish_telemetry(json.dumps({
             "current_sw_title": version,
             "current_sw_version": version,
             "sw_state": state,
             "sw_error": msg or ""
         }))
 
-    def publish_message(self, message: str) -> bool:
+    def publish_telemetry(self, message: str) -> bool:
         return self.publish_message_raw("v1/devices/me/telemetry", message)
 
     def publish_message_raw(self, topic: str, message: str) -> bool:
@@ -105,3 +105,17 @@ class GatewayMqttClient(Client):
             }
         }))
         time.sleep(1/1000) # sleep for 1ms to avoid duplicate timestamps
+
+    def update_sys_info_attribute(self) -> None:
+        sys_info_data = {}
+        try:
+            with open('/proc/stat', 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    sys_info_data[line.split()[0]] = line.split()[1:]
+        except Exception as e:
+            warn(f"Failed to read /proc/stat: {e}")
+
+        self.publish_message_raw("v1/devices/me/attributes", json.dumps({
+            "sys_info": sys_info_data
+        }))

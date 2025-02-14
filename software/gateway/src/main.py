@@ -1,3 +1,4 @@
+import json
 import os
 import signal
 import sys
@@ -79,6 +80,7 @@ try:
         sleep(5)
 
         info("Gateway started successfully")
+        mqtt_client.update_sys_info_attribute()
 
         while not STOP_MAINLOOP:
             # check if there are any new incoming mqtt messages in the queue, process them
@@ -124,7 +126,7 @@ try:
                     f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")
                 if len(message) > 0:
                     debug('Sending message: ' + str(message[0]))
-                    if not mqtt_client.publish_message(message[0][2]):
+                    if not mqtt_client.publish_telemetry(message[0][2]):
                         continue
                     communication_sqlite_db.execute(f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
                 continue
