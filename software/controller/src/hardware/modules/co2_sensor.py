@@ -126,11 +126,11 @@ class CO2MeasurementModule:
         if true_values[1] > true_values[0]:
             slope = (true_values[1] - true_values[0]) / (measured_values[1] -
                                                          measured_values[0])
-            intercept = true_values[0] - self.slope * measured_values[0]
+            intercept = true_values[0] - slope * measured_values[0]
         else:
             slope = (true_values[0] - true_values[1]) / (measured_values[0] -
                                                          measured_values[1])
-            intercept = true_values[1] - self.slope * measured_values[1]
+            intercept = true_values[1] - slope * measured_values[1]
 
         # check validity of slope and intercept
         state = state_interface.StateInterface.read(config=self.config)
@@ -138,10 +138,10 @@ class CO2MeasurementModule:
         if not (state.co2_sensor_slope * 0.9 < slope <
                 state.co2_sensor_slope * 1.1):
             self.logger.warning(
-                f"Calculated CO2 calibration slope: {self.slope} is not within 10% of previous value: {state.co2_sensor_slope}.",
+                f"Calculated CO2 calibration slope: {slope} is not within 10% of previous value: {state.co2_sensor_slope}.",
                 forward=True)
             self.logger.warning(
-                f"Calibration might have failed. State file will will not be updated with calibration results.",
+                f"Calibration might have failed. Calibration results will be discarded.",
                 forward=True)
             return
 
@@ -179,8 +179,7 @@ class CO2MeasurementModule:
                 bme280_pressure=self.air_inlet_bme280_data.pressure,
                 sht45_temperature=self.air_inlet_sht45_data.temperature,
                 sht45_humidity=self.air_inlet_sht45_data.humidity,
-            ),
-        )
+            ), )
 
     def send_CO2_calibration_data(self,
                                   CO2_sensor_data: sensor_types.CO2SensorData,
@@ -199,8 +198,7 @@ class CO2MeasurementModule:
                 cal_sht45_temperature=self.air_inlet_sht45_data.temperature,
                 cal_sht45_humidity=self.air_inlet_sht45_data.humidity,
                 cal_gmp343_temperature=CO2_sensor_data.temperature,
-            ),
-        )
+            ), )
 
     def send_calibration_correction_data(self) -> None:
 
@@ -209,5 +207,4 @@ class CO2MeasurementModule:
             payload=mqtt_playload_types.MQTTCalibrationCorrectionData(
                 cal_gmp343_slope=round(self.slope, 4),
                 cal_gmp343_intercept=round(self.intercept, 2),
-                cal_sht_45_offset=self.inlet_sht45.humidity_offset),
-        )
+                cal_sht_45_offset=self.inlet_sht45.humidity_offset), )
