@@ -1,6 +1,6 @@
 # Interfaces
 
-This directory contains interface implementations that facilitate communication between different hardware and software components.
+This directory provides structured interfaces for hardware control, configuration management, state persistence, and logging, ensuring modular and maintainable system architecture.
 
 ## Directory Structure
 
