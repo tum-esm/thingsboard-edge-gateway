@@ -2,11 +2,11 @@ import random
 import time
 from typing import Any, Literal, Optional
 import re
-import serial
 
 try:
     import gpiozero
     import gpiozero.pins.pigpio
+    import serial
 except Exception:
     pass
 
