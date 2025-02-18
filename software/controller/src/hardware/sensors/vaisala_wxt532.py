@@ -23,10 +23,6 @@ DEVICE_STATUS_PATTERN = (
 
 
 class SerialInterface:
-    """
-    Serial interface for communicating with sensors.
-    Handles encoding/decoding centrally.
-    """
 
     def __init__(self, port: str, encoding: str = "cp1252") -> None:
         self.serial_interface = serial.Serial(
