@@ -9,7 +9,7 @@ This directory contains interface implementations that facilitate communication 
     📄 config_interface.py      # Interface for handling configuration file
     📄 state_interface.py       # Interface for managing system state
     📄 logging_interface.py     # Interface for structured logging and MQTT support
-    📄 hardware_interface.py    # Wrapper for hardware interactions with locking mechanism
+    📄 hardware_interface.py    # Wrapper for hardware interactions
 ```
 
 ## Interface Descriptions
