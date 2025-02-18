@@ -36,7 +36,7 @@ class SerialInterface:
             stopbits=1,
         )
 
-    def read_all(self) -> bytes:
+    def read_all(self) -> Any:
         """Read all available bytes from the serial port."""
         return self.serial_interface.read_all()
 
@@ -57,7 +57,6 @@ class VaisalaWXT532(Sensor):
             pin=self.config.hardware.wxt532_power_pin_out,
             pin_factory=self.pin_factory)
         self.power_pin.on()
-        # Instantiate the serial interface
         self.serial_interface = SerialInterface(
             port=str(self.config.hardware.wxt532_serial_port))
         self.current_input_stream = ""
