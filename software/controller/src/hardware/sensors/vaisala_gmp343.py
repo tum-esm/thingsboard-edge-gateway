@@ -1,6 +1,7 @@
+import os
 import random
 import time
-from typing import Any, Literal, Optional
+from typing import Any, Optional, Literal
 import re
 
 try:
@@ -13,6 +14,7 @@ except Exception:
 from hardware.sensors._base_sensor import Sensor
 from custom_types import sensor_types, config_types
 
+# Regex patterns for CO₂ sensor responses
 CO2_MEASUREMENT_REGEX = (
     r"\d+\.\d+\s+"  # raw
     + r"\d+\.\d+\s+"  # compensated
@@ -24,8 +26,12 @@ STARTUP_REGEX = r"GMP343 - Version STD \d+\.\d+\\r\\n" + \
 
 
 class SerialInterface:
+    """
+    Serial interface for communicating with sensors.
+    Handles encoding/decoding centrally.
+    """
 
-    def __init__(self, port: str) -> None:
+    def __init__(self, port: str, encoding: str = "cp1252") -> None:
         self.serial_interface = serial.Serial(
             port=port,
             baudrate=19200,
@@ -33,6 +39,17 @@ class SerialInterface:
             parity="N",
             stopbits=1,
         )
+        self.encoding = encoding
+
+    def flush_receiver_stream(self) -> None:
+        """Wait briefly and flush the input buffer."""
+        time.sleep(0.2)
+        self.serial_interface.reset_input_buffer()
+
+    def read_all(self) -> Any:
+        """Read all available data from the serial port and decode it."""
+        raw_bytes = self.serial_interface.read_all()
+        return raw_bytes.decode(self.encoding) if raw_bytes else ""
 
     def send_command(
         self,
@@ -41,50 +58,30 @@ class SerialInterface:
         timeout: float = 8
     ) -> tuple[Literal["success", "uncomplete", "timeout"], str]:
         """
-        send a command to the sensor. Puts a "\x1B" string after the
-        command, which will make the sensor wait until commands
-        have been processed.
-        Returns the sensor answer as tuple (indicator, answer).
+        Send a command to the sensor and wait for a response that matches the expected regex.
         """
-        self.flush_receiver_stream()  # empty input queue
-        self.serial_interface.write(
-            f"{message}\r\n".encode("utf-8"))  # send command
-        self.serial_interface.flush()  # wait until data is written
+        self.flush_receiver_stream()
+        self.serial_interface.write(f"{message}\r\n".encode("utf-8"))
+        self.serial_interface.flush()
         return self.wait_for_answer(expected_regex=expected_regex,
-                                    timeout=timeout)  # return answer
-
-    def flush_receiver_stream(self) -> None:
-        """wait 0.2 seconds and then empty the current input queue"""
-        time.sleep(0.2)  # wait for outstanding answers from previous commands
-        self.serial_interface.read_all(
-        )  # reads everything in queue and throws it away
+                                    timeout=timeout)
 
     def wait_for_answer(
         self, expected_regex: str, timeout: float
     ) -> tuple[Literal["success", "uncomplete", "timeout"], str]:
         start_time = time.time()
         answer = ""
-
         while True:
-            received_bytes = self.serial_interface.read_all()
-            if received_bytes is not None:
-                answer += received_bytes.decode(encoding="cp1252")
-
-                # return successful answer as it matches expected regex
+            answer_chunk = self.read_all()
+            if answer_chunk:
+                answer += answer_chunk
                 if re.search(expected_regex, answer):
                     return "success", answer
-
-                # return answer that is requesting to set the new value in another message
-                # sensor will freeze until the new value is set
-                # this can happen if only "p" is received instead of "p 1050"
-                # Case example: "PRESSURE (hPa) : 1000.000 ?"
                 if re.search(r".*\?.*", answer):
                     return "uncomplete", answer
-
             if (time.time() - start_time) > timeout:
                 return "timeout", answer
-            else:
-                time.sleep(0.05)
+            time.sleep(0.05)
 
 
 class VaisalaGMP343(Sensor):
@@ -92,7 +89,6 @@ class VaisalaGMP343(Sensor):
 
     def __init__(self, config: config_types.Config,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
-
         super().__init__(config=config, pin_factory=pin_factory)
 
     def _initialize_sensor(self) -> None:
@@ -109,12 +105,10 @@ class VaisalaGMP343(Sensor):
         self.serial_interface.flush_receiver_stream()
         self.serial_interface.wait_for_answer(expected_regex=STARTUP_REGEX,
                                               timeout=10)
-
         self._send_sensor_settings()
 
     def _shutdown_sensor(self) -> None:
         """Shutdown the sensor."""
-
         if hasattr(
                 self,
                 "power_pin") and self.power_pin and not self.power_pin.closed:
@@ -135,10 +129,8 @@ class VaisalaGMP343(Sensor):
         if (humidity is not None) and (pressure is not None):
             self._send_compensation_values(pressure=pressure,
                                            humidity=humidity)
-
         answer = self.serial_interface.send_command(
             "send", expected_regex=CO2_MEASUREMENT_REGEX, timeout=15)
-
         if not answer[1] or 'Unknown' in answer[1]:
             raise self.SensorError(
                 "Invalid sensor response: data missing or corrupted.")
@@ -147,7 +139,6 @@ class VaisalaGMP343(Sensor):
         except ValueError as e:
             self.logger.error(f"Failed to parse sensor data: {e}")
             raise self.SensorError("Failed to parse sensor data.")
-
         return sensor_types.CO2SensorData(
             raw=sensor_data[0],
             compensated=sensor_data[1],
@@ -165,48 +156,41 @@ class VaisalaGMP343(Sensor):
             temperature=random.uniform(0, 50),
         )
 
-    def _send_command_to_sensor(
-        self,
-        command: str,
-        expected_regex: str = r".*\>.*",
-        timeout: float = 8,
-    ) -> str:
-        """Send a command and handle different types of responses.
-        Raises a SensorError if sending the command fails."""
+    def _retry_send_command(self, command: str, error_type: str,
+                            expected_regex: str, timeout: float) -> str:
+        """
+        Extracted retry logic for sending commands.
+        """
+        answer = self.serial_interface.send_command(
+            message=command.strip().split(" ")[-1]
+            if error_type == "uncomplete" else command,
+            expected_regex=expected_regex,
+            timeout=timeout)
+        if answer[0] == "success":
+            self.logger.info(f"Resending {error_type} was successful.")
+            return self._format_raw_answer(answer[1])
+        raise self.SensorError(
+            f"Resend failed: {error_type}. Sensor answer: {answer[1]}")
 
-        def _retry_send(command: str, error_type: str) -> str:
-            """Helper method to handle retry logic for uncomplete or timeout responses."""
-            answer = self.serial_interface.send_command(
-                message=command.strip().split(" ")[-1]
-                if error_type == "uncomplete" else command,
-                expected_regex=expected_regex,
-                timeout=timeout)
-
-            if answer[0] == "success":
-                self.logger.info(f"Resending {error_type} was successful.")
-                return self._format_raw_answer(answer[1])
-
-            raise self.SensorError(
-                f"Resend failed: {error_type}. Sensor answer: {answer[1]}")
-
+    def _send_command_to_sensor(self,
+                                command: str,
+                                expected_regex: str = r".*\>.*",
+                                timeout: float = 8) -> str:
+        """
+        Send a command and handle responses, using the extracted retry logic.
+        """
         answer = self.serial_interface.send_command(
             message=command, expected_regex=expected_regex, timeout=timeout)
-
-        # If command is successful, return the formatted result
         if answer[0] == "success":
             return self._format_raw_answer(answer[1])
-
-        # Handle retries for uncomplete or timeout error
         if answer[0] in ("uncomplete", "timeout"):
-            return _retry_send(command, answer[0])
-
+            return self._retry_send_command(command, answer[0], expected_regex,
+                                            timeout)
         raise self.SensorError("Sending command failed")
 
     def _send_sensor_settings(self) -> None:
-        """send the sensor settings as defined in the configuration file."""
-
-        self.logger.info("Sending settings to the CO2 sensor.")
-
+        """Send sensor settings defined in the configuration file."""
+        self.logger.info("Sending settings to the CO₂ sensor.")
         settings = [
             'form CO2RAWUC CO2RAW CO2 T " (R C C+F T)"',
             'echo off',
@@ -221,47 +205,38 @@ class VaisalaGMP343(Sensor):
             f"pc {'on' if self.config.hardware.gmp343_pressure_compensation else 'off'}",
             f"oc {'on' if self.config.hardware.gmp343_oxygen_compensation else 'off'}",
         ]
-
         for command in settings:
             self._send_command_to_sensor(command=command)
-
         self.logger.info("Settings sent successfully.")
 
     def _send_compensation_values(self, pressure: float,
                                   humidity: float) -> None:
-        """update pressure, humidity in sensor for internal compensation."""
-
+        """Update sensor with pressure and humidity compensation values."""
         if not (0 <= humidity <= 100):
             raise ValueError(f"Humidity {humidity} is out of range [0, 100].")
         if not (700 <= pressure <= 1300):
             raise ValueError(
                 f"Pressure {pressure} is out of range [700, 1300].")
-
         self._send_command_to_sensor(command=f"rh {round(humidity, 2)}")
         self._send_command_to_sensor(command=f"p {round(pressure, 2)}")
-
         self.logger.info(
-            f"Updated compensation values: pressure = {pressure}, " +
-            f"humidity = {humidity}.")
+            f"Updated compensation values: pressure = {pressure}, humidity = {humidity}."
+        )
 
     def _format_raw_answer(self, raw: str) -> str:
-        """replace all useless characters in the CO2 probe's answer"""
+        """Format and clean up the raw sensor answer."""
         return (raw.strip(" \r\n").replace(
             "  ", "").replace(" : ", ": ").replace(" \r\n", "\r\n").replace(
                 "\r\n\r\n", "\r\n").replace("\r\n", "; ").removesuffix("; >"))
 
     def _check_errors(self) -> None:
-        """checks whether the CO2 probe reports any errors. Possibly raises
-        the CO2SensorInterface.CommunicationError exception"""
-
+        """
+        Check sensor for errors.
+        """
         answer = self._send_command_to_sensor("param")
         self.logger.info(f"GMP343 Sensor Info: {answer}")
-
         answer = self._send_command_to_sensor("errs")
-
-        if not ("OK: No errors detected." in answer):
-            self.logger.warning(
-                f"The CO2 sensor reported errors: {answer}",
-                forward=True,
-            )
-            raise self.SensorError("CO2 sensor reported errors.")
+        if "OK: No errors detected." not in answer:
+            self.logger.warning(f"The CO₂ sensor reported errors: {answer}",
+                                forward=True)
+            raise self.SensorError("CO₂ sensor reported errors.")

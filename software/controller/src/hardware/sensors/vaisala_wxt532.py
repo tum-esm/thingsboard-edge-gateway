@@ -2,11 +2,11 @@ import random
 import time
 import re
 from typing import Any, Optional, Tuple, List, Match
+import serial
 
 try:
     import gpiozero
     import gpiozero.pins.pigpio
-    import serial
 except Exception:
     pass
 
@@ -14,7 +14,7 @@ from hardware.sensors._base_sensor import Sensor
 from custom_types import config_types, sensor_types
 from utils import list_operations
 
-# Regex patterns for parsing messages
+# Regex patterns for parsing wind sensor messages
 MEASUREMENT_PATTERN = (
     r"Dn=([0-9.]+)D,Dm=([0-9.]+)D,Dx=([0-9.]+)D,Sn=([0-9.]+)M,Sm=([0-9.]+)M,Sx=([0-9.]+)M"
 )
@@ -24,10 +24,11 @@ DEVICE_STATUS_PATTERN = (
 
 class SerialInterface:
     """
-    Serial interface for reading data from the WXT532 sensor.
+    Serial interface for communicating with sensors.
+    Handles encoding/decoding centrally.
     """
 
-    def __init__(self, port: str) -> None:
+    def __init__(self, port: str, encoding: str = "cp1252") -> None:
         self.serial_interface = serial.Serial(
             port=port,
             baudrate=19200,
@@ -35,10 +36,17 @@ class SerialInterface:
             parity="N",
             stopbits=1,
         )
+        self.encoding = encoding
+
+    def flush_receiver_stream(self) -> None:
+        """Wait briefly and flush the input buffer."""
+        time.sleep(0.2)
+        self.serial_interface.reset_input_buffer()
 
     def read_all(self) -> Any:
-        """Read all available bytes from the serial port."""
-        return self.serial_interface.read_all()
+        """Read all available data from the serial port and decode it."""
+        raw_bytes = self.serial_interface.read_all()
+        return raw_bytes.decode(self.encoding) if raw_bytes else ""
 
 
 class VaisalaWXT532(Sensor):
@@ -67,7 +75,6 @@ class VaisalaWXT532(Sensor):
                 self,
                 "power_pin") and self.power_pin and not self.power_pin.closed:
             self.power_pin.off()
-            # Shut down the device and release all associated resources (such as GPIO pins).
             self.power_pin.close()
         else:
             self.logger.warning(
@@ -109,33 +116,29 @@ class VaisalaWXT532(Sensor):
 
     def _update_buffered_messages(self) -> None:
         """
-        Update the internal buffer by reading new bytes from the serial interface,
-        decoding them, and splitting into complete messages.
+        Update the internal buffer by reading new data from the serial interface,
+        splitting into complete messages.
         """
-        new_input_bytes = self.serial_interface.read_all()
-        if not new_input_bytes:
+        new_data = self.serial_interface.read_all()
+        if not new_data:
             return
-        self.current_input_stream += new_input_bytes.decode("cp1252")
+        self.current_input_stream += new_data
         messages = self.current_input_stream.split("\r\n")
         self.current_input_stream = messages[
             -1]  # Retain any incomplete message
-        self.buffered_messages.extend(
-            messages[:-1])  # Append complete messages
+        self.buffered_messages.extend(messages[:-1])
 
     def _extract_measurements_from_messages(
             self) -> List[sensor_types.WindSensorData]:
         """
-        Extract wind sensor measurements and update the latest device status
-        from the buffered messages.
+        Extract wind sensor measurements and update device status from buffered messages.
         """
         wind_measurements: List[sensor_types.WindSensorData] = []
         for message in self.buffered_messages:
-            # Parse measurement messages
             measurement_match = re.search(MEASUREMENT_PATTERN, message)
             if measurement_match:
                 wind_measurements.append(
                     self._parse_measurement_message(measurement_match))
-            # Parse device status messages
             device_match = re.search(DEVICE_STATUS_PATTERN, message)
             if device_match:
                 self.latest_device_status = self._parse_device_status_message(
@@ -172,7 +175,6 @@ class VaisalaWXT532(Sensor):
     ) -> Optional[sensor_types.WindSensorData]:
         """
         Aggregate multiple wind measurements into a single summary value.
-        Returns None if no measurements are available.
         """
         if not wind_measurements:
             return None
@@ -193,19 +195,15 @@ class VaisalaWXT532(Sensor):
 
     def _check_errors(self) -> None:
         """
-        Check for errors in the sensor's device status.
-        Raises an AssertionError if any measured parameter is out of the expected range.
+        Check the device status for errors.
         """
         if not self.latest_device_status:
             self.logger.info("No device status available.")
             return
-
         now = time.time()
         if now - self.latest_device_status.last_update_time > 300:
             self.logger.warning("Device status is older than 5 minutes.")
             return
-
-        # Validate voltage ranges and temperatures
         assert 22 <= self.latest_device_status.heating_voltage <= 26, "Heating voltage out of range"
         assert 22 <= self.latest_device_status.supply_voltage <= 26, "Supply voltage out of range"
         assert 3.2 <= self.latest_device_status.reference_voltage <= 4.0, "Reference voltage out of range"
