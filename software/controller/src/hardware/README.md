@@ -32,8 +32,8 @@ The `actuators` subfolder contains hardware interfaces for:
 
 - **ACL Type 201** – Solenoid valves (24V)
 - **Schwarzer Precision SP 622 EC_BL** – Membrane pump (24V)
-- **10W PTC heating element** (24V)
-- **DC sleeve fan** (24V)
+- **DBK Enclosures** - 10W PTC heating element (24V)
+- **EBM-Papst** - DC sleeve fan (24V)
 
 ## Sensors
 
@@ -50,22 +50,22 @@ The `sensors` subfolder includes hardware interfaces for various environmental a
 
 The `modules` subfolder contains higher-level modules that integrate multiple sensors and actuators:
 
-### **CO₂ Sensor Module** (`co2_sensor.py`):
+### **CO₂ Sensor Module**:
 
-- Interfaces with Vaisala GMP343 (CO₂ measurement)
+- Interfaces with Vaisala GMP343 (CO₂ sensor)
 - Integrates Sensirion SHT45 for humidity correction
 - Utilizes Bosch BME280 for pressure correction
 - Handles CO₂ measurement, calibration, dilution correction
 - Queues processed data for MQTT transmission
 
-### **Heated Sensor Box** (`heated_sensor_box.py`):
+### **Heated Sensor Box**:
 
-- Implements PID temperature control using Grove MCP9808 (temperature)
-- Controls heating element (`heat_box_heater.py`)
-- Manages ventilation with sleeve fan (`heat_box_ventilator.py`)
+- Implements PID temperature control using Grove MCP9808
+- Controls PTC heating element
+- Manages ventilation with sleeve fan
 - Runs in a multithreading environment for real-time response
 
-### **Wind Sensor Module** (`wind_sensor.py`):
+### **Wind Sensor Module**:
 
 - Interfaces with Vaisala WXT532 for wind speed and direction measurement
 - Queues processed data for MQTT transmission
