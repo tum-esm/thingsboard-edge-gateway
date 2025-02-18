@@ -1,7 +1,9 @@
-import os
 import random
 import time
-from typing import Any, Optional
+from typing import Any, Literal, Optional
+import re
+import serial
+
 try:
     import gpiozero
     import gpiozero.pins.pigpio
@@ -10,7 +12,6 @@ except Exception:
 
 from hardware.sensors._base_sensor import Sensor
 from custom_types import sensor_types, config_types
-from interfaces import serial_interfaces
 
 CO2_MEASUREMENT_REGEX = (
     r"\d+\.\d+\s+"  # raw
@@ -20,6 +21,70 @@ CO2_MEASUREMENT_REGEX = (
     + r"\(R C C\+F T\)")
 STARTUP_REGEX = r"GMP343 - Version STD \d+\.\d+\\r\\n" + \
                 r"Copyright: Vaisala Oyj \d{4} - \d{4}"
+
+
+class SerialInterface:
+
+    def __init__(self, port: str) -> None:
+        self.serial_interface = serial.Serial(
+            port=port,
+            baudrate=19200,
+            bytesize=8,
+            parity="N",
+            stopbits=1,
+        )
+
+    def send_command(
+        self,
+        message: str,
+        expected_regex: str = r".*\>.*",
+        timeout: float = 8
+    ) -> tuple[Literal["success", "uncomplete", "timeout"], str]:
+        """
+        send a command to the sensor. Puts a "\x1B" string after the
+        command, which will make the sensor wait until commands
+        have been processed.
+        Returns the sensor answer as tuple (indicator, answer).
+        """
+        self.flush_receiver_stream()  # empty input queue
+        self.serial_interface.write(
+            f"{message}\r\n".encode("utf-8"))  # send command
+        self.serial_interface.flush()  # wait until data is written
+        return self.wait_for_answer(expected_regex=expected_regex,
+                                    timeout=timeout)  # return answer
+
+    def flush_receiver_stream(self) -> None:
+        """wait 0.2 seconds and then empty the current input queue"""
+        time.sleep(0.2)  # wait for outstanding answers from previous commands
+        self.serial_interface.read_all(
+        )  # reads everything in queue and throws it away
+
+    def wait_for_answer(
+        self, expected_regex: str, timeout: float
+    ) -> tuple[Literal["success", "uncomplete", "timeout"], str]:
+        start_time = time.time()
+        answer = ""
+
+        while True:
+            received_bytes = self.serial_interface.read_all()
+            if received_bytes is not None:
+                answer += received_bytes.decode(encoding="cp1252")
+
+                # return successful answer as it matches expected regex
+                if re.search(expected_regex, answer):
+                    return "success", answer
+
+                # return answer that is requesting to set the new value in another message
+                # sensor will freeze until the new value is set
+                # this can happen if only "p" is received instead of "p 1050"
+                # Case example: "PRESSURE (hPa) : 1000.000 ?"
+                if re.search(r".*\?.*", answer):
+                    return "uncomplete", answer
+
+            if (time.time() - start_time) > timeout:
+                return "timeout", answer
+            else:
+                time.sleep(0.05)
 
 
 class VaisalaGMP343(Sensor):
@@ -39,7 +104,7 @@ class VaisalaGMP343(Sensor):
         self.power_pin.off()
         time.sleep(5)
         self.power_pin.on()
-        self.serial_interface = serial_interfaces.SerialCO2SensorInterface(
+        self.serial_interface = SerialInterface(
             port=str(self.config.hardware.gmp343_serial_port))
         self.serial_interface.flush_receiver_stream()
         self.serial_interface.wait_for_answer(expected_regex=STARTUP_REGEX,
