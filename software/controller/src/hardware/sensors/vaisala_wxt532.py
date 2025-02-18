@@ -1,8 +1,8 @@
 import random
-import os
-import re
 import time
-from typing import Any, Tuple, Optional, List, Match
+import re
+from typing import Any, Optional, Tuple, List, Match
+
 try:
     import gpiozero
     import gpiozero.pins.pigpio
@@ -14,7 +14,7 @@ from hardware.sensors._base_sensor import Sensor
 from custom_types import config_types, sensor_types
 from utils import list_operations
 
-# Define regex patterns for parsing
+# Regex patterns for parsing messages
 MEASUREMENT_PATTERN = (
     r"Dn=([0-9.]+)D,Dm=([0-9.]+)D,Dx=([0-9.]+)D,Sn=([0-9.]+)M,Sm=([0-9.]+)M,Sx=([0-9.]+)M"
 )
@@ -22,35 +22,48 @@ DEVICE_STATUS_PATTERN = (
     r"Th=([0-9.]+)C,Vh=([0-9.]+)N,Vs=([0-9.]+)V,Vr=([0-9.]+)V")
 
 
-class VaisalaWXT532(Sensor):
-    """Class for the Vaisala WXT532 sensor."""
+class SerialInterface:
+    """
+    Serial interface for reading data from the WXT532 sensor.
+    """
 
-    def __init__(self, config: config_types.Config,
-                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
-        super().__init__(config=config, pin_factory=pin_factory)
-
-        self.buffered_messages: List[str] = []
-        self.latest_device_status: Optional[
-            sensor_types.WindSensorStatus] = None
-
-    def _initialize_sensor(self) -> None:
-        """Initialize the sensor."""
-        self.power_pin = gpiozero.OutputDevice(
-            pin=self.config.hardware.wxt532_power_pin_out,
-            pin_factory=self.pin_factory)
-        self.power_pin.on()
-
-        self.wxt532_interface = serial.Serial(
-            port=self.config.hardware.wxt532_serial_port,
+    def __init__(self, port: str) -> None:
+        self.serial_interface = serial.Serial(
+            port=port,
             baudrate=19200,
             bytesize=8,
             parity="N",
             stopbits=1,
         )
+
+    def read_all(self) -> bytes:
+        """Read all available bytes from the serial port."""
+        return self.serial_interface.read_all()
+
+
+class VaisalaWXT532(Sensor):
+    """Class for the Vaisala WXT532 wind sensor."""
+
+    def __init__(self, config: config_types.Config,
+                 pin_factory: gpiozero.pins.pigpio.PiGPIOFactory) -> None:
+        super().__init__(config=config, pin_factory=pin_factory)
+        self.buffered_messages: List[str] = []
+        self.latest_device_status: Optional[
+            sensor_types.WindSensorStatus] = None
+
+    def _initialize_sensor(self) -> None:
+        """Initialize the wind sensor."""
+        self.power_pin = gpiozero.OutputDevice(
+            pin=self.config.hardware.wxt532_power_pin_out,
+            pin_factory=self.pin_factory)
+        self.power_pin.on()
+        # Instantiate the serial interface
+        self.serial_interface = SerialInterface(
+            port=str(self.config.hardware.wxt532_serial_port))
         self.current_input_stream = ""
 
     def _shutdown_sensor(self) -> None:
-        """Shutdown the sensor."""
+        """Shutdown the sensor and release resources."""
         if hasattr(
                 self,
                 "power_pin") and self.power_pin and not self.power_pin.closed:
@@ -65,7 +78,7 @@ class VaisalaWXT532(Sensor):
         self, *args: Any, **kwargs: Any
     ) -> Tuple[Optional[sensor_types.WindSensorData],
                Optional[sensor_types.WindSensorStatus]]:
-        """Read the sensor value."""
+        """Read the wind sensor data and device status."""
         self._update_buffered_messages()
         wind_measurements = self._extract_measurements_from_messages()
         aggregated_measurement = self._aggregate_measurements(
@@ -73,59 +86,61 @@ class VaisalaWXT532(Sensor):
         return aggregated_measurement, self.latest_device_status
 
     def _simulate_read(
-        self,
+        self
     ) -> Tuple[Optional[sensor_types.WindSensorData],
                Optional[sensor_types.WindSensorStatus]]:
-        """Simulate the sensor value."""
+        """Simulate the wind sensor data and device status."""
         now = round(time.time())
-        return (
-            sensor_types.WindSensorData(
-                speed_avg=round(random.uniform(0, 20), 2),
-                speed_max=round(random.uniform(0, 20), 2),
-                speed_min=round(random.uniform(0, 20), 2),
-                direction_avg=round(random.uniform(0, 360), 2),
-                direction_max=round(random.uniform(0, 360), 2),
-                direction_min=round(random.uniform(0, 360), 2),
-                last_update_time=now,
-            ),
-            sensor_types.WindSensorStatus(
-                temperature=round(random.uniform(-20, 60), 2),
-                heating_voltage=round(random.uniform(0, 24), 2),
-                supply_voltage=round(random.uniform(0, 24), 2),
-                reference_voltage=round(random.uniform(0, 5), 2),
-                last_update_time=now,
-            ),
-        )
+        return (sensor_types.WindSensorData(
+            speed_avg=round(random.uniform(0, 20), 2),
+            speed_max=round(random.uniform(0, 20), 2),
+            speed_min=round(random.uniform(0, 20), 2),
+            direction_avg=round(random.uniform(0, 360), 2),
+            direction_max=round(random.uniform(0, 360), 2),
+            direction_min=round(random.uniform(0, 360), 2),
+            last_update_time=now,
+        ),
+                sensor_types.WindSensorStatus(
+                    temperature=round(random.uniform(-20, 60), 2),
+                    heating_voltage=round(random.uniform(0, 24), 2),
+                    supply_voltage=round(random.uniform(0, 24), 2),
+                    reference_voltage=round(random.uniform(0, 5), 2),
+                    last_update_time=now,
+                ))
 
     def _update_buffered_messages(self) -> None:
-        """Update the buffer by reading and appending new messages."""
-        new_input_bytes = self.wxt532_interface.read_all()
+        """
+        Update the internal buffer by reading new bytes from the serial interface,
+        decoding them, and splitting into complete messages.
+        """
+        new_input_bytes = self.serial_interface.read_all()
         if not new_input_bytes:
             return
-
         self.current_input_stream += new_input_bytes.decode("cp1252")
         messages = self.current_input_stream.split("\r\n")
-        self.current_input_stream = messages[-1]  # Save incomplete message
-        self.buffered_messages.extend(messages[:-1])  # Store complete messages
+        self.current_input_stream = messages[
+            -1]  # Retain any incomplete message
+        self.buffered_messages.extend(
+            messages[:-1])  # Append complete messages
 
     def _extract_measurements_from_messages(
             self) -> List[sensor_types.WindSensorData]:
-        """Extract wind sensor measurements and device status from messages."""
-        wind_measurements = []
-
+        """
+        Extract wind sensor measurements and update the latest device status
+        from the buffered messages.
+        """
+        wind_measurements: List[sensor_types.WindSensorData] = []
         for message in self.buffered_messages:
             # Parse measurement messages
             measurement_match = re.search(MEASUREMENT_PATTERN, message)
             if measurement_match:
                 wind_measurements.append(
                     self._parse_measurement_message(measurement_match))
-
             # Parse device status messages
             device_match = re.search(DEVICE_STATUS_PATTERN, message)
             if device_match:
                 self.latest_device_status = self._parse_device_status_message(
                     device_match)
-
         self.buffered_messages.clear()
         return wind_measurements
 
@@ -156,13 +171,14 @@ class VaisalaWXT532(Sensor):
     def _aggregate_measurements(
         self, wind_measurements: List[sensor_types.WindSensorData]
     ) -> Optional[sensor_types.WindSensorData]:
-        """Aggregate wind measurements into a single summary."""
+        """
+        Aggregate multiple wind measurements into a single summary value.
+        Returns None if no measurements are available.
+        """
         if not wind_measurements:
             return None
-
         self.logger.info(
             f"Processed {len(wind_measurements)} wind sensor measurements.")
-
         return sensor_types.WindSensorData(
             direction_min=min(m.direction_min for m in wind_measurements),
             direction_avg=list_operations.avg_list(
@@ -177,9 +193,10 @@ class VaisalaWXT532(Sensor):
         )
 
     def _check_errors(self) -> None:
-        """Check for errors in the sensor.
-        *Raises AssertionError if an error is detected."""
-
+        """
+        Check for errors in the sensor's device status.
+        Raises an AssertionError if any measured parameter is out of the expected range.
+        """
         if not self.latest_device_status:
             self.logger.info("No device status available.")
             return
@@ -189,6 +206,7 @@ class VaisalaWXT532(Sensor):
             self.logger.warning("Device status is older than 5 minutes.")
             return
 
-        assert 22 <= self.latest_device_status.heating_voltage <= 26
-        assert 22 <= self.latest_device_status.supply_voltage <= 26
-        assert 3.2 <= self.latest_device_status.reference_voltage <= 4.0
+        # Validate voltage ranges and temperatures
+        assert 22 <= self.latest_device_status.heating_voltage <= 26, "Heating voltage out of range"
+        assert 22 <= self.latest_device_status.supply_voltage <= 26, "Supply voltage out of range"
+        assert 3.2 <= self.latest_device_status.reference_voltage <= 4.0, "Reference voltage out of range"
