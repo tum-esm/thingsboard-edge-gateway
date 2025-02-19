@@ -167,15 +167,13 @@ mkdir -p /home/pi/acropolis/logs
 ```bash
 cd /home/pi/acropolis/software/gateway
 sudo ./build_gateway_runner_docker_image.sh
+# Update `THINGSBOARD_PROVISION_*` environment parameters in file: run_dockerized_gateway.sh
 ```
 
-(Optional) Skip if you want to create template image for multiple systems
+(Optional) Skip if you want to create an template image for multiple systems
 
 ```bash
-cd /home/pi/acropolis/software/gateway
-# Update `THINGSBOARD_PROVISION_*` environment parameters in
-# file run_dockerized_gateway.sh
-./run_dockerized_gateway.sh #registers device with ThingsBoard
+./run_dockerized_gateway.sh #registers device with ThingsBoard and creates tb_access_token
 docker logs --tail 50 -f acropolis_edge_gateway
 ```
 
