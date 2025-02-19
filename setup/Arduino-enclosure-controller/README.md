@@ -5,7 +5,7 @@ This directory contains the firmware and setup instructions for the Arduino-base
 ## File Structure
 
 ```bash
-📁 Arduino-enclosure-controller
+📁 /enclosure_controller/
     📄 enclosure_controller.ino  # Main firmware file
     📄 config.h                  # Configuration file
     📄 platformio.ini            # PlatformIO configuration file
@@ -23,12 +23,14 @@ This directory contains the firmware and setup instructions for the Arduino-base
 ## Dependencies
 
 This project requires the following external libraries:
+
 - **OneWire** (version 2.3.7) – Used for communication with DS18B20
 - **DallasTemperature** (version 3.9.0) – Simplifies temperature reading from DS18B20
 
 ### **Installing Dependencies**
 
 For **Arduino IDE**, install via the Library Manager:
+
 1. Open Arduino IDE.
 2. Navigate to **Sketch** → **Include Library** → **Manage Libraries**.
 3. Search for "OneWire" and install version **2.3.7**.
@@ -39,6 +41,7 @@ For **PlatformIO**, dependencies are managed automatically via `platformio.ini`.
 ## Setup Instructions
 
 1. **Connect the hardware**:
+
    - **DS18B20 Temperature Sensor**:
      - Data pin → **Arduino digital pin 2**
      - Requires a **4.7kΩ pull-up resistor** between VCC and Data
@@ -46,12 +49,14 @@ For **PlatformIO**, dependencies are managed automatically via `platformio.ini`.
    - **Enclosure Fan**: Connect to **pin 4**
 
 2. **For Arduino IDE Users**:
+
    - Open `enclosure_controller.ino` in the Arduino IDE.
    - Select the correct board and port from `Tools > Board` and `Tools > Port`.
    - Ensure dependencies are installed (see above section).
    - Upload the firmware to the Arduino board.
 
 3. **For PlatformIO Users**:
+
    - Ensure `platformio.ini` is correctly configured.
    - Run the following command to build and upload:
      ```bash
@@ -86,4 +91,5 @@ For **PlatformIO**, dependencies are managed automatically via `platformio.ini`.
 <br>
 
 ---
+
 For further details, refer to the firmware comments and external documentation if available.
