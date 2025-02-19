@@ -1,49 +1,65 @@
-# File Structure
+# Raspberry Pi 4 Edge Client Setup
 
-```
+This guide provides step-by-step instructions to set up a Raspberry Pi 4 as an edge client for the Acropolis project. It includes OS installation, dependency setup, modem configuration, and running the gateway.
+
+## File Structure
+
+```bash
 📁 RPi-edge-client
-
     📄 config.txt
     📄 default.script
     📄 README.md
 ```
 
-# OS Setup
+## 1. Install Raspberry Pi OS
 
-- Install RASPBERRY PI OS LITE (64-Bit)
-- Setup SSH, WIFI, Hostname
-- Copy config.txt into bootfs folder on SD card
+- Download and install **Raspberry Pi OS Lite (64-bit)**.
+- Configure **SSH, WiFi, and Hostname**.
+- Copy `config.txt` into the `bootfs` folder on the SD card.
 
-```
-sudo apt update
-sudo apt upgrade
-sudo apt install -y build-essential libssl-dev libbz2-dev libexpat1-dev liblzma-dev zlib1g-dev libffi-dev openssl docker.io git tldr ncdu minicom pigpio libsqlite3-dev wget screen udhcpc
+## 2. Install Dependencies
+
+Update the package list and install required dependencies:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y \
+    build-essential libssl-dev libbz2-dev \
+    libexpat1-dev liblzma-dev zlib1g-dev \
+    libffi-dev openssl docker.io git \
+    tldr ncdu minicom pigpio libsqlite3-dev \
+    wget screen udhcpc
 ```
 
-```
+Enable **I2C Interface** using:
+
+```bash
 sudo raspi-config
-Enable I2C Interface
+# Navigate to: Interface Options → I2C → Enable
 ```
 
-# Docker Setup
+## 3. Set Up Docker
 
-```
-nano /etc/docker/daemon.json
-#Add:
+Create a Docker daemon configuration file:
+
+```bash
+sudo nano /etc/docker/daemon.json
+# Add:
 {
-    "dns": ["8.8.8.8", "1.1.1.1",  "8.8.4.4"]
+    "dns": ["8.8.8.8", "1.1.1.1", "8.8.4.4"]
 }
 ```
 
-```
+Add the current user to the Docker group and reboot:
+
+```bash
 sudo usermod -aG docker $USER
-sudo git config --system --add safe.directory '*'
 sudo reboot
 ```
 
-# Python
+## 4. Install Python 3.12
 
-```
+```bash
 wget https://www.python.org/ftp/python/3.12.8/Python-3.12.8.tgz
 sudo tar zxf Python-3.12.8.tgz
 cd Python-3.12.8
@@ -53,68 +69,69 @@ sudo make install
 curl -sSL https://install.python-poetry.org/ | python3.12 -
 ```
 
-# Modem
+## 5. Configure Modem
 
-## AT Modem Commands
+### **AT Commands for Modem Setup**
 
-```
-# open modem interface
+```bash
 sudo minicom -D /dev/ttyS0
-# check modem functionality
+# Check modem functionality
 AT
-# see terminal input
+# Enable terminal echo
 ATE1
-# switch to RNDIS
+# Switch modem to RNDIS mode
 AT+CUSBPIDSWITCH=9001,1,1
-# Wait for a possible modem restart
-
-# set SIM APN
+# Set SIM APN
 AT+CGDCONT=1,"IP","iotde.telefonica.com"
-# set network registration to automatic
+# Enable automatic network registration
 AT+COPS=0
-# set LTE only
+# Set LTE only mode
 AT+CNMP=38
 ```
 
-## Install Driver
+### **Install SIM8200 Modem Driver**
 
-```
+```bash
 cd /home/pi
 wget https://www.waveshare.net/w/upload/8/89/SIM8200_for_RPI.7z
 7z x SIM8200_for_RPI.7z -r -o./SIM8200_for_RPI
 sudo chmod 777 -R SIM8200_for_RPI
 cd SIM8200_for_RPI/Goonline
-make clean
-make
+make clean && make
 ```
 
-### Setup UDHCPC default script
+## 6. Set Up Networking & System Automation
 
-```
-copy default.script to /usr/share/udhcpc/
+### **Install and Configure UDHCPC**
+
+```bash
+cd /home/pi/acropolis/setup/RPi-edge-client
+sudo cp default.script /usr/share/udhcpc/
 sudo chmod -R 0777 /usr/share/udhcpc/
 ```
 
-### Setup offline trigger script
+### **Create acropolis folder**
 
-```
-copy network_lost_reboot_trigger.sh to /home/pi/acropolis/
-sudo chmod a+x network_lost_reboot_trigger.sh
-```
-
-## Update Crontab
-
-```
-crontab -e
-#Add:
-@reboot sudo pigpiod -n "127.0.0.1"
-@reboot sleep 10 && sudo -b /home/pi/SIM8200_for_RPI/Goonline/simcom-cm
-@reboot sleep 15 && sudo -b udhcpc -i wwan0 -b
-@weekly sudo docker system prune -a --force --filter "until=8760h"
-@daily sudo /home/pi/documents/acropolis/acropolis-edge/software/gateway/scripts/network_lost_reboot_trigger.sh
+```bash
+sudo mkdir -p /home/pi/acropolis/
+git clone https://github.com/tum-esm/ACROPOLIS-edge.git ./acropolis-edge
+sudo git config --system --add safe.directory '*'
+cd /home/pi/acropolis/setup/RPi-edge-client
+sudo cp network_lost_reboot_trigger.sh /home/pi/acropolis/
+sudo chmod a+x /home/pi/acropolis/network_lost_reboot_trigger.sh
+sudo cp run_dockerized_gateway.sh /home/pi/acropolis/
+sudo chmod a+x /home/pi/acropolis/run_dockerized_gateway.sh
 ```
 
-### Add:
+### **Update Crontab for Automation**
+
+Edit crontab:
+
+```bash
+sudo crontab -e
+```
+
+Add:
 
 ```
 # Add binary folders to PATH
@@ -141,35 +158,68 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 ```
 cd /home/pi
-mkdir /home/pi/acropolis
-cd /home/pi/acropolis/
-mkdir data
-mkdir logs
+mkdir -p /home/pi/acropolis/data
+mkdir -p /home/pi/acropolis/logs
 ```
 
-### Copy Files
+### **Clone and Build Gateway**
 
-- Copy `run_dockerized_gateway.sh` to /home/pi/acropolis/
-- Update `THINGSBOARD_PROVISION_*` environment parameters
-
-```
-git clone https://github.com/tum-esm/ACROPOLIS-edge.git ./acropolis-edge
-sudo git config --system --add safe.directory '*'
+```bash
+cd /home/pi/acropolis/software/gateway
 sudo ./build_gateway_runner_docker_image.sh
+```
+
+(Optional) Skip if you want to create template image for multiple systems
+```bash
+cd /home/pi/acropolis/software/gateway
+# Update `THINGSBOARD_PROVISION_*` environment parameters in
+# file run_dockerized_gateway.sh
+./run_dockerized_gateway.sh #registers device with ThingsBoard
+docker logs --tail 50 -f acropolis_edge_gateway
+```
+
+## 8. Create & Flash SD Card Image
+
+Remove SD Card and insert into personal computer
+
+### **Create Backup Image**
+
+```bash
+diskutil list
+diskutil umountDisk /dev/disk[*]
+dd status=progress bs=4M  if=/dev/disk[*] | gzip > //Users/.../acropolis-edge-image.gz
+```
+
+## 9. Fast Setup for additional systems
+
+Insert fresh SD Card into personal computer
+
+### **Flash Image to SD Card**
+
+```bash
+diskutil list
+diskutil umountDisk /dev/disk[*]
+gzip -dc //Users/.../acropolis-edge-image.gz | sudo dd of=/dev/disk[*] bs=4M status=progres
+```
+
+Remove SD Card and insert into RaspberryPi
+
+### **Change Hostname**
+
+```bash
+sudo raspi-config
+# Navigate to: System Options → Hostname
+reboot
+```
+
+### **Run Gateway Script**
+
+```bash
+# make sure no 'tb_access_token' exists
 ./run_dockerized_gateway.sh
 docker logs --tail 50 -f acropolis_edge_gateway
 ```
 
-# Create Image of SD card
+---
 
-```
-dd status=progress bs=4M  if=/dev/disk4 | gzip > //Users/.../acropolis-edge-image.gz
-```
-
-# Flash image back to SD card
-
-```
-diskutil list
-diskutil umountDisk /dev/disk{i}
-gzip -dc //Users/.../acropolis-edge-image.gz | sudo dd of=/dev/disk4 bs=4M status=progres
-```
+This completes the setup for the Raspberry Pi 4 Edge Client.
