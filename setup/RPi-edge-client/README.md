@@ -170,6 +170,7 @@ sudo ./build_gateway_runner_docker_image.sh
 ```
 
 (Optional) Skip if you want to create template image for multiple systems
+
 ```bash
 cd /home/pi/acropolis/software/gateway
 # Update `THINGSBOARD_PROVISION_*` environment parameters in
@@ -215,7 +216,9 @@ reboot
 ### **Run Gateway Script**
 
 ```bash
+cd /home/pi/acopolis/acropolis-edge/software/gateway
 # make sure no 'tb_access_token' exists
+cd /home/pi/acopolis
 ./run_dockerized_gateway.sh
 docker logs --tail 50 -f acropolis_edge_gateway
 ```
