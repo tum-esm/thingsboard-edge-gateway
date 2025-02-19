@@ -156,7 +156,7 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 # Setup Gateway
 
-```
+```bash
 cd /home/pi
 mkdir -p /home/pi/acropolis/data
 mkdir -p /home/pi/acropolis/logs
