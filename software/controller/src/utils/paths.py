@@ -3,14 +3,6 @@ from os.path import dirname, abspath, join
 
 PROJECT_DIR = dirname(dirname(dirname(abspath(__file__))))
 
-# DATA PATH
-if os.path.exists("/root/data"):
-    ACROPOLIS_CONTROLLER_DATA_PATH = "/root/data"
-else:
-    fallback_dir = join(PROJECT_DIR, "data")
-    os.makedirs(fallback_dir, exist_ok=True)
-    ACROPOLIS_CONTROLLER_DATA_PATH = fallback_dir
-
 # DATA/STATE/CONFIG PATH
 if os.path.exists("/root/data"):
     ACROPOLIS_CONTROLLER_DATA_PATH = "/root/data"
