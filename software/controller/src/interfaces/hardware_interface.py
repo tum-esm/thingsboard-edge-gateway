@@ -20,6 +20,7 @@ from hardware.actuators.heat_box_ventilator import HeatBoxVentilator
 from hardware.modules import co2_sensor, wind_sensor, heated_sensor_box
 
 from utils import gpio_pin_factory
+from utils.paths import ACROPOLIS_CONTROLLER_LOCKFILE_PATH
 
 
 class HwLock(TypedDict):
@@ -46,8 +47,7 @@ class HardwareInterface:
 
     def __init__(self, config: config_types.Config) -> None:
         global_hw_lock["lock"] = filelock.FileLock(
-            os.environ.get("ACROPOLIS_HARDWARE_LOCKFILE_PATH")
-            or "/home/pi/Documents/acropolis/acropolis-hardware.lock",
+            ACROPOLIS_CONTROLLER_LOCKFILE_PATH,
             timeout=5,
         )
         self.config = config
@@ -56,6 +56,9 @@ class HardwareInterface:
 
         if not self.config.active_components.simulation_mode:
             self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
+        else:
+            self.pin_factory = None
+
         acquire_hardware_lock()
 
         # measurement sensors

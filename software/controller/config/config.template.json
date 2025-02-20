@@ -7,10 +7,10 @@
         "run_hardware_tests": false,
         "run_sensor_heating_control": false, 
         "perform_sht45_offset_correction": false,
-        "perform_co2_calibration_correction": true,
+        "perform_co2_calibration_correction": false,
         "log_to_file": true,
-        "log_to_console": false,
-        "simulation_mode": false
+        "log_to_console": true,
+        "simulation_mode": true
     },
     "calibration": {
         "average_air_inlet_measurements": 15,
