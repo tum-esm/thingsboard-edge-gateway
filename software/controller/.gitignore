@@ -18,6 +18,7 @@ state.json
 #folders
 logs/
 .mypy_cache/
+.pytest_cache/
 
 # ssh stuff
 authorized_keys
