@@ -27,7 +27,28 @@ The **entry point** for the entire system, handling:
 
 ## **Subdirectories Overview**
 
-### **1️⃣ Interfaces (`interfaces/`)**
+### **1️⃣ Custom Types (`custom_types/`)**
+
+Defines **structured data models** using `pydantic` and `dataclasses`.
+
+✅ Standardizes **sensor readings, calibration data, and MQTT payloads**.  
+✅ Ensures **type safety and validation** for configurations.  
+✅ Provides **data integrity for continiuous operation**.
+
+---
+
+
+### **2️⃣ Hardware (`hardware/`)**
+
+Contains **abstractions for sensors and actuators**, allowing modular hardware integration.
+
+✅ Implements **CO₂ sensor, wind sensor, actuators, and power management**.  
+✅ Implements **modules** that bundles sensors and actuators.  
+✅ Offers **abstract base classes** for structured interface implementation
+
+---
+
+### **3️⃣ Interfaces (`interfaces/`)**
 
 Implements **communication interfaces** between hardware components, system utilities, and external services.
 
@@ -37,25 +58,6 @@ Implements **communication interfaces** between hardware components, system util
 
 ---
 
-### **2️⃣ Hardware (`hardware/`)**
-
-Contains **abstractions for sensors and actuators**, allowing modular hardware integration.
-
-✅ Implements **CO₂ sensor, wind sensor, actuators, and power management**.
-✅ Implements **modules** that bundles sensors and actuators.  
-✅ Offers **abstract base classes** for structured interface implementation
-
----
-
-### **3️⃣ Custom Types (`custom_types/`)**
-
-Defines **structured data models** using `pydantic` and `dataclasses`.
-
-✅ Standardizes **sensor readings, calibration data, and MQTT payloads**.  
-✅ Ensures **type safety and validation** for configurations.  
-✅ Provides **data integrity for continiuous operation**.
-
----
 
 ### **4️⃣ Procedures (`procedures/`)**
 
