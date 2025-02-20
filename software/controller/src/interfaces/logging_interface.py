@@ -25,7 +25,7 @@ class Logger:
 
     def __init__(self,
                  config: config_types.Config,
-                 origin: str = "insert-name-here") -> None:
+                 origin: str = "edge-controller") -> None:
 
         self.config = config
         self.origin: str = origin
@@ -217,5 +217,4 @@ class Logger:
             payload=mqtt_playload_types.MQTTLogMessage(
                 severity=level,
                 message=subject + " " + details,
-            ),
-        )
+            ), )
