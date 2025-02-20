@@ -8,8 +8,19 @@ import sys
 import pytz
 
 from custom_types import mqtt_playload_types, config_types
-from utils import message_queue, shell_commands
+from utils import message_queue
 from utils.paths import ACROPOLIS_CONTROLLER_LOGS_PATH
+
+
+class CommandLineException(Exception):
+
+    def __init__(self, value: str, details: Optional[str] = None) -> None:
+        self.value = value
+        self.details = details
+        Exception.__init__(self)
+
+    def __str__(self) -> str:
+        return repr(self.value)
 
 
 def _pad_str_right(text: str,
@@ -112,9 +123,7 @@ class Logger:
         exception_traceback = "\n".join(
             traceback.format_exception(type(e), e, e.__traceback__)).strip()
         exception_details = "None"
-        if isinstance(e,
-                      shell_commands.CommandLineException) and (e.details
-                                                                is not None):
+        if isinstance(e, CommandLineException) and (e.details is not None):
             exception_details = e.details.strip()
 
         subject_string = (exception_name
