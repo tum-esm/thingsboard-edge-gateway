@@ -37,7 +37,7 @@ Each edge system is managed by a Raspberry Pi 4, utilizing an LTE hat (NB-IoT) f
 
 ## Software Architecture
 
-<img src="docs/pictures/ACROPOLIS-Architecture.svg">
+<img src="docs/pictures/ACROPOLIS-Architecture-8.svg">
 
 <br/>
 
