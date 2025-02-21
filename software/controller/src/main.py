@@ -95,7 +95,6 @@ def run() -> None:
     signal.signal(signal.SIGINT, _graceful_teardown)
     signal.signal(signal.SIGTERM, _graceful_teardown)
     logger.info("Established graceful teardown hook.")
-    
 
     # -------------------------------------------------------------------------
     # initialize procedures
@@ -174,18 +173,18 @@ def run() -> None:
             # cancel the alarm for too long mainloops
             signal.alarm(0)
 
-            # reboot if exception lasts longer than 12 hours
+            # exit main loop if exception lasts longer than 3 hours
             if (time.time() -
-                    last_successful_mainloop_iteration_time) >= 86400:
-                if system_info.read_os_uptime() >= 86400:
+                    last_successful_mainloop_iteration_time) >= 10800:
+                if system_info.read_os_uptime() >= 10800:
                     logger.info(
-                        "Rebooting because no successful mainloop iteration for 24 hours.",
+                        "Exiting main loop because no successful iteration for 3 hours.",
                         forward=True,
                     )
                     exit(1)
                 else:
                     logger.info(
-                        "Persistent issue present. Last reboot is less than 24h ago. No action."
+                        "Persistent issue present. Issue present for less than 3h. No action."
                     )
 
             try:

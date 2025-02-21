@@ -23,8 +23,11 @@ This repository contains the software and hardware blueprints for the measuremen
 
 ## Repository Overview
 
-- Software
+- Docs
 - Setup
+- Software
+
+<br/>
 
 ## System Overview
 
@@ -34,9 +37,7 @@ Each edge system is managed by a Raspberry Pi 4, utilizing an LTE hat (NB-IoT) f
 
 ## Software Architecture
 
-First Draft
-
-<img src="docs/Software-Architecture.svg">
+<img src="docs/pictures/ACROPOLIS-Architecture.svg">
 
 <br/>
 
@@ -44,10 +45,14 @@ First Draft
 
 Aigner et. al.: Advancing Urban Greenhouse Gas Monitoring: Development and Evaluation of a High-Density CO2 Sensor Network in Munich. ICOS Science Conference 2024, Versailles, France, 10.-12. Sept, [Link](https://www.icos-cp.eu/news-and-events/science-conference/icos2024sc/all-abstracts)
 
+<br/>
+
 ## Current Development Team:
 
 - Patrick Aigner [@patrickjaigner](https://github.com/patrickjaigner)
 - Lars Frölich [@larsfroelich](https://github.com/larsfroelich)
+
+<br/>
 
 ## Past Development Team Members:
 

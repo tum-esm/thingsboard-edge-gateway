@@ -119,7 +119,8 @@ class Sensor(ABC):
     def check_errors(self) -> None:
         """Check for any errors that might have occurred."""
         if self.simulate:
-            self.logger.warning("No errors present in simulation mode.")
+            self.logger.debug("No errors present in simulation mode.")
+            return
         try:
             self._check_errors()
             self.logger.info("No errors detected.")
