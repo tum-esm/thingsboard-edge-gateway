@@ -7,7 +7,7 @@ except Exception:
     pass
 
 from custom_types import config_types
-from interfaces import logging_interface
+from interfaces import logging_interface, communication_queue
 
 
 class Actuator(ABC):
@@ -19,12 +19,14 @@ class Actuator(ABC):
     def __init__(
             self,
             config: config_types.Config,
+            communication_queue: communication_queue.CommunicationQueue,
             max_retries: int = 3,
             retry_delay: float = 0.5,
             pin_factory: Optional[gpiozero.pins.pigpio.PiGPIOFactory] = None):
 
         # init parameters
         self.config = config
+        self.communication_queue = communication_queue
         self.simulate = config.active_components.simulation_mode
         self.max_retries = max_retries
         self.retry_delay = retry_delay
@@ -32,7 +34,9 @@ class Actuator(ABC):
 
         # init logger with actuator class name
         self.logger = logging_interface.Logger(
-            config=config, origin=f"{self.__class__.__name__}")
+            config=config,
+            communication_queue=self.communication_queue,
+            origin=f"{self.__class__.__name__}")
 
         if self.simulate:
             self.logger.info(f"Simulating {self.__class__.__name__}.")

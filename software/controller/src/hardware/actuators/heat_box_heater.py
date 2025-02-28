@@ -7,6 +7,7 @@ except Exception:
 
 from hardware.actuators import _base_actuator
 from custom_types import config_types
+from interfaces import communication_queue
 
 
 class HeatBoxHeater(_base_actuator.Actuator):
@@ -14,11 +15,13 @@ class HeatBoxHeater(_base_actuator.Actuator):
 
     def __init__(self,
                  config: config_types.Config,
+                communication_queue: communication_queue.CommunicationQueue,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory,
                  max_retries: int = 3,
                  retry_delay: float = 0.5):
 
         super().__init__(config=config,
+                         communication_queue=communication_queue,
                          max_retries=max_retries,
                          retry_delay=retry_delay,
                          pin_factory=pin_factory)

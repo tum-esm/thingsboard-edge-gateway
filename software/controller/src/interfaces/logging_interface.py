@@ -8,7 +8,7 @@ import sys
 import pytz
 
 from custom_types import mqtt_playload_types, config_types
-from utils import message_queue
+from . import communication_queue
 from utils.paths import ACROPOLIS_CONTROLLER_LOGS_PATH
 
 
@@ -36,13 +36,14 @@ class Logger:
 
     def __init__(self,
                  config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
                  origin: str = "edge-controller") -> None:
 
         self.config = config
         self.origin: str = origin
         self.print_to_console = self.config.active_components.log_to_console
         self.write_to_file = self.config.active_components.log_to_file
-        self.message_queue = message_queue.MessageQueue()
+        self.communication_queue = communication_queue
 
     def horizontal_line(self,
                         fill_char: Literal["-", "=", ".", "_"] = "=") -> None:
@@ -205,6 +206,7 @@ class Logger:
         subject: str,
         details: str = "",
     ) -> None:
+
         subject = f"{self.origin} - {subject}"
 
         if len(subject) > 256:
@@ -222,7 +224,7 @@ class Logger:
 
         time.sleep(1)  # Ensure that log message has a unique timestamp
 
-        self.message_queue.enqueue_message(
+        self.communication_queue.enqueue_message(
             payload=mqtt_playload_types.MQTTLogMessage(
                 severity=level,
                 message=subject + " " + details,

@@ -21,6 +21,7 @@ from hardware.modules import co2_sensor, wind_sensor, heated_sensor_box
 
 from utils import gpio_pin_factory
 from utils.paths import ACROPOLIS_CONTROLLER_LOCKFILE_PATH
+from . import communication_queue
 
 
 class HwLock(TypedDict):
@@ -45,14 +46,20 @@ class HardwareInterface:
         """raise when trying to use the hardware, but it
         is used by another process"""
 
-    def __init__(self, config: config_types.Config) -> None:
+    def __init__(
+            self, config: config_types.Config,
+            communication_queue: communication_queue.CommunicationQueue
+    ) -> None:
         global_hw_lock["lock"] = filelock.FileLock(
             ACROPOLIS_CONTROLLER_LOCKFILE_PATH,
             timeout=5,
         )
         self.config = config
-        self.logger = logging_interface.Logger(config=config,
-                                               origin="hardware-interface")
+        self.communication_queue = communication_queue
+        self.logger = logging_interface.Logger(
+            config=config,
+            communication_queue=communication_queue,
+            origin="hardware-interface")
 
         if not self.config.active_components.simulation_mode:
             self.pin_factory = gpio_pin_factory.get_gpio_pin_factory()
@@ -62,46 +69,70 @@ class HardwareInterface:
         acquire_hardware_lock()
 
         # measurement sensors
-        self.co2_sensor = VaisalaGMP343(config=self.config,
-                                        pin_factory=self.pin_factory)
-        self.wind_sensor = VaisalaWXT532(config=self.config,
-                                         pin_factory=self.pin_factory)
-        self.ups = PhoenixContactUPS(config=self.config,
-                                     pin_factory=self.pin_factory)
-        self.air_inlet_bme280_sensor = BoschBME280(config=self.config,
-                                                   variant="air-inlet")
-        self.mainboard_sensor = BoschBME280(config=self.config,
-                                            variant="ioboard")
-        self.air_inlet_sht45_sensor = SensirionSHT45(config=self.config)
+        self.co2_sensor = VaisalaGMP343(
+            config=self.config,
+            communication_queue=self.communication_queue,
+            pin_factory=self.pin_factory)
+        self.wind_sensor = VaisalaWXT532(
+            config=self.config,
+            communication_queue=self.communication_queue,
+            pin_factory=self.pin_factory)
+        self.ups = PhoenixContactUPS(
+            config=self.config,
+            communication_queue=self.communication_queue,
+            pin_factory=self.pin_factory)
+        self.air_inlet_bme280_sensor = BoschBME280(
+            config=self.config,
+            communication_queue=self.communication_queue,
+            variant="air-inlet")
+        self.mainboard_sensor = BoschBME280(
+            config=self.config,
+            communication_queue=self.communication_queue,
+            variant="ioboard")
+        self.air_inlet_sht45_sensor = SensirionSHT45(
+            config=self.config, communication_queue=self.communication_queue)
 
         if self.config.active_components.run_sensor_heating_control:
-            self.heat_box_sensor = GroveMCP9808(config=self.config)
+            self.heat_box_sensor = GroveMCP9808(
+                config=self.config,
+                communication_queue=self.communication_queue)
 
         # measurement actuators
-        self.pump = SchwarzerPrecisionPump(config=self.config,
-                                           pin_factory=self.pin_factory)
+        self.pump = SchwarzerPrecisionPump(
+            config=self.config,
+            communication_queue=self.communication_queue,
+            pin_factory=self.pin_factory)
         self.valves = ACLValves(config=self.config,
+                                communication_queue=self.communication_queue,
                                 pin_factory=self.pin_factory)
 
         if self.config.active_components.run_sensor_heating_control:
-            self.heat_box_heater = HeatBoxHeater(config=self.config,
-                                                 pin_factory=self.pin_factory)
+            self.heat_box_heater = HeatBoxHeater(
+                config=self.config,
+                communication_queue=self.communication_queue,
+                pin_factory=self.pin_factory)
             self.heat_box_ventilator = HeatBoxVentilator(
-                config=self.config, pin_factory=self.pin_factory)
+                config=self.config,
+                communication_queue=self.communication_queue,
+                pin_factory=self.pin_factory)
 
         # hardware modules
         self.co2_measurement_module = co2_sensor.CO2MeasurementModule(
             config=config,
+            communication_queue=self.communication_queue,
             co2_sensor=self.co2_sensor,
             inlet_bme280=self.air_inlet_bme280_sensor,
             inlet_sht45=self.air_inlet_sht45_sensor)
         self.wind_sensor_module = wind_sensor.WindSensorModule(
-            config=config, wind_sensor=self.wind_sensor)
+            config=config,
+            communication_queue=self.communication_queue,
+            wind_sensor=self.wind_sensor)
 
         # modules run as threads
         if self.config.active_components.run_sensor_heating_control:
             self.heating_box_module = heated_sensor_box.HeatingBoxModule(
                 config=config,
+                communication_queue=self.communication_queue,
                 temperature_sensor=self.heat_box_sensor,
                 heater=self.heat_box_heater,
                 ventilator=self.heat_box_ventilator)

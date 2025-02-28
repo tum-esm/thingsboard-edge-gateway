@@ -12,6 +12,7 @@ except Exception:
 
 from hardware.sensors._base_sensor import Sensor
 from custom_types import sensor_types, config_types
+from interfaces import communication_queue
 
 # Regex patterns for CO₂ sensor responses
 CO2_MEASUREMENT_REGEX = (
@@ -83,8 +84,11 @@ class VaisalaGMP343(Sensor):
     """Class for the Vaisala GMP343 sensor."""
 
     def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory):
-        super().__init__(config=config, pin_factory=pin_factory)
+        super().__init__(config=config,
+                         communication_queue=communication_queue,
+                         pin_factory=pin_factory)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

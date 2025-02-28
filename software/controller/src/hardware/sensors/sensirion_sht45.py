@@ -9,16 +9,19 @@ except:
 
 from hardware.sensors._base_sensor import Sensor
 from custom_types import config_types, sensor_types
-from interfaces import state_interface
+from interfaces import state_interface, communication_queue
 
 
 class SensirionSHT45(Sensor):
     """Class for the Sensirion SHT45 sensor."""
 
-    def __init__(self, config: config_types.Config):
-        super().__init__(config=config)
+    def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue):
+        super().__init__(config=config,
+                         communication_queue=communication_queue)
 
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
         self.humidity_offset = state.sht45_humidity_offset
 
     def _initialize_sensor(self) -> None:

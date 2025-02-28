@@ -1,8 +1,7 @@
 from custom_types import config_types, sensor_types
 from custom_types import mqtt_playload_types
-from interfaces import logging_interface
+from interfaces import logging_interface, communication_queue
 from hardware.sensors.vaisala_wxt532 import VaisalaWXT532
-from utils import message_queue
 
 
 class WindSensorModule:
@@ -17,12 +16,15 @@ class WindSensorModule:
     #TODO: Make it executeable as a thread
 
     def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
                  wind_sensor: VaisalaWXT532) -> None:
 
         self.logger, self.config = logging_interface.Logger(
-            config=config, origin="measurement-procedure"), config
+            config=config,
+            communication_queue=communication_queue,
+            origin="measurement-procedure"), config
         self.wind_sensor = wind_sensor
-        self.message_queue = message_queue.MessageQueue()
+        self.communication_queue = communication_queue
 
     def process_wind_sensor_data(self) -> None:
         # wind measurement
@@ -39,7 +41,7 @@ class WindSensorModule:
             self.logger.info(
                 f"latest wind sensor measurement: {wind_sensor_data}")
 
-            self.message_queue.enqueue_message(
+            self.communication_queue.enqueue_message(
                 payload=mqtt_playload_types.MQTTWindData(
                     wxt532_direction_min=wind_sensor_data.direction_min,
                     wxt532_direction_avg=wind_sensor_data.direction_avg,
@@ -48,8 +50,7 @@ class WindSensorModule:
                     wxt532_speed_avg=wind_sensor_data.speed_avg,
                     wxt532_speed_max=wind_sensor_data.speed_max,
                     wxt532_last_update_time=wind_sensor_data.last_update_time,
-                ),
-            )
+                ), )
         else:
             self.logger.info(f"did not receive any wind sensor measurement")
 
@@ -60,7 +61,7 @@ class WindSensorModule:
             self.logger.info(
                 f"latest wind sensor device info: {wind_sensor_status}")
 
-            self.message_queue.enqueue_message(
+            self.communication_queue.enqueue_message(
                 payload=mqtt_playload_types.MQTTWindSensorInfo(
                     wxt532_temperature=wind_sensor_status.temperature,
                     wxt532_heating_voltage=wind_sensor_status.heating_voltage,
@@ -69,8 +70,7 @@ class WindSensorModule:
                     reference_voltage,
                     wxt532_last_update_time=wind_sensor_status.
                     last_update_time,
-                ),
-            )
+                ), )
 
         else:
             self.logger.info(f"did not receive any wind sensor device info")

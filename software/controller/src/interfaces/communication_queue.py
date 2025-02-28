@@ -20,17 +20,26 @@ THINGSBOARD_PAYLOADS = Union[mqtt_playload_types.MQTTCO2Data,
                              mqtt_playload_types.MQTTLogMessage]
 
 
-class MessageQueue:
+class CommunicationQueue:
     """Uses an SQLite database to store messages to be forwarded to the ThingsBoard server by the gateway"""
 
     def __init__(self) -> None:
-        db_path = os.path.join(ACROPOLIS_DATA_PATH, "acropolis_comm_db.db")
+        db_path = os.path.join(ACROPOLIS_DATA_PATH, "communication_queue.db")
 
         self.con = sqlite3.connect(db_path,
                                    isolation_level=None,
                                    autocommit=True)
+        # Create queue_out for MQTT messages
         self.con.execute("""
-                CREATE TABLE IF NOT EXISTS queue_out (
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    type text,
+                    message text
+                );
+            """)
+        # Create health_check_queue for health check messages
+        self.con.execute("""
+                CREATE TABLE IF NOT EXISTS health_check (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     type text,
                     message text
@@ -45,8 +54,15 @@ class MessageQueue:
             "values": dataclasses.asdict(payload),
         }
         with self.con:
-            sql_statement: str = "INSERT INTO queue_out (type, message) VALUES(?, ?);"
+            sql_statement: str = "INSERT INTO messages (type, message) VALUES(?, ?);"
             self.con.execute(sql_statement, ("MQTT_message", str(new_message)))
             self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
 
         time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps
+
+    def enqueue_health_check(self) -> None:
+        ts = str(int(time.time_ns() / 1_000_000))
+        with self.con:
+            sql_statement: str = "INSERT INTO health_check (type, message) VALUES(?, ?);"
+            self.con.execute(sql_statement, ("health_check", ts))
+            self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")

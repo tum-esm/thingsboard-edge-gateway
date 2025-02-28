@@ -13,6 +13,7 @@ except Exception:
 from hardware.sensors._base_sensor import Sensor
 from custom_types import config_types, sensor_types
 from utils import list_operations
+from interfaces import communication_queue
 
 # Regex patterns for parsing wind sensor messages
 MEASUREMENT_PATTERN = (
@@ -49,8 +50,11 @@ class VaisalaWXT532(Sensor):
     """Class for the Vaisala WXT532 wind sensor."""
 
     def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
                  pin_factory: gpiozero.pins.pigpio.PiGPIOFactory) -> None:
-        super().__init__(config=config, pin_factory=pin_factory)
+        super().__init__(config=config,
+                         communication_queue=communication_queue,
+                         pin_factory=pin_factory)
         self.buffered_messages: List[str] = []
         self.latest_device_status: Optional[
             sensor_types.WindSensorStatus] = None
