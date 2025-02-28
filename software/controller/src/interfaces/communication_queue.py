@@ -4,6 +4,7 @@ from os.path import dirname
 import dataclasses
 from typing import Union
 import time
+import json
 
 from custom_types import mqtt_playload_types
 
@@ -53,7 +54,8 @@ class CommunicationQueue:
         }
         with self.con:
             sql_statement: str = "INSERT INTO messages (type, message) VALUES(?, ?);"
-            self.con.execute(sql_statement, ("MQTT_message", str(new_message)))
+            self.con.execute(sql_statement,
+                             ("MQTT_message", json.dumps(new_message)))
             self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
 
         time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps
