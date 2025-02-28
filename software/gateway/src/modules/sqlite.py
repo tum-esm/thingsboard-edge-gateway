@@ -20,6 +20,8 @@ class SqliteConnection:
             self.conn.execute("PRAGMA journal_mode=WAL;")       # enable write-ahead logging
             self.conn.execute("PRAGMA busy_timeout = 5000;")    # 5 seconds timeout for when the db is locked
         except Exception as e:
+            if nr_retries <= 0:
+                fatal_error(f'[SQLITE][FATAL] Failed to connect to sqlite db at "{self.path}": {e}')
             self.reset_db_conn(e, nr_retries - 1)
 
     def does_table_exist(self, table) -> bool:

@@ -16,4 +16,4 @@ bash scripts/run_mypy.sh
 
 ## TODOS
 
-- execute version check on startup via thingsboard shared attributes
+- 
