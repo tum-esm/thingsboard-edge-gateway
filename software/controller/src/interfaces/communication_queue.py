@@ -39,12 +39,10 @@ class CommunicationQueue:
             """)
         # Create health_check_queue for health check messages
         self.con.execute("""
-                CREATE TABLE IF NOT EXISTS health_check (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    type text,
-                    message text
-                );
-            """)
+            CREATE TABLE IF NOT EXISTS health_check (
+                timestamp_ms INTEGER PRIMARY KEY
+            );
+        """)
         self.con.execute("PRAGMA journal_mode=WAL;")
 
     def enqueue_message(self, payload: THINGSBOARD_PAYLOADS) -> None:
@@ -61,8 +59,8 @@ class CommunicationQueue:
         time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps
 
     def enqueue_health_check(self) -> None:
-        ts = str(int(time.time_ns() / 1_000_000))
+        ts = int(time.time_ns() / 1_000_000)
         with self.con:
-            sql_statement: str = "INSERT INTO health_check (type, message) VALUES(?, ?);"
-            self.con.execute(sql_statement, ("health_check", ts))
+            sql_statement: str = "INSERT OR REPLACE INTO health_check (timestamp_ms) VALUES(?);"
+            self.con.execute(sql_statement, (ts, ))
             self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
