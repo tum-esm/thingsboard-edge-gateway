@@ -166,7 +166,7 @@ class CO2MeasurementModule:
             edge_corrected: Optional[float] = None) -> None:
 
         # do not send out measurements if they are not valid
-        if CO2_sensor_data.raw is 0.0:
+        if CO2_sensor_data.raw == 0.0:
             self.logger.debug(
                 "CO2 raw value is 0.0, not sending measurement data.")
 
