@@ -146,6 +146,7 @@ def run() -> None:
     while True:
         try:
             logger.info("Starting mainloop iteration.")
+            communication_queue.enqueue_health_check()
 
             # -----------------------------------------------------------------
             # SYSTEM CHECKS
