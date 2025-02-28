@@ -93,18 +93,23 @@ class GatewayMqttClient(Client):
             print(f'[MQTT] MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
             return False
         debug(f'[MQTT] Publishing message: {message}')
-        self.publish(topic, message)
+        try:
+            self.publish(topic, message).wait_for_publish(5)
+        except Exception as e:
+            print(f'[MQTT] Failed to publish message "{message}" to topic "{topic}": {e}')
+            return False
+
         return True
 
-    def publish_log(self, log_level, log_message) -> None:
-        self.publish_telemetry(json.dumps({
-            "ts": int(time.time_ns() / 1000_000),
+    def publish_log(self, log_level, log_message, timestamp_ms = None) -> bool:
+        time.sleep(1/1000) # sleep for 1ms to avoid duplicate timestamps
+        return self.publish_telemetry(json.dumps({
+            "ts": timestamp_ms or int(time.time_ns() / 1000_000),
             "values": {
                 "severity": log_level,
                 "message": "GATEWAY - " + log_message
             }
         }))
-        time.sleep(1/1000) # sleep for 1ms to avoid duplicate timestamps
 
     def update_sys_info_attribute(self) -> None:
         sys_info_data = {}

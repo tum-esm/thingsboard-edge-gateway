@@ -1,4 +1,3 @@
-import json
 import os
 import signal
 import sys
@@ -21,8 +20,10 @@ from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
+mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
+gateway_logs_buffer_db = None
 STOP_MAINLOOP = False
 
 # Set up signal handling for safe shutdown
@@ -40,6 +41,8 @@ def shutdown_handler(sig: Any, _frame: Any) -> None:
         archive_sqlite_db.close()
     if communication_sqlite_db is not None:
         communication_sqlite_db.close()
+    if gateway_logs_buffer_db is not None:
+        gateway_logs_buffer_db.close()
 
     sys.stdout.flush()
     sys.exit(sig)
@@ -66,10 +69,10 @@ try:
         debug(f"Args: {args}")
         access_token = self_provisioning_get_access_token(args)
 
-        archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-        comm_db_path = os.path.join(utils.paths.ACROPOLIS_DATA_PATH, "acropolis_comm_db.db")
-        debug(f"Comm DB path: {comm_db_path}")
-        communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
+        # initialize sqlite database connections
+        archive_sqlite_db = sqlite.SqliteConnection(utils.paths.GATEWAY_ARCHIVE_DB_PATH)
+        communication_sqlite_db = sqlite.SqliteConnection(utils.paths.COMMUNICATION_QUEUE_DB_PATH)
+        gateway_logs_buffer_db = sqlite.SqliteConnection(utils.paths.GATEWAY_LOGS_BUFFER_DB_PATH)
 
         # create and run the mqtt client in a separate thread
         mqtt_client = GatewayMqttClient().init(access_token)
@@ -108,28 +111,41 @@ try:
 
                 continue # process next message
 
-            if not docker_client.is_edge_running():
-                info("Controller is not running, starting new container in 10s...")
-                sleep(10)
-                docker_client.start_controller()
-
             if not mqtt_client_thread.is_alive():
                 warn("MQTT client thread died, exiting in 30 seconds...")
                 sleep(30)
                 exit()
 
+            # check if there are any buffered outgoing log message in the buffer sqlite db
+            if gateway_logs_buffer_db.do_table_values_exist("log_buffer"):
+                # fetch the next message (lowest `id`) from the queue and send it
+                message = gateway_logs_buffer_db.execute(
+                    f"SELECT id, log_level, message, timestamp_ms FROM {"log_buffer"} ORDER BY id LIMIT 1")
+                if len(message) > 0:
+                    debug('Sending buffered log message: ' + str(message[0]))
+                    if not mqtt_client.publish_log(message[0][1], message[0][2], message[0][3]):
+                        continue
+                    gateway_logs_buffer_db.execute(
+                        f"DELETE FROM {"log_buffer"} WHERE id = {message[0][0]}")
+                continue
+
             # check if there are any new outgoing mqtt messages in the sqlite db
-            if (communication_sqlite_db.does_table_exist(sqlite.SqliteTables.QUEUE_OUT.value)
-                    and not communication_sqlite_db.is_table_empty(sqlite.SqliteTables.QUEUE_OUT.value)):
-                # fetch the next message (lowest `id) from the queue and send it
+            if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.QUEUE_OUT.value):
+                # fetch the next message (lowest `id`) from the queue and send it
                 message = communication_sqlite_db.execute(
                     f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")
                 if len(message) > 0:
-                    debug('Sending message: ' + str(message[0]))
+                    debug('Sending controller message: ' + str(message[0]))
                     if not mqtt_client.publish_telemetry(message[0][2]):
                         continue
-                    communication_sqlite_db.execute(f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
+                    communication_sqlite_db.execute(
+                        f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
                 continue
+
+            if not docker_client.is_edge_running():
+                info("Controller is not running, starting new container in 10s...")
+                sleep(10)
+                docker_client.start_controller()
 
             # if nothing happened this iteration, sleep for a while
             sleep(1)
