@@ -33,7 +33,7 @@ def run() -> None:
     # initialize interfaces
 
     # initialize communication queue
-    communication_queue = communication_queue.CommunicationQueue()
+    queue = communication_queue.CommunicationQueue()
 
     # initialize config
     try:
@@ -46,7 +46,7 @@ def run() -> None:
 
     # initialize logger
     logger = logging_interface.Logger(config=config,
-                                      communication_queue=communication_queue,
+                                      communication_queue=queue,
                                       origin="main")
 
     logger.horizontal_line()
@@ -66,7 +66,7 @@ def run() -> None:
 
     try:
         hardware = hardware_interface.HardwareInterface(
-            config=config, communication_queue=communication_queue)
+            config=config, communication_queue=queue)
     except Exception as e:
         logger.exception(e,
                          label="Could not initialize hardware interface.",
@@ -119,15 +119,15 @@ def run() -> None:
     try:
         system_check_procedure = system_check.SystemCheckProcedure(
             config=config,
-            communication_queue=communication_queue,
+            communication_queue=queue,
             hardware_interface=hardware)
         calibration_procedure = calibration.CalibrationProcedure(
             config=config,
-            communication_queue=communication_queue,
+            communication_queue=queue,
             hardware_interface=hardware)
         measurement_procedure = measurement.MeasurementProcedure(
             config=config,
-            communication_queue=communication_queue,
+            communication_queue=queue,
             hardware_interface=hardware)
 
     except Exception as e:
@@ -146,7 +146,7 @@ def run() -> None:
     while True:
         try:
             logger.info("Starting mainloop iteration.")
-            communication_queue.enqueue_health_check()
+            queue.enqueue_health_check()
 
             # -----------------------------------------------------------------
             # SYSTEM CHECKS
