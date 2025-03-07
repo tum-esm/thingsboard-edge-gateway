@@ -57,6 +57,9 @@ class CO2MeasurementModule:
         ))
         self.logger.debug(f"new measurement: {CO2_sensor_data}")
 
+        # send health check after successful measurement
+        self.communication_queue.enqueue_health_check()
+
         return CO2_sensor_data
 
     def perform_edge_correction(
