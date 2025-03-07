@@ -41,7 +41,8 @@ class CommunicationQueue:
         # Create health_check_queue for health check messages
         self.con.execute("""
             CREATE TABLE IF NOT EXISTS health_check (
-                timestamp_ms INTEGER PRIMARY KEY
+                id INTEGER PRIMARY KEY,
+                timestamp_ms INTEGER            
             );
         """)
         self.con.execute("PRAGMA journal_mode=WAL;")
@@ -63,6 +64,6 @@ class CommunicationQueue:
     def enqueue_health_check(self) -> None:
         ts = int(time.time_ns() / 1_000_000)
         with self.con:
-            sql_statement: str = "INSERT OR REPLACE INTO health_check (timestamp_ms) VALUES(?);"
-            self.con.execute(sql_statement, (ts, ))
+            sql_statement: str = "INSERT OR REPLACE INTO health_check (id, timestamp_ms) VALUES(?, ?);"
+            self.con.execute(sql_statement, (1, ts))
             self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")

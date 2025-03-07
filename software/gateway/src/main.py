@@ -62,7 +62,7 @@ def forced_shutdown_handler(_sig: Any, _frame: Any) -> None:
 def get_last_controller_health_check_ts():
     if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
         last_controller_health_check_ts = communication_sqlite_db.execute(
-            "SELECT timestamp_ms FROM health_check LIMIT 1")
+            "SELECT timestamp_ms FROM health_check WHERE id = 1")
         if len(last_controller_health_check_ts) > 0:
             return last_controller_health_check_ts[0][0]
 
