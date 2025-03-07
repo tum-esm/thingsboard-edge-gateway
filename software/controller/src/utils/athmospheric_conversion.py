@@ -9,7 +9,7 @@ It also includes some useful constants
 Refactored by Patrick Aigner
 """
 
-from typing import Final, Any
+from typing import Final
 import numpy as np
 
 T0: Final = 273.15  # T0: float = The 0 C temperature in K
