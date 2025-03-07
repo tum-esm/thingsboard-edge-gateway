@@ -112,7 +112,6 @@ try:
         config=config, communication_queue=queue, hardware_interface=hardware)
     measurement_procedure = measurement.MeasurementProcedure(
         config=config, communication_queue=queue, hardware_interface=hardware)
-
 except Exception as e:
     logger.exception(e, label="Could not initialize procedures", forward=True)
     raise e
@@ -120,11 +119,10 @@ except Exception as e:
 # -------------------------------------------------------------------------
 # infinite mainloop
 
-logger.info("Successfully finished setup, starting mainloop.", forward=True)
+logger.info("Successfully finished setup. Starting main loop.", forward=True)
 
 while True:
     try:
-        logger.info("Starting mainloop iteration.")
 
         # -----------------------------------------------------------------
         # SYSTEM CHECKS
