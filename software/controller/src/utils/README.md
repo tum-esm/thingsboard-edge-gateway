@@ -14,5 +14,5 @@ The `utils` directory contains various utility modules that provide supporting f
     📄 list_operations.py             # Utility functions for handling lists
     📄 paths.py                       # Defines standard paths used in the system
     📄 ring_buffer.py                 # Implements a ring buffer for sensor data storage
-    📄 system_info.py                 # Retrieves system information such as CPU usage, memory, and uptime
+    📄 system_info.py                 # Retrieves system information
 ```
