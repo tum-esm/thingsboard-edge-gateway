@@ -175,7 +175,7 @@ try:
                 docker_client.stop_edge()
 
             # if nothing happened this iteration, sleep for a while
-            sleep(1)
+            sleep(5)
 
 except Exception as e:
     utils.misc.fatal_error(f"An error occurred in gateway main loop: {e}")
