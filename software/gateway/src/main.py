@@ -150,6 +150,7 @@ try:
                 info("Controller is not running, starting new container in 10s...")
                 sleep(10)
                 docker_client.start_controller()
+                continue
 
             if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
                 last_controller_health_check = communication_sqlite_db.execute("SELECT timestamp_ms FROM health_check LIMIT 1")
@@ -161,9 +162,12 @@ try:
                 last_controller_health_check = 0
 
             controller_running_since = docker_client.get_edge_startup_timestamp_ms()
-            mqtt_client.publish_message_raw("v1/devices/me/attributes", json.dumps({
-                "ms_since_controller_startup": int(time_ns() / 1_000_000) - controller_running_since,
-                "ms_since_last_controller_health_check": int(time_ns() / 1_000_000) - last_controller_health_check
+            mqtt_client.publish_telemetry(json.dumps({
+                "ts": int(time_ns() / 1_000_000),
+                "values":{
+                    "ms_since_controller_startup": int(time_ns() / 1_000_000) - controller_running_since,
+                    "ms_since_last_controller_health_check": int(time_ns() / 1_000_000) - last_controller_health_check
+                }
             }))
 
             if max(last_controller_health_check, controller_running_since) < int(time_ns() / 1_000_000) - (6 * 3600_000):
