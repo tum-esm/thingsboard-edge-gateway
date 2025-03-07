@@ -7,8 +7,7 @@ except Exception:
     pass
 
 from custom_types import config_types
-from interfaces import logging_interface
-from utils import message_queue
+from interfaces import logging_interface, communication_queue
 from hardware.sensors.grove_MCP9808 import GroveMCP9808
 from hardware.actuators.heat_box_heater import HeatBoxHeater
 from hardware.actuators.heat_box_ventilator import HeatBoxVentilator
@@ -18,13 +17,16 @@ class HeatingBoxModule(threading.Thread):
     """Combines sensor and actor interfaces and runs as a thread."""
 
     def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
                  temperature_sensor: GroveMCP9808, heater: HeatBoxHeater,
                  ventilator: HeatBoxVentilator) -> None:
         super().__init__()
-        self.logger = logging_interface.Logger(config=config,
-                                               origin="HeatingBoxModule")
+        self.logger = logging_interface.Logger(
+            config=config,
+            communication_queue=communication_queue,
+            origin="HeatingBoxModule")
         self.config = config
-        self.message_queue = message_queue.MessageQueue()
+        self.communication_queue = communication_queue
 
         # hardware
         self.temperature_sensor = temperature_sensor

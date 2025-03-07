@@ -1,8 +1,8 @@
 from typing import Any, Dict, Optional
 
 from custom_types import config_types, sensor_types, mqtt_playload_types
-from interfaces import logging_interface
-from utils import ring_buffer, message_queue, athmospheric_conversion
+from interfaces import logging_interface, communication_queue
+from utils import ring_buffer, athmospheric_conversion
 from utils.extract_true_bottle_value import extract_true_bottle_value
 from hardware.sensors.vaisala_gmp343 import VaisalaGMP343
 from hardware.sensors.bosch_bme280 import BoschBME280
@@ -13,19 +13,23 @@ from interfaces import state_interface
 class CO2MeasurementModule:
     """Combines sensor and actor interfaces."""
 
-    def __init__(self, config: config_types.Config, co2_sensor: VaisalaGMP343,
-                 inlet_bme280: BoschBME280,
+    def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
+                 co2_sensor: VaisalaGMP343, inlet_bme280: BoschBME280,
                  inlet_sht45: SensirionSHT45) -> None:
 
-        self.logger = logging_interface.Logger(config=config,
-                                               origin="CO2MeasurementModule")
+        self.logger = logging_interface.Logger(
+            config=config,
+            communication_queue=communication_queue,
+            origin="CO2MeasurementModule")
         self.config = config
-        self.message_queue = message_queue.MessageQueue()
+        self.communication_queue = communication_queue
         self.reset_ring_buffers()
         self.calibration_reading: Dict[Any, Any] = {}
 
         # read slope and offset from state file
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
         self.slope = state.co2_sensor_slope
         self.intercept = state.co2_sensor_intercept
 
@@ -133,7 +137,8 @@ class CO2MeasurementModule:
             intercept = true_values[1] - slope * measured_values[1]
 
         # check validity of slope and intercept
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
 
         if not (state.co2_sensor_slope * 0.9 < slope <
                 state.co2_sensor_slope * 1.1):
@@ -161,12 +166,12 @@ class CO2MeasurementModule:
             edge_corrected: Optional[float] = None) -> None:
 
         # do not send out measurements if they are not valid
-        if CO2_sensor_data.raw is 0.0:
+        if CO2_sensor_data.raw == 0.0:
             self.logger.debug(
                 "CO2 raw value is 0.0, not sending measurement data.")
 
         # send out MQTT measurement message
-        self.message_queue.enqueue_message(
+        self.communication_queue.enqueue_message(
             payload=mqtt_playload_types.MQTTCO2Data(
                 gmp343_raw=CO2_sensor_data.raw,
                 gmp343_compensated=CO2_sensor_data.compensated,
@@ -186,7 +191,7 @@ class CO2MeasurementModule:
                                   gas_bottle_id: int) -> None:
 
         # send out MQTT measurement message
-        self.message_queue.enqueue_message(
+        self.communication_queue.enqueue_message(
             payload=mqtt_playload_types.MQTTCO2CalibrationData(
                 cal_bottle_id=gas_bottle_id,
                 cal_gmp343_raw=CO2_sensor_data.raw,
@@ -203,7 +208,7 @@ class CO2MeasurementModule:
     def send_calibration_correction_data(self) -> None:
 
         # send out MQTT measurement message
-        self.message_queue.enqueue_message(
+        self.communication_queue.enqueue_message(
             payload=mqtt_playload_types.MQTTCalibrationCorrectionData(
                 cal_gmp343_slope=round(self.slope, 4),
                 cal_gmp343_intercept=round(self.intercept, 2),

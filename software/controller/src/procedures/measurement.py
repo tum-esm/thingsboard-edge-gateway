@@ -2,7 +2,7 @@ import time
 from typing import Optional, Literal
 
 from custom_types import config_types
-from interfaces import hardware_interface, logging_interface
+from interfaces import hardware_interface, logging_interface, communication_queue
 
 
 class MeasurementProcedure:
@@ -16,10 +16,13 @@ class MeasurementProcedure:
 
     def __init__(
             self, config: config_types.Config,
+            communication_queue: communication_queue.CommunicationQueue,
             hardware_interface: hardware_interface.HardwareInterface) -> None:
 
         self.logger, self.config = logging_interface.Logger(
-            config=config, origin="measurement-procedure"), config
+            config=config,
+            communication_queue=communication_queue,
+            origin="measurement-procedure"), config
         self.active_air_inlet: Optional[Literal[1, 2, 3, 4]] = None
         self.last_measurement_time: float = 0
         self.hardware_interface = hardware_interface

@@ -10,7 +10,7 @@ import pytz
 # Ensure the project root is added to the Python path to allow absolute imports from src
 sys.path.insert(0, str(Path(__file__).parent))
 
-from interfaces import config_interface, logging_interface, state_interface, hardware_interface
+from interfaces import config_interface, logging_interface, state_interface, hardware_interface, communication_queue
 from procedures import calibration, measurement, system_check
 from utils import alarms, expontential_backoff, system_info
 
@@ -29,14 +29,27 @@ def run() -> None:
     - Procedure: Measurements (CO2, Wind)
     """
 
+    # -------------------------------------------------------------------------
+    # initialize interfaces
+
+    # initialize communication queue
+    queue = communication_queue.CommunicationQueue()
+
+    # initialize config
     try:
         config = config_interface.ConfigInterface.read()
     except Exception as e:
         raise e
 
-    logger = logging_interface.Logger(config=config, origin="main")
-    logger.horizontal_line()
+    # initialize and check validity of state file
+    state_interface.StateInterface.init()
 
+    # initialize logger
+    logger = logging_interface.Logger(config=config,
+                                      communication_queue=queue,
+                                      origin="main")
+
+    logger.horizontal_line()
     logger.info(
         f"Started new automation process with SW version {SW_VERSION} and PID {os.getpid()}.",
         forward=True,
@@ -48,10 +61,19 @@ def run() -> None:
 
     logger.info(f"Started with config: {config.dict()}", forward=True)
 
-    # -------------------------------------------------------------------------
+    # initialize all hardware interface
+    logger.info("Initializing hardware interfaces.", forward=True)
 
-    # check and provide valid state file
-    state_interface.StateInterface.init(config=config)
+    try:
+        hardware = hardware_interface.HardwareInterface(
+            config=config, communication_queue=queue)
+    except Exception as e:
+        logger.exception(e,
+                         label="Could not initialize hardware interface.",
+                         forward=True)
+        raise e
+
+    # -------------------------------------------------------------------------
 
     # define timeouts for parts of the automation
     max_setup_time = 180
@@ -68,20 +90,8 @@ def run() -> None:
     ebo = expontential_backoff.ExponentialBackOff()
 
     # -------------------------------------------------------------------------
-    # initialize all hardware interfaces
-    # tear down hardware on program termination
 
-    logger.info("Initializing hardware interfaces.", forward=True)
-
-    try:
-        hardware = hardware_interface.HardwareInterface(config=config)
-    except Exception as e:
-        logger.exception(e,
-                         label="Could not initialize hardware interface.",
-                         forward=True)
-        raise e
-
-    # tear down hardware on program termination
+    # initialize graceful teardown
     def _graceful_teardown(*_args: Any) -> None:
         alarms.set_alarm(10, "graceful teardown")
         logger.info("Received termination signal. Starting graceful teardown.",
@@ -108,11 +118,17 @@ def run() -> None:
 
     try:
         system_check_procedure = system_check.SystemCheckProcedure(
-            config=config, hardware_interface=hardware)
+            config=config,
+            communication_queue=queue,
+            hardware_interface=hardware)
         calibration_procedure = calibration.CalibrationProcedure(
-            config=config, hardware_interface=hardware)
+            config=config,
+            communication_queue=queue,
+            hardware_interface=hardware)
         measurement_procedure = measurement.MeasurementProcedure(
-            config=config, hardware_interface=hardware)
+            config=config,
+            communication_queue=queue,
+            hardware_interface=hardware)
 
     except Exception as e:
         logger.exception(e,
@@ -130,6 +146,7 @@ def run() -> None:
     while True:
         try:
             logger.info("Starting mainloop iteration.")
+            queue.enqueue_health_check()
 
             # -----------------------------------------------------------------
             # SYSTEM CHECKS

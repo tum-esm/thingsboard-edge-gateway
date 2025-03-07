@@ -25,6 +25,7 @@ archive_sqlite_db = None
 communication_sqlite_db = None
 STOP_MAINLOOP = False
 
+
 # Set up signal handling for safe shutdown
 def shutdown_handler(sig: Any, _frame: Any) -> None:
     global STOP_MAINLOOP
@@ -67,14 +68,16 @@ try:
         access_token = self_provisioning_get_access_token(args)
 
         archive_sqlite_db = sqlite.SqliteConnection("archive.db")
-        comm_db_path = os.path.join(utils.paths.ACROPOLIS_DATA_PATH, "acropolis_comm_db.db")
+        comm_db_path = os.path.join(utils.paths.ACROPOLIS_DATA_PATH,
+                                    "communication_queue.db")
         debug(f"Comm DB path: {comm_db_path}")
         communication_sqlite_db = sqlite.SqliteConnection(comm_db_path)
 
         # create and run the mqtt client in a separate thread
         mqtt_client = GatewayMqttClient().init(access_token)
         mqtt_client.connect(args.tb_host, args.tb_port)
-        mqtt_client_thread: threading.Thread = threading.Thread(target=lambda: mqtt_client.loop_forever())
+        mqtt_client_thread: threading.Thread = threading.Thread(
+            target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()
 
         sleep(5)
@@ -99,17 +102,19 @@ try:
                 # check for attribute updates
                 elif "v1/devices/me/attributes" in topic:
                     if not any([
-                        on_msg_check_for_config_update(msg_payload),
-                        on_msg_check_for_ota_update(msg_payload),
-                        on_msg_check_for_files_update(msg_payload),
+                            on_msg_check_for_config_update(msg_payload),
+                            on_msg_check_for_ota_update(msg_payload),
+                            on_msg_check_for_files_update(msg_payload),
                     ]):
                         warn("[MAIN] Got invalid message: " + str(msg))
                         warn("[MAIN] Skipping invalid message...")
 
-                continue # process next message
+                continue  # process next message
 
             if not docker_client.is_edge_running():
-                info("Controller is not running, starting new container in 10s...")
+                info(
+                    "Controller is not running, starting new container in 10s..."
+                )
                 sleep(10)
                 docker_client.start_controller()
 
@@ -119,16 +124,21 @@ try:
                 exit()
 
             # check if there are any new outgoing mqtt messages in the sqlite db
-            if (communication_sqlite_db.does_table_exist(sqlite.SqliteTables.QUEUE_OUT.value)
-                    and not communication_sqlite_db.is_table_empty(sqlite.SqliteTables.QUEUE_OUT.value)):
+            if (communication_sqlite_db.does_table_exist(
+                    sqlite.SqliteTables.QUEUE_OUT.value)
+                    and not communication_sqlite_db.is_table_empty(
+                        sqlite.SqliteTables.QUEUE_OUT.value)):
                 # fetch the next message (lowest `id) from the queue and send it
                 message = communication_sqlite_db.execute(
-                    f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1")
+                    f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1"
+                )
                 if len(message) > 0:
                     debug('Sending message: ' + str(message[0]))
                     if not mqtt_client.publish_telemetry(message[0][2]):
                         continue
-                    communication_sqlite_db.execute(f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
+                    communication_sqlite_db.execute(
+                        f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}"
+                    )
                 continue
 
             # if nothing happened this iteration, sleep for a while
@@ -136,4 +146,3 @@ try:
 
 except Exception as e:
     utils.misc.fatal_error(f"An error occurred in gateway main loop: {e}")
-

@@ -10,13 +10,14 @@ except ImportError:
 
 from hardware.sensors._base_sensor import Sensor
 from custom_types import sensor_types, config_types
-from interfaces import logging_interface
+from interfaces import logging_interface, communication_queue
 
 
 class BoschBME280(Sensor):
     """Class for the Bosch BME280 sensor."""
 
     def __init__(self, config: config_types.Config,
+                 communication_queue: communication_queue.CommunicationQueue,
                  variant: Literal["ioboard", "air-inlet"]):
 
         self.variant = variant
@@ -24,9 +25,12 @@ class BoschBME280(Sensor):
 
         # overwrite logger for variant
         self.logger = logging_interface.Logger(
-            config=config, origin=f"{self.__class__.__name__}:" + self.variant)
+            config=config,
+            communication_queue=communication_queue,
+            origin=f"{self.__class__.__name__}:" + self.variant)
 
-        super().__init__(config=config)
+        super().__init__(config=config,
+                         communication_queue=communication_queue)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

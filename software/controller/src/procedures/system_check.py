@@ -6,8 +6,8 @@ except Exception:
 
 from custom_types import config_types
 from custom_types import mqtt_playload_types
-from interfaces import hardware_interface, logging_interface
-from utils import message_queue, system_info
+from interfaces import hardware_interface, logging_interface, communication_queue
+from utils import system_info
 
 
 class SystemCheckProcedure:
@@ -15,12 +15,15 @@ class SystemCheckProcedure:
 
     def __init__(
             self, config: config_types.Config,
+            communication_queue: communication_queue.CommunicationQueue,
             hardware_interface: hardware_interface.HardwareInterface) -> None:
 
         self.logger, self.config = logging_interface.Logger(
-            config=config, origin="system-check-procedure"), config
+            config=config,
+            communication_queue=communication_queue,
+            origin="system-check-procedure"), config
         self.hardware_interface = hardware_interface
-        self.message_queue = message_queue.MessageQueue()
+        self.communication_queue = communication_queue
         self.simulate = config.active_components.simulation_mode
 
     def run(self) -> None:
@@ -42,7 +45,7 @@ class SystemCheckProcedure:
         mainboard_sensor = self.mainboard_sensor()
 
         # construct message and put it into message queue
-        self.message_queue.enqueue_message(
+        self.communication_queue.enqueue_message(
             payload=mqtt_playload_types.MQTTSystemData(
                 enclosure_bme280_temperature=mainboard_sensor.temperature,
                 enclosure_bme280_humidity=mainboard_sensor.humidity,
@@ -56,8 +59,7 @@ class SystemCheckProcedure:
                 ups_battery_is_fully_charged,
                 ups_battery_error_detected=ups_sate.ups_battery_error_detected,
                 ups_battery_above_voltage_threshold=ups_sate.
-                ups_battery_above_voltage_threshold),
-        )
+                ups_battery_above_voltage_threshold), )
 
         # check for hardware errors
         self.hardware_interface.check_errors()

@@ -3,8 +3,8 @@ from datetime import datetime
 import pytz
 
 from custom_types import config_types
-from interfaces import logging_interface, state_interface, hardware_interface
-from utils import message_queue, ring_buffer
+from interfaces import logging_interface, state_interface, hardware_interface, communication_queue
+from utils import ring_buffer
 
 
 class CalibrationProcedure:
@@ -12,17 +12,21 @@ class CalibrationProcedure:
 
     def __init__(
             self, config: config_types.Config,
+            communication_queue: communication_queue.CommunicationQueue,
             hardware_interface: hardware_interface.HardwareInterface) -> None:
         self.logger, self.config = logging_interface.Logger(
-            config=config, origin="calibration-procedure"), config
+            config=config,
+            communication_queue=communication_queue,
+            origin="calibration-procedure"), config
         self.hardware_interface = hardware_interface
 
         self.last_measurement_time: float = 0
-        self.message_queue = message_queue.MessageQueue()
+        self.communication_queue = communication_queue
         self.seconds_drying_with_first_bottle = 0
 
     def run(self) -> None:
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
         calibration_time = datetime.now().timestamp()
         self.logger.info(
             "starting calibration procedure",
@@ -33,7 +37,8 @@ class CalibrationProcedure:
         # if the calibration fails it will be triggered again the next day
         self.logger.debug("updating state")
 
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
         state.last_calibration_attempt = calibration_time
         state_interface.StateInterface.write(state)
 
@@ -98,7 +103,8 @@ class CalibrationProcedure:
         #"""
 
         # load state, kept during configuration procedures
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
 
         current_local_time = datetime.now().astimezone(
             pytz.timezone(self.config.local_time_zone))
@@ -197,7 +203,8 @@ class CalibrationProcedure:
             self.config.calibration.sampling_per_cylinder_seconds)
 
         # read the latest state
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
 
         current_position = state.next_calibration_cylinder
 
@@ -282,7 +289,8 @@ class CalibrationProcedure:
         self.hardware_interface.air_inlet_sht45_sensor.set_humidity_offset(
             rh_offset)
 
-        state = state_interface.StateInterface.read(config=self.config)
+        state = state_interface.StateInterface.read(
+            config=self.config, communication_queue=self.communication_queue)
         state.sht45_humidity_offset = rh_offset
         state_interface.StateInterface.write(state)
 

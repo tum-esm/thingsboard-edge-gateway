@@ -5,13 +5,19 @@ except ImportError:
 
 from hardware.sensors._base_sensor import Sensor
 from custom_types import config_types
+from interfaces import communication_queue
 
 
 class GroveMCP9808(Sensor):
     """Class for the Grove MCP9808 sensor."""
 
-    def __init__(self, config: config_types.Config):
-        super().__init__(config=config)
+    def __init__(
+        self,
+        config: config_types.Config,
+        communication_queue: communication_queue.CommunicationQueue,
+    ):
+        super().__init__(config=config,
+                         communication_queue=communication_queue)
 
     def _initialize_sensor(self) -> None:
         """Initialize the sensor."""

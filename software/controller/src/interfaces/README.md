@@ -6,6 +6,7 @@ This directory provides structured interfaces for hardware control, configuratio
 
 ```bash
 📁 interfaces
+    📄 communication_queue.py   # Interface for talking to the gateway
     📄 config_interface.py      # Interface for handling configuration file
     📄 state_interface.py       # Interface for managing system state
     📄 logging_interface.py     # Interface for structured logging and MQTT support
@@ -13,6 +14,12 @@ This directory provides structured interfaces for hardware control, configuratio
 ```
 
 ## Interface Descriptions
+
+### **Configuration Interface (`config_interface.py`)**
+
+- Initialises the connection to the communication queue SQLite DB
+- Enqueues MQTT messages to the gateway to be forwarded to Thingsboard
+- Enqueues healt check messages for the gateway
 
 ### **Configuration Interface (`config_interface.py`)**
 
