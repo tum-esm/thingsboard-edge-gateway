@@ -21,7 +21,7 @@ def fatal_error(msg) -> None:
     error_msg = str(msg)
     error_msg += "\n" + traceback.format_exc()
 
-    error(f'FATAL ERROR: {error}')
+    error(f'FATAL ERROR: {error_msg}')
     sys.stdout.flush()
     sleep(1)
 
