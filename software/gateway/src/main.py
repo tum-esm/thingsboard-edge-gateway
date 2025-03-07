@@ -1,8 +1,9 @@
+import json
 import os
 import signal
 import sys
 import threading
-from time import sleep
+from time import sleep, time_ns
 from typing import Any
 
 from modules.logging import info, warn, debug
@@ -149,6 +150,25 @@ try:
                 info("Controller is not running, starting new container in 10s...")
                 sleep(10)
                 docker_client.start_controller()
+
+            if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
+                last_controller_health_check = communication_sqlite_db.execute("SELECT timestamp_ms FROM health_check LIMIT 1")
+                if len(last_controller_health_check) > 0:
+                    last_controller_health_check = last_controller_health_check[0][0]
+                else:
+                    last_controller_health_check = 0
+            else:
+                last_controller_health_check = 0
+
+            controller_running_since = docker_client.get_edge_startup_timestamp_ms()
+            mqtt_client.publish_message_raw("v1/devices/me/attributes", json.dumps({
+                "ms_since_controller_startup": int(time_ns() / 1_000_000) - controller_running_since,
+                "ms_since_last_controller_health_check": int(time_ns() / 1_000_000) - last_controller_health_check
+            }))
+
+            if max(last_controller_health_check, controller_running_since) < int(time_ns() / 1_000_000) - (6 * 3600_000):
+                warn("Controller did not send health check in the last 6 hours, restarting container...")
+                docker_client.stop_edge()
 
             # if nothing happened this iteration, sleep for a while
             sleep(1)

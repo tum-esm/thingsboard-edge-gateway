@@ -1,3 +1,4 @@
+import datetime
 import os
 from time import sleep
 from typing import Any, Optional
@@ -57,6 +58,18 @@ class GatewayDockerClient:
                         if version.endswith(":latest"):
                             version = version[:-7]
                         return version
+        return None
+
+    def get_edge_startup_timestamp_ms(self) -> Optional[int]:
+        if self.is_edge_running():
+            containers = self.docker_client.containers.list()
+            for container in containers:
+                if container.name == CONTROLLER_CONTAINER_NAME:
+                    return int(
+                        datetime.datetime.strptime(container.attrs["State"]["StartedAt"][:-4], "%Y-%m-%dT%H:%M:%S.%f" )
+                        .replace(tzinfo=datetime.timezone.utc)
+                        .timestamp() * 1000
+                    )
         return None
 
     def stop_edge(self) -> None:

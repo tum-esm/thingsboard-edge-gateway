@@ -11,6 +11,7 @@ from modules.logging import info
 
 class SqliteTables(Enum):
     QUEUE_OUT = "queue_out"
+    HEALTH_CHECK = "health_check"
 
 
 class SqliteConnection:
