@@ -16,4 +16,4 @@ bash scripts/run_mypy.sh
 
 ## TODOS
 
-- 
+- in start_edge(): always reset git to correct commit even if image already exists
