@@ -26,6 +26,8 @@ archive_sqlite_db = None
 communication_sqlite_db = None
 gateway_logs_buffer_db = None
 STOP_MAINLOOP = False
+AUX_DATA_PUBLISH_INTERVAL_MS = 20_000 # evey 20 seconds
+aux_data_publish_ts = None
 
 
 # Set up signal handling for safe shutdown
@@ -56,6 +58,15 @@ def forced_shutdown_handler(_sig: Any, _frame: Any) -> None:
     sys.stdout.flush()
     os._exit(1)
 
+
+def get_last_controller_health_check_ts():
+    if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
+        last_controller_health_check_ts = communication_sqlite_db.execute(
+            "SELECT timestamp_ms FROM health_check LIMIT 1")
+        if len(last_controller_health_check_ts) > 0:
+            return last_controller_health_check_ts[0][0]
+
+    return 0
 
 signal.signal(signal.SIGALRM, forced_shutdown_handler)
 
@@ -152,25 +163,20 @@ try:
                 docker_client.start_controller()
                 continue
 
-            if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
-                last_controller_health_check = communication_sqlite_db.execute("SELECT timestamp_ms FROM health_check LIMIT 1")
-                if len(last_controller_health_check) > 0:
-                    last_controller_health_check = last_controller_health_check[0][0]
-                else:
-                    last_controller_health_check = 0
-            else:
-                last_controller_health_check = 0
+            controller_running_since_ts = docker_client.get_edge_startup_timestamp_ms()
+            last_controller_health_check_ts = get_last_controller_health_check_ts()
 
-            controller_running_since = docker_client.get_edge_startup_timestamp_ms()
-            mqtt_client.publish_telemetry(json.dumps({
-                "ts": int(time_ns() / 1_000_000),
-                "values":{
-                    "ms_since_controller_startup": int(time_ns() / 1_000_000) - controller_running_since,
-                    "ms_since_last_controller_health_check": int(time_ns() / 1_000_000) - last_controller_health_check
-                }
-            }))
+            if aux_data_publish_ts is None or int(time_ns() / 1_000_000) - aux_data_publish_ts > AUX_DATA_PUBLISH_INTERVAL_MS:
+                aux_data_publish_ts = int(time_ns() / 1_000_000)
+                mqtt_client.publish_telemetry(json.dumps({
+                    "ts": aux_data_publish_ts,
+                    "values": {
+                        "ms_since_controller_startup": aux_data_publish_ts - controller_running_since_ts,
+                        "ms_since_last_controller_health_check": aux_data_publish_ts - last_controller_health_check_ts
+                    }
+                }))
 
-            if max(last_controller_health_check, controller_running_since) < int(time_ns() / 1_000_000) - (6 * 3600_000):
+            if max(last_controller_health_check_ts, controller_running_since_ts) < int(time_ns() / 1_000_000) - (6 * 3600_000):
                 warn("Controller did not send health check in the last 6 hours, restarting container...")
                 docker_client.stop_edge()
 
