@@ -144,17 +144,17 @@ try:
                 continue
 
             # check if there are any new outgoing mqtt messages in the sqlite db
-            if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.QUEUE_OUT.value):
+            if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.CONTROLLER_MESSAGES.value):
                 # fetch the next message (lowest `id`) from the queue and send it
                 message = communication_sqlite_db.execute(
-                    f"SELECT * FROM {sqlite.SqliteTables.QUEUE_OUT.value} ORDER BY id LIMIT 1"
+                    f"SELECT * FROM {sqlite.SqliteTables.CONTROLLER_MESSAGES.value} ORDER BY id LIMIT 1"
                 )
                 if len(message) > 0:
                     debug('Sending controller message: ' + str(message[0]))
                     if not mqtt_client.publish_telemetry(message[0][2]):
                         continue
                     communication_sqlite_db.execute(
-                        f"DELETE FROM {sqlite.SqliteTables.QUEUE_OUT.value} WHERE id = {message[0][0]}")
+                        f"DELETE FROM {sqlite.SqliteTables.CONTROLLER_MESSAGES.value} WHERE id = {message[0][0]}")
                 continue
 
             if not docker_client.is_edge_running():
@@ -185,3 +185,5 @@ try:
 
 except Exception as e:
     utils.misc.fatal_error(f"An error occurred in gateway main loop: {e}")
+
+

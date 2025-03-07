@@ -10,7 +10,7 @@ from modules.logging import info
 
 
 class SqliteTables(Enum):
-    QUEUE_OUT = "queue_out"
+    CONTROLLER_MESSAGES = "messages"
     HEALTH_CHECK = "health_check"
 
 
