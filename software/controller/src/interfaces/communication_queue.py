@@ -53,17 +53,23 @@ class CommunicationQueue:
                       1_000_000),  # ThingsBoard expects milliseconds
             "values": dataclasses.asdict(payload),
         }
-        with self.con:
-            sql_statement: str = "INSERT INTO messages (type, message) VALUES(?, ?);"
-            self.con.execute(sql_statement,
-                             ("MQTT_message", json.dumps(new_message)))
-            self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
+        try:
+            with self.con:
+                sql_statement: str = "INSERT INTO messages (type, message) VALUES(?, ?);"
+                self.con.execute(sql_statement,
+                                 ("MQTT_message", json.dumps(new_message)))
+                self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
 
-        time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps
+            time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps
+        except Exception:
+            exit(0)
 
     def enqueue_health_check(self) -> None:
         ts = int(time.time_ns() / 1_000_000)
-        with self.con:
-            sql_statement: str = "INSERT OR REPLACE INTO health_check (id, timestamp_ms) VALUES(?, ?);"
-            self.con.execute(sql_statement, (1, ts))
-            self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
+        try:
+            with self.con:
+                sql_statement: str = "INSERT OR REPLACE INTO health_check (id, timestamp_ms) VALUES(?, ?);"
+                self.con.execute(sql_statement, (1, ts))
+                self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
+        except Exception:
+            exit(0)
