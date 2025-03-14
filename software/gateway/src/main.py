@@ -136,7 +136,7 @@ try:
             if not mqtt_client_thread.is_alive():
                 warn("MQTT client thread died, exiting in 30 seconds...")
                 sleep(30)
-                exit()
+                utils.misc.fatal_error("MQTT client thread died")
 
             # check if there are any buffered outgoing log message in the buffer sqlite db
             if gateway_logs_buffer_db.do_table_values_exist("log_buffer"):

@@ -14,9 +14,6 @@ def get_maybe(dictionary, *properties) -> Any:
     return dictionary
 
 def fatal_error(msg) -> None:
-    # Set a timer to force exit if graceful shutdown fails
-    signal.setitimer(signal.ITIMER_REAL, 20)
-
     # Add stacktrace to error message
     error_msg = str(msg)
     error_msg += "\n" + traceback.format_exc()
@@ -27,5 +24,5 @@ def fatal_error(msg) -> None:
 
     # Trigger the graceful shutdown handler
     signal.raise_signal( signal.SIGINT )
-    sleep(20)
+    sleep(15)
     sys.exit(1)
