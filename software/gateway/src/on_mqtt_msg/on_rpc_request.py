@@ -4,7 +4,8 @@ import signal
 from time import sleep
 from typing import Any
 
-from main import archive_sqlite_db
+import utils.paths
+from modules import sqlite
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
@@ -112,6 +113,10 @@ def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
     if start_timestamp_ms <= 1735719469_000 or end_timestamp_ms >= 2524637869_000:
         return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' and 'end_timestamp_ms' must be within the range of 1735719469_000 and 2524637869_000")
 
+    archive_sqlite_db = sqlite.SqliteConnection(utils.paths.GATEWAY_ARCHIVE_DB_PATH)
+    if archive_sqlite_db.db_unavailable:
+        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: archive database unavailable")
+
     info(f"[RPC] Republishing messages - {start_timestamp_ms} -> {end_timestamp_ms}")
     message_count = 0
     while start_timestamp_ms < end_timestamp_ms:
@@ -128,6 +133,7 @@ def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
             start_timestamp_ms = message[1]
         if len(messages) < 200:
             break
+    archive_sqlite_db.close()
     send_rpc_response(rpc_msg_id, f"OK - {message_count} messages republished - {start_timestamp_ms} -> {end_timestamp_ms}")
 
 

@@ -181,7 +181,7 @@ try:
                 docker_client.start_controller()
                 continue
 
-            controller_running_since_ts = docker_client.get_edge_startup_timestamp_ms()
+            controller_running_since_ts = docker_client.get_edge_startup_timestamp_ms() or 0
             last_controller_health_check_ts = get_last_controller_health_check_ts()
 
             # publish controller startup time and health check time to mqtt
