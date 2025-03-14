@@ -93,7 +93,7 @@ try:
                     message TEXT
                 );
             """)
-        archive_sqlite_db.execute("CREATE INDEX controller_archive_ts_index on controller_archive (timestamp_ms);")
+        archive_sqlite_db.execute("CREATE INDEX IF NOT EXISTS controller_archive_ts_index on controller_archive (timestamp_ms);")
 
         # create and run the mqtt client in a separate thread
         mqtt_client = GatewayMqttClient().init(access_token)
