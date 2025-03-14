@@ -46,6 +46,7 @@ class SystemCheckProcedure:
 
         # construct message and put it into message queue
         self.communication_queue.enqueue_message(
+            type="measurement",
             payload=mqtt_playload_types.MQTTSystemData(
                 enclosure_bme280_temperature=mainboard_sensor.temperature,
                 enclosure_bme280_humidity=mainboard_sensor.humidity,
@@ -59,7 +60,8 @@ class SystemCheckProcedure:
                 ups_battery_is_fully_charged,
                 ups_battery_error_detected=ups_sate.ups_battery_error_detected,
                 ups_battery_above_voltage_threshold=ups_sate.
-                ups_battery_above_voltage_threshold), )
+                ups_battery_above_voltage_threshold),
+        )
 
         # check for hardware errors
         self.hardware_interface.check_errors()

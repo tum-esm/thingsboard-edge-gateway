@@ -42,6 +42,7 @@ class WindSensorModule:
                 f"latest wind sensor measurement: {wind_sensor_data}")
 
             self.communication_queue.enqueue_message(
+                type="measurement",
                 payload=mqtt_playload_types.MQTTWindData(
                     wxt532_direction_min=wind_sensor_data.direction_min,
                     wxt532_direction_avg=wind_sensor_data.direction_avg,
@@ -62,6 +63,7 @@ class WindSensorModule:
                 f"latest wind sensor device info: {wind_sensor_status}")
 
             self.communication_queue.enqueue_message(
+                type="measurement",
                 payload=mqtt_playload_types.MQTTWindSensorInfo(
                     wxt532_temperature=wind_sensor_status.temperature,
                     wxt532_heating_voltage=wind_sensor_status.heating_voltage,

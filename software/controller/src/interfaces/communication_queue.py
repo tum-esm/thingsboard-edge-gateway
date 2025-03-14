@@ -47,7 +47,8 @@ class CommunicationQueue:
         """)
         self.con.execute("PRAGMA journal_mode=WAL;")
 
-    def enqueue_message(self, payload: THINGSBOARD_PAYLOADS) -> None:
+    def enqueue_message(self, type: str,
+                        payload: THINGSBOARD_PAYLOADS) -> None:
         new_message = {
             "ts": int(time.time_ns() /
                       1_000_000),  # ThingsBoard expects milliseconds
@@ -57,7 +58,7 @@ class CommunicationQueue:
             with self.con:
                 sql_statement: str = "INSERT INTO messages (type, message) VALUES(?, ?);"
                 self.con.execute(sql_statement,
-                                 ("MQTT_message", json.dumps(new_message)))
+                                 (type, json.dumps(new_message)))
                 self.con.execute("PRAGMA wal_checkpoint(PASSIVE);")
 
             time.sleep(1 / 1000)  # sleep for 1ms to avoid duplicate timestamps

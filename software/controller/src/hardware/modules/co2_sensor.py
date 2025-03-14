@@ -175,6 +175,7 @@ class CO2MeasurementModule:
 
         # send out MQTT measurement message
         self.communication_queue.enqueue_message(
+            type="measurement",
             payload=mqtt_playload_types.MQTTCO2Data(
                 gmp343_raw=CO2_sensor_data.raw,
                 gmp343_compensated=CO2_sensor_data.compensated,
@@ -195,6 +196,7 @@ class CO2MeasurementModule:
 
         # send out MQTT measurement message
         self.communication_queue.enqueue_message(
+            type="measurement",
             payload=mqtt_playload_types.MQTTCO2CalibrationData(
                 cal_bottle_id=gas_bottle_id,
                 cal_gmp343_raw=CO2_sensor_data.raw,
@@ -212,6 +214,7 @@ class CO2MeasurementModule:
 
         # send out MQTT measurement message
         self.communication_queue.enqueue_message(
+            type="measurement",
             payload=mqtt_playload_types.MQTTCalibrationCorrectionData(
                 cal_gmp343_slope=round(self.slope, 4),
                 cal_gmp343_intercept=round(self.intercept, 2),

@@ -225,7 +225,9 @@ class Logger:
         time.sleep(1)  # Ensure that log message has a unique timestamp
 
         self.communication_queue.enqueue_message(
+            type="log",
             payload=mqtt_playload_types.MQTTLogMessage(
                 severity=level,
                 message=subject + " " + details,
-            ), )
+            ),
+        )
