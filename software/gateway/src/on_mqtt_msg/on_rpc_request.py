@@ -4,10 +4,11 @@ import signal
 from time import sleep
 from typing import Any
 
+from main import archive_sqlite_db
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
-from modules.logging import info, error
+from modules.logging import info, error, debug
 
 
 def rpc_reboot(rpc_msg_id: str, _method: Any, _params: Any):
@@ -97,6 +98,40 @@ def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
     GatewayFileWriter().overwrite_file_content(params["identifier"], params["content"])
     send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
 
+def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: params is not a dictionary")
+    if "start_timestamp_ms" not in params or "end_timestamp_ms" not in params:
+        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: missing 'start_timestamp_ms' or 'end_timestamp_ms' in params")
+    if type(params["start_timestamp_ms"]) is not int or type(params["end_timestamp_ms"]) is not int:
+        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' and 'end_timestamp_ms' must be integers")
+    start_timestamp_ms = params["start_timestamp_ms"]
+    end_timestamp_ms = params["end_timestamp_ms"]
+    if start_timestamp_ms >= end_timestamp_ms:
+        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' must be less than 'end_timestamp_ms'")
+    if start_timestamp_ms <= 1735719469_000 or end_timestamp_ms >= 2524637869_000:
+        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' and 'end_timestamp_ms' must be within the range of 1735719469_000 and 2524637869_000")
+
+    info(f"[RPC] Republishing messages - {start_timestamp_ms} -> {end_timestamp_ms}")
+    message_count = 0
+    while start_timestamp_ms < end_timestamp_ms:
+        messages = archive_sqlite_db.execute("""SELECT id, timestamp_ms, message 
+            FROM controller_archive 
+            WHERE timestamp_ms > ? AND timestamp_ms < ? 
+            ORDER BY timestamp_ms ASC LIMIT 200""",
+            (start_timestamp_ms, end_timestamp_ms)
+        )
+        for message in messages:
+            message_count += 1
+            debug(f"Republishing message with timestamp {message[1]}")
+            GatewayMqttClient().publish_telemetry(message[2])
+            start_timestamp_ms = message[1]
+        if len(messages) < 200:
+            break
+    send_rpc_response(rpc_msg_id, f"OK - {message_count} messages republished - {start_timestamp_ms} -> {end_timestamp_ms}")
+
+
+
 RPC_METHODS = {
     "reboot": {
         "description": "Reboot the device",
@@ -137,6 +172,10 @@ RPC_METHODS = {
     "file_overwrite_content": {
         "description": "Overwrite file content ({identifier: str, content: str})",
         "exec": rpc_file_overwrite_content
+    },
+    "archive_republish_messages": {
+        "description": "Republish messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})",
+        "exec": rpc_archive_republish_messages
     }
 }
 
