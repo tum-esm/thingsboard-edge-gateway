@@ -2,7 +2,7 @@ import json
 import os
 import signal
 from time import sleep
-from typing import Any
+from typing import Any, Optional
 
 import utils.paths
 from modules import sqlite
@@ -99,23 +99,34 @@ def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
     GatewayFileWriter().overwrite_file_content(params["identifier"], params["content"])
     send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
 
-def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
+
+def verify_start_end_timestamp_params(params: Any) -> Optional[str]:
     if type(params) is not dict:
-        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: params is not a dictionary")
+        return "params is not a dictionary"
     if "start_timestamp_ms" not in params or "end_timestamp_ms" not in params:
-        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: missing 'start_timestamp_ms' or 'end_timestamp_ms' in params")
+        return "missing 'start_timestamp_ms' or 'end_timestamp_ms' in params"
     if type(params["start_timestamp_ms"]) is not int or type(params["end_timestamp_ms"]) is not int:
-        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' and 'end_timestamp_ms' must be integers")
+        return "'start_timestamp_ms' and 'end_timestamp_ms' must be integers"
     start_timestamp_ms = params["start_timestamp_ms"]
     end_timestamp_ms = params["end_timestamp_ms"]
     if start_timestamp_ms >= end_timestamp_ms:
-        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' must be less than 'end_timestamp_ms'")
+        return "'start_timestamp_ms' must be less than 'end_timestamp_ms'"
+    return None
+
+
+def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
+    params_verify_err = verify_start_end_timestamp_params(params)
+    if params_verify_err is not None:
+        return send_rpc_method_error(rpc_msg_id, f"Republishing archived messages failed: {params_verify_err}")
+
+    start_timestamp_ms = params["start_timestamp_ms"]
+    end_timestamp_ms = params["end_timestamp_ms"]
     if start_timestamp_ms <= 1735719469_000 or end_timestamp_ms >= 2524637869_000:
-        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: 'start_timestamp_ms' and 'end_timestamp_ms' must be within the range of 1735719469_000 and 2524637869_000")
+        return send_rpc_method_error(rpc_msg_id, "Republishing archived messages failed: 'start_timestamp_ms' and 'end_timestamp_ms' must be within the range of 1735719469_000 and 2524637869_000")
 
     archive_sqlite_db = sqlite.SqliteConnection(utils.paths.GATEWAY_ARCHIVE_DB_PATH)
     if archive_sqlite_db.db_unavailable:
-        return send_rpc_method_error(rpc_msg_id, "Archiving messages failed: archive database unavailable")
+        return send_rpc_method_error(rpc_msg_id, "Republishing archived messages failed: archive database unavailable")
 
     info(f"[RPC] Republishing messages - {start_timestamp_ms} -> {end_timestamp_ms}")
     message_count = 0
@@ -136,6 +147,25 @@ def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
     archive_sqlite_db.close()
     send_rpc_response(rpc_msg_id, f"OK - {message_count} messages republished - {start_timestamp_ms} -> {end_timestamp_ms}")
 
+def rpc_archive_discard_messages(rpc_msg_id: str, _method: Any, params: Any):
+    params_verify_err = verify_start_end_timestamp_params(params)
+    if params_verify_err is not None:
+        return send_rpc_method_error(rpc_msg_id, f"Discarding archived messages failed: {params_verify_err}")
+
+    start_timestamp_ms = params["start_timestamp_ms"]
+    end_timestamp_ms = params["end_timestamp_ms"]
+    if end_timestamp_ms >= 2524637869_000:
+        return send_rpc_method_error(rpc_msg_id, "Discarding archived messages failed: 'end_timestamp_ms' must be < 2524637869_000")
+
+    archive_sqlite_db = sqlite.SqliteConnection(utils.paths.GATEWAY_ARCHIVE_DB_PATH)
+    if archive_sqlite_db.db_unavailable:
+        return send_rpc_method_error(rpc_msg_id, "Discarding archived messages failed: archive database unavailable")
+
+    info(f"[RPC] Discarding archived messages - {start_timestamp_ms} -> {end_timestamp_ms}")
+    message_count = archive_sqlite_db.execute("DELETE FROM controller_archive WHERE timestamp_ms > ? AND timestamp_ms < ?",
+                                              (start_timestamp_ms, end_timestamp_ms))
+    archive_sqlite_db.close()
+    send_rpc_response(rpc_msg_id, f"OK - {message_count} messages discarded - {start_timestamp_ms} -> {end_timestamp_ms}")
 
 
 RPC_METHODS = {
@@ -182,7 +212,11 @@ RPC_METHODS = {
     "archive_republish_messages": {
         "description": "Republish messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})",
         "exec": rpc_archive_republish_messages
-    }
+    },
+    "archive_discard_messages": {
+        "description": "Discard messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})",
+        "exec": rpc_archive_discard_messages
+    },
 }
 
 

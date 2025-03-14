@@ -23,6 +23,7 @@ class SqliteConnection:
             self.conn = sqlite3.connect(path, cached_statements=0, isolation_level=None, autocommit=True, check_same_thread=False)
             self.conn.execute("PRAGMA journal_mode=WAL;")       # enable write-ahead logging
             self.conn.execute("PRAGMA busy_timeout = 5000;")    # 5 seconds timeout for when the db is locked
+            self.conn.execute("PRAGMA auto_vacuum  = FULL;")    # shrink the db file size when possible
             self.db_unavailable = False
         except Exception as e:
             if dont_retry:
