@@ -4,7 +4,7 @@ import signal
 import sys
 import threading
 from time import sleep, time_ns
-from typing import Any
+from typing import Any, Optional
 
 from modules.logging import info, warn, debug
 import utils.paths
@@ -21,7 +21,6 @@ from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
-mqtt_client = None
 archive_sqlite_db = None
 communication_sqlite_db = None
 gateway_logs_buffer_db = None
