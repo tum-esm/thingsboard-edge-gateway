@@ -140,7 +140,7 @@ def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
         for message in messages:
             message_count += 1
             debug(f"Republishing message with timestamp {message[1]}")
-            GatewayMqttClient().publish_telemetry(message[2])
+            GatewayMqttClient().publish_telemetry(json.dumps({"ts": message[1], "values": json.loads(message[2])}))
             start_timestamp_ms = message[1]
         if len(messages) < 200:
             break
