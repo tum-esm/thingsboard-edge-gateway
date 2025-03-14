@@ -61,9 +61,7 @@ class PhoenixContactUPS(Sensor):
         ups_powered_by_grid = self._read_power_mode()
         battery_is_fully_charged = self._read_battery_charge_state()
         battery_error_detected = self._read_alarm_state()
-        battery_above_voltage_threshold = self._read_voltage_threshold_state(
-            ups_powered_by_grid=ups_powered_by_grid,
-            battery_is_fully_charged=battery_is_fully_charged)
+        battery_above_voltage_threshold = self._read_voltage_threshold_state()
 
         return sensor_types.UPSSensorData(
             ups_powered_by_grid=ups_powered_by_grid,
@@ -87,12 +85,12 @@ class PhoenixContactUPS(Sensor):
         UPS_POWER_MODE_PIN_IN is LOW when the system is powered by the grid
         """
 
-        if not self.pins["UPS_POWER_MODE_PIN_IN"].is_active:
-            self.logger.info("System is powered by the grid")
-            return True
-        else:
+        if self.pins["UPS_POWER_MODE_PIN_IN"].is_active:
             self.logger.info("System is powered by the battery")
             return False
+        else:
+            self.logger.info("System is powered by the grid")
+            return True
 
     def _read_battery_charge_state(self) -> bool:
         """
@@ -113,20 +111,20 @@ class PhoenixContactUPS(Sensor):
         UPS_ALARM_PIN_IN is LOW when the battery status is okay"
         """
 
-        if not self.pins["UPS_ALARM_PIN_IN"].is_active:
-            self.logger.info("The battery status is fine")
-            return False
-        else:
+        if self.pins["UPS_ALARM_PIN_IN"].is_active:
             self.logger.info("A battery error was detected")
             return True
+        else:
+            self.logger.info("The battery status is fine")
+            return False
 
-    def _read_voltage_threshold_state(self, ups_powered_by_grid: bool,
-                                      battery_is_fully_charged: bool) -> bool:
-        """When UPS_STATUS_READY is HIGH & UPS_POWER_MODE_PIN_IN is HIGH
+    def _read_voltage_threshold_state(self) -> bool:
+        """When UPS_BATTERY_CHARGE_PIN_IN is HIGH & UPS_POWER_MODE_PIN_IN is HIGH
         the battery voltage has dropped below the minimum threshold.
         """
 
-        if ups_powered_by_grid & battery_is_fully_charged:
+        if self.pins["UPS_BATTERY_CHARGE_PIN_IN"].is_active & self.pins[
+                "UPS_POWER_MODE_PIN_IN"].is_active:
             self.logger.info(
                 "The battery voltage has dropped below the minimum threshold")
             return False
