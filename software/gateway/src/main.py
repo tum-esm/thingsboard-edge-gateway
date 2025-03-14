@@ -158,7 +158,7 @@ try:
                     f"SELECT id, type, message FROM {sqlite.SqliteTables.CONTROLLER_MESSAGES.value} ORDER BY id LIMIT 1"
                 )
                 if len(message) > 0:
-                    message_type = json.loads(message[0][1])
+                    message_type = message[0][1]
                     message_obj = json.loads(message[0][2])
                     debug('Sending controller message: ' + str(message[0]))
                     if not mqtt_client.publish_telemetry(message[0][2]):
