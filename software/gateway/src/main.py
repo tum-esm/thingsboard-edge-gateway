@@ -168,7 +168,7 @@ try:
                     if not "log" in message_type:
                         message_timestamp_ms = message_obj["ts"]
                         message_values = message_obj["values"]
-                        archive_sqlite_db.execute("INSERT INTO controller_archive (timestamp_ms, message) VALUES (?, ?)", (message_timestamp_ms, message_values))
+                        archive_sqlite_db.execute("INSERT INTO controller_archive (timestamp_ms, message) VALUES (?, ?)", (message_timestamp_ms, json.dumps(message_values)))
 
                     # remove the published message from the queue
                     communication_sqlite_db.execute(
