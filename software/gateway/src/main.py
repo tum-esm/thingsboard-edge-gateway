@@ -21,6 +21,7 @@ from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
 from utils.misc import get_maybe
 
+global_mqtt_client : Optional[GatewayMqttClient] = None
 archive_sqlite_db = None
 communication_sqlite_db = None
 gateway_logs_buffer_db = None
@@ -38,8 +39,8 @@ def shutdown_handler(sig: Any, _frame: Any) -> None:
 
     info("GRACEFUL SHUTDOWN")
     STOP_MAINLOOP = True
-    if mqtt_client is not None:
-        mqtt_client.graceful_exit()
+    if global_mqtt_client is not None:
+        global_mqtt_client.graceful_exit()
     if archive_sqlite_db is not None:
         archive_sqlite_db.close()
     if communication_sqlite_db is not None:
@@ -100,6 +101,7 @@ try:
         mqtt_client_thread: threading.Thread = threading.Thread(
             target=lambda: mqtt_client.loop_forever())
         mqtt_client_thread.start()
+        global_mqtt_client = mqtt_client
 
         sleep(5)
 
