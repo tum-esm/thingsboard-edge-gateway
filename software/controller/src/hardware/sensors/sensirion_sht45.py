@@ -45,8 +45,8 @@ class SensirionSHT45(Sensor):
                 relative_humidity)
 
         return sensor_types.SHT45SensorData(
-            temperature=temperature,
-            humidity=relative_humidity,
+            temperature=round(temperature,4),
+            humidity=round(relative_humidity,4),
         )
 
     def _simulate_read(self, *args: Any,
