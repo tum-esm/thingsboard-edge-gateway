@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 import utils.paths
 from modules import sqlite
+from modules.docker_client import GatewayDockerClient
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
@@ -31,6 +32,12 @@ def rpc_exit(rpc_msg_id: str, _method: Any, _params: Any):
     send_rpc_response(rpc_msg_id, "OK - Exiting")
     sleep(3)
     signal.raise_signal(signal.SIGTERM)
+
+def rpc_restart_controller(rpc_msg_id: str, _method: Any, _params: Any):
+    info("[RPC] Restarting controller...")
+    send_rpc_response(rpc_msg_id, "OK - Restarting Controller")
+    sleep(3)
+    GatewayDockerClient().stop_edge()
 
 def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any):
     info("[RPC] Pong")
@@ -184,6 +191,10 @@ RPC_METHODS = {
     "ping": {
         "description": "Ping the device (returns 'pong' reply)",
         "exec": rpc_ping
+    },
+    "restart_controller": {
+        "description": "Restart the controller docker container",
+        "exec": rpc_restart_controller
     },
     "files_upsert": {
         "description": "Upsert file definition ({identifier: str, path: str})",
