@@ -30,7 +30,6 @@ STOP_MAINLOOP = False
 AUX_DATA_PUBLISH_INTERVAL_MS = 20_000 # evey 20 seconds
 aux_data_publish_ts = None
 
-
 # Set up signal handling for safe shutdown
 def shutdown_handler(sig: Any, _frame: Any) -> None:
     global STOP_MAINLOOP
@@ -109,6 +108,7 @@ try:
         info("Gateway started successfully")
         mqtt_client.update_sys_info_attribute()
 
+        # daemon thread for updating file content client attributes every 30 seconds
         def file_update_check_daemon():
             """Daemon thread to check for file updates every 30 seconds."""
             while True:
@@ -120,6 +120,7 @@ try:
         file_update_thread = threading.Thread(target=file_update_check_daemon, daemon=True)
         file_update_thread.start()
 
+        # *** main loop ***
         while not STOP_MAINLOOP:
             # check if there are any new incoming mqtt messages in the queue, process them
             if not mqtt_client.message_queue.empty():
@@ -188,6 +189,7 @@ try:
                         f"DELETE FROM {sqlite.SqliteTables.CONTROLLER_MESSAGES.value} WHERE id = {message[0][0]}")
                 continue
 
+            # automatically restart the controller's docker container if it is not running
             if not docker_client.is_edge_running():
                 info("Controller is not running, starting new container in 10s...")
                 sleep(10)

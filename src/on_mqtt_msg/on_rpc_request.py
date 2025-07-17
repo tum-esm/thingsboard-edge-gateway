@@ -53,6 +53,7 @@ def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
     info(f"[RPC] Upserting file definition - {params['identifier']} -> {params['path']}")
     GatewayFileWriter().upsert_file(params["identifier"], params["path"])
     send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
+    return None
 
 def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
     if type(params) is not str:
@@ -61,6 +62,8 @@ def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
     info(f"[RPC] Removing file definition '{params}'")
     GatewayFileWriter().remove_file(params)
     send_rpc_response(rpc_msg_id, f"OK - File definition removed - '{params}'")
+    return None
+
 
 def rpc_files_init(rpc_msg_id: str, _method: Any, _params: Any):
     info(f"[RPC] Initializing file definitions")
@@ -79,6 +82,8 @@ def rpc_file_append_line(rpc_msg_id: str, _method: Any, params: Any):
     info(f"[RPC] Appending file line - '{params['identifier']}' += '{params['line']}'")
     GatewayFileWriter().append_file_line(params["identifier"], params["line"])
     send_rpc_response(rpc_msg_id, f"OK - File line appended - '{params['identifier']}' += '{params['line']}'")
+    return None
+
 
 def rpc_file_remove_line(rpc_msg_id: str, _method: Any, params: Any):
     if type(params) is not dict:
@@ -92,6 +97,8 @@ def rpc_file_remove_line(rpc_msg_id: str, _method: Any, params: Any):
     info(f"[RPC] Removing file line - '{params['identifier']}' -= '{params['line']}'")
     GatewayFileWriter().remove_file_line(params["identifier"], params["line"])
     send_rpc_response(rpc_msg_id, f"OK - File line removed - '{params['identifier']}' -= '{params['line']}'")
+    return None
+
 
 def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
     if type(params) is not dict:
@@ -105,6 +112,7 @@ def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
     info(f"[RPC] Overwriting file content - '{params['identifier']}' = '{params['content']}'")
     GatewayFileWriter().overwrite_file_content(params["identifier"], params["content"])
     send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
+    return None
 
 
 def verify_start_end_timestamp_params(params: Any) -> Optional[str]:
@@ -153,6 +161,8 @@ def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
             break
     archive_sqlite_db.close()
     send_rpc_response(rpc_msg_id, f"OK - {message_count} messages republished - {start_timestamp_ms} -> {end_timestamp_ms}")
+    return None
+
 
 def rpc_archive_discard_messages(rpc_msg_id: str, _method: Any, params: Any):
     params_verify_err = verify_start_end_timestamp_params(params)
@@ -173,6 +183,7 @@ def rpc_archive_discard_messages(rpc_msg_id: str, _method: Any, params: Any):
                                               (start_timestamp_ms, end_timestamp_ms))
     archive_sqlite_db.close()
     send_rpc_response(rpc_msg_id, f"OK - {message_count} messages discarded - {start_timestamp_ms} -> {end_timestamp_ms}")
+    return None
 
 
 RPC_METHODS = {
