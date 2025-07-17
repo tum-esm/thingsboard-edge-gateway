@@ -6,6 +6,7 @@ import threading
 from time import sleep, time_ns
 from typing import Any, Optional
 
+from modules.file_writer import GatewayFileWriter
 from modules.logging import info, warn, debug
 import utils.paths
 import utils.misc
@@ -107,6 +108,17 @@ try:
 
         info("Gateway started successfully")
         mqtt_client.update_sys_info_attribute()
+
+        def file_update_check_daemon():
+            """Daemon thread to check for file updates every 30 seconds."""
+            while True:
+                try:
+                    GatewayFileWriter().update_all_files_content_client_attributes()
+                except Exception as ex:
+                    warn(f"Error updating file content: {ex}")
+                sleep(30)
+        file_update_thread = threading.Thread(target=file_update_check_daemon, daemon=True)
+        file_update_thread.start()
 
         while not STOP_MAINLOOP:
             # check if there are any new incoming mqtt messages in the queue, process them
