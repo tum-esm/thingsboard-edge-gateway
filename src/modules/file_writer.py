@@ -37,14 +37,14 @@ class GatewayFileWriter:
 
     def upsert_file(self, file_identifier: str, file_path: str) -> None:
         if self.files is None:
-            raise Exception("Files definition is not available")
+            self.initialize_files()
         self.files[file_identifier] = file_path
         self.write_file_content_to_client_attribute(file_identifier, self.read_file(file_path)[0])
         self.write_files_definition_to_client_attribute()
 
     def remove_file(self, file_identifier: str) -> None:
         if self.files is None:
-            raise Exception("Files definition is not available")
+            self.initialize_files()
         if file_identifier not in self.files:
             raise Exception(f"File with identifier '{file_identifier}' not found")
         del self.files[file_identifier]
