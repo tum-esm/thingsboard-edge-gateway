@@ -123,8 +123,8 @@ def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
         return send_rpc_method_error(rpc_msg_id, "Running command failed: params is not a dictionary")
     if "command" not in params:
         return send_rpc_method_error(rpc_msg_id, "Running command failed: missing 'command' in params")
-    if type(params["command"]) is not str:
-        return send_rpc_method_error(rpc_msg_id, "Running command failed: 'command' must be a string")
+    if type(params["command"]) is not list or any(type(cmd) is not str for cmd in params["command"]):
+        return send_rpc_method_error(rpc_msg_id, "Running command failed: 'command' must be a list of strings")
     if "timeout_s" in params and type(params["timeout_s"]) is not int:
         return send_rpc_method_error(rpc_msg_id, "Running command failed: 'timeout_s' must be an integer")
     timeout_s = params["timeout_s"] if "timeout_s" in params else 30
@@ -186,7 +186,7 @@ def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
     while not stdout_line_queue.empty():
         output_lines.extend(read_lines_from_queue(stdout_line_queue))
 
-    result = f"Command '{command}' exited with code {sub_process.returncode}. Output: {'\n'.join(output_lines)}"
+    result = f"Command '{command}' exited with code {sub_process.returncode}. Output: {''.join(output_lines)}"
     send_rpc_response(rpc_msg_id, f"OK - Command executed - {result}")
     return None
 
