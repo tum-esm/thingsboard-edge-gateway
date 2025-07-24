@@ -285,7 +285,7 @@ RPC_METHODS = {
         "exec": rpc_restart_controller
     },
     "run_command": {
-        "description": "Run arbitrary command ({command: list [str], timeout_s: int}) - use with caution!",
+        "description": "Run arbitrary command ({command: list [str], timeout_s: int [default 30s]}) - use with caution!",
         "exec": rpc_run_command
     },
     "files_upsert": {
