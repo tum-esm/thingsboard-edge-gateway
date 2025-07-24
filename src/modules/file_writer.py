@@ -72,7 +72,7 @@ class GatewayFileWriter:
             with open(file_path, "r") as f:
                 file_contents = f.read()
                 contents_hash = md5(file_contents.encode("utf-8")).hexdigest()
-                if self.hashes[file_path] == contents_hash:
+                if file_path in self.hashes and self.hashes[file_path] == contents_hash:
                     return file_contents, False
                 else:
                     self.hashes[file_path] = contents_hash
