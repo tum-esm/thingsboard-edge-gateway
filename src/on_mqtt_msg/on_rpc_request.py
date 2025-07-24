@@ -54,6 +54,9 @@ def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
         return send_rpc_method_error(rpc_msg_id, "Upserting file definition failed: missing 'identifier' or 'path' in params")
 
     info(f"[RPC] Upserting file definition - {params['identifier']} -> {params['path']}")
+    # Check if the file exists
+    if not os.path.exists(params["path"]) or not os.path.isfile(params["path"]):
+        return send_rpc_method_error(rpc_msg_id, f"Upserting file definition failed: file '{params['path']}' does not exist")
     GatewayFileWriter().upsert_file(params["identifier"], params["path"])
     send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
     return None
@@ -68,10 +71,9 @@ def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
     return None
 
 
-def rpc_files_init(rpc_msg_id: str, _method: Any, _params: Any):
-    info(f"[RPC] Initializing file definitions")
-    GatewayFileWriter().initialize_files()
-    send_rpc_response(rpc_msg_id, "OK - File definitions initialized")
+def rpc_files_list(rpc_msg_id: str, _method: Any, _params: Any):
+    info(f"[RPC] Listing file definitions")
+    send_rpc_response(rpc_msg_id, "OK - File definitions: " + json.dumps(GatewayFileWriter().files, indent=2))
 
 def rpc_file_append_line(rpc_msg_id: str, _method: Any, params: Any):
     if type(params) is not dict:
@@ -173,7 +175,6 @@ def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
                 sub_process.kill()
                 sub_process.wait()  # ensure process has ended
                 result = f"Error running command '{command}': Timeout after {timeout_s} seconds. Output: {'\n'.join(output_lines)}"
-                error(f"[RPC] {result})")
                 return send_rpc_method_error(rpc_msg_id, result)
 
             sleep(0.05)  # small sleep: reduce CPU without blocking
@@ -284,7 +285,7 @@ RPC_METHODS = {
         "exec": rpc_restart_controller
     },
     "run_command": {
-        "description": "Run arbitrary command ({command: str, timeout_s: int}) - use with caution!",
+        "description": "Run arbitrary command ({command: list [str], timeout_s: int}) - use with caution!",
         "exec": rpc_run_command
     },
     "files_upsert": {
@@ -295,9 +296,9 @@ RPC_METHODS = {
         "description": "Remove file definition ({identifier: str})",
         "exec": rpc_files_remove
     },
-    "files_init": {
-        "description": "Initialize file definitions",
-        "exec": rpc_files_init
+    "files_list": {
+        "description": "List file definitions",
+        "exec": rpc_files_list
     },
     "file_append_line": {
         "description": "Append line to file ({identifier: str, line: str})",
