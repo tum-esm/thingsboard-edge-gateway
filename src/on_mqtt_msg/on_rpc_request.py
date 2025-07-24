@@ -1,7 +1,10 @@
 import json
 import os
+import queue
 import signal
-from time import sleep
+import subprocess
+import threading
+from time import sleep, time, monotonic
 from typing import Any, Optional
 
 import utils.paths
@@ -114,6 +117,79 @@ def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
     send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
     return None
 
+def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
+    # Read command parameters
+    if type(params) is not dict:
+        return send_rpc_method_error(rpc_msg_id, "Running command failed: params is not a dictionary")
+    if "command" not in params:
+        return send_rpc_method_error(rpc_msg_id, "Running command failed: missing 'command' in params")
+    if type(params["command"]) is not str:
+        return send_rpc_method_error(rpc_msg_id, "Running command failed: 'command' must be a string")
+    if "timeout_s" in params and type(params["timeout_s"]) is not int:
+        return send_rpc_method_error(rpc_msg_id, "Running command failed: 'timeout_s' must be an integer")
+    timeout_s = params["timeout_s"] if "timeout_s" in params else 30
+    command = params["command"]
+
+    info(f"[RPC] Running command: ['{command}']")
+    def read_stream_to_queue(stream, out_q: queue.Queue[str]) -> None:
+        """Continuously read lines from `stream` and put them on a queue."""
+        with stream:  # closes the pipe on exit
+            for line in iter(stream.readline, ''):   # '' ⇒ EOF in text mode
+                out_q.put(line)
+    def read_lines_from_queue(line_queue: queue.Queue[str]) -> list[str]:
+        collected_lines = []
+        while True:
+             try:
+                 line = line_queue.get_nowait()
+             except queue.Empty:
+                 break
+             collected_lines.append(line)
+        return collected_lines
+
+    # Run the command
+    start_timestamp = monotonic()
+    sub_process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,  # merge stderr → stdout
+        text=True,  # get str, not bytes
+        bufsize=1,  # line‑buffered
+        encoding='utf‑8', # decode stdout to string via utf-8
+        errors='replace' # replace invalid characters with placeholder char during utf-8 decoding
+    )
+
+    stdout_line_queue: queue.Queue[str] = queue.Queue()
+    pipe_reading_thread = threading.Thread(target=read_stream_to_queue, args=(sub_process.stdout, stdout_line_queue),
+                                           daemon=True)
+    pipe_reading_thread.start()
+
+    output_lines: list[str] = []
+    try:
+        while sub_process.poll() is None:
+            # Drain any lines that are already waiting
+            output_lines.extend(read_lines_from_queue(stdout_line_queue))
+
+            if monotonic() - start_timestamp >= timeout_s:
+                sub_process.kill()
+                sub_process.wait()  # ensure process has ended
+                result = f"Error running command '{command}': Timeout after {timeout_s} seconds. Output: {'\n'.join(output_lines)}"
+                error(f"[RPC] {result})")
+                return send_rpc_method_error(rpc_msg_id, result)
+
+            sleep(0.05)  # small sleep: reduce CPU without blocking
+        sub_process.wait()
+    finally:
+        # If we exit early (timeout or exception) make sure the reader thread ends
+        pipe_reading_thread.join(timeout=1)
+
+    # read any remaining lines from the queue
+    while not stdout_line_queue.empty():
+        output_lines.extend(read_lines_from_queue(stdout_line_queue))
+
+    result = f"Command '{command}' exited with code {sub_process.returncode}. Output: {'\n'.join(output_lines)}"
+    send_rpc_response(rpc_msg_id, f"OK - Command executed - {result}")
+    return None
+
 
 def verify_start_end_timestamp_params(params: Any) -> Optional[str]:
     if type(params) is not dict:
@@ -206,6 +282,10 @@ RPC_METHODS = {
     "restart_controller": {
         "description": "Restart the controller docker container",
         "exec": rpc_restart_controller
+    },
+    "run_command": {
+        "description": "Run arbitrary command ({command: str, timeout_s: int}) - use with caution!",
+        "exec": rpc_run_command
     },
     "files_upsert": {
         "description": "Upsert file definition ({identifier: str, path: str})",

@@ -161,8 +161,7 @@ try:
                     debug('Sending buffered log message: ' + str(message[0]))
                     if not mqtt_client.publish_log(message[0][1], message[0][2], message[0][3]):
                         continue
-                    gateway_logs_buffer_db.execute(
-                        f"DELETE FROM {"log_buffer"} WHERE id = {message[0][0]}")
+                    gateway_logs_buffer_db.execute(f"DELETE FROM {"log_buffer"} WHERE id = {message[0][0]}")
                 continue
 
             # check if there are any new outgoing mqtt messages in the sqlite db
