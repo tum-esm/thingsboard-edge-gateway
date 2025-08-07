@@ -18,7 +18,7 @@ provision_reply = None
 def self_provisioning_get_access_token(args: argparse.Namespace) -> str:
     global provision_reply
     # check if access token exists
-    access_token_path_env_var = os.environ.get("THINGSBOARD_GATEWAY_ACCESS_TOKEN") or "./tb_access_token"
+    access_token_path_env_var = os.environ.get("THINGSBOARD_ACCESS_TOKEN") or "./tb_access_token"
 
     if os.path.exists(access_token_path_env_var):
         with open(access_token_path_env_var, "r") as f:
@@ -89,5 +89,5 @@ def get_device_name(args: argparse.Namespace) -> str:
             getattr(args, "device_name", None)
         or os.environ.get("THINGSBOARD_DEVICE_NAME")
         or socket.gethostname()
-        or ("acropolis-gateway-" + str(randrange(1000000, 9999999, 1)))
+        or ("teg-" + str(randrange(1000000, 9999999, 1)))
     )

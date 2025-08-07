@@ -105,22 +105,22 @@ make clean && make
 ### **Install and Configure UDHCPC**
 
 ```bash
-cd /home/pi/acropolis/setup/RPi-edge-client
+cd /home/pi/thingsboard-edge-gateway/setup/RPi-edge-client
 sudo cp default.script /usr/share/udhcpc/
 sudo chmod -R 0777 /usr/share/udhcpc/
 ```
 
-### **Create acropolis folder**
+### **Create the thingsboard-edge-gateway folder**
 
 ```bash
-sudo mkdir -p /home/pi/acropolis/
-git clone https://github.com/tum-esm/ACROPOLIS-edge.git ./acropolis-edge
+sudo mkdir -p /home/pi/thingsboard-edge-gateway/
+git clone https://github.com/tum-esm/thingsboard-edge-gateway.git ./thingsboard-edge-gateway
 sudo git config --system --add safe.directory '*'
-cd /home/pi/acropolis/setup/RPi-edge-client
-sudo cp network_lost_reboot_trigger.sh /home/pi/acropolis/
-sudo chmod a+x /home/pi/acropolis/network_lost_reboot_trigger.sh
-sudo cp run_dockerized_gateway.sh /home/pi/acropolis/
-sudo chmod a+x /home/pi/acropolis/run_dockerized_gateway.sh
+cd /home/pi/thingsboard-edge-gateway/setup/RPi-edge-client
+sudo cp network_lost_reboot_trigger.sh /home/pi/thingsboard-edge-gateway/
+sudo chmod a+x /home/pi/thingsboard-edge-gateway/network_lost_reboot_trigger.sh
+sudo cp run_dockerized_gateway.sh /home/pi/thingsboard-edge-gateway/
+sudo chmod a+x /home/pi/thingsboard-edge-gateway/run_dockerized_gateway.sh
 ```
 
 ### **Update Crontab for Automation**
@@ -148,30 +148,30 @@ PATH=/usr/sbin:/usr/bin:/sbin:/bin
 @daily docker system prune -a --force --filter "until=8760h"
 
 # Reboot on connectivity loss
-@daily /bin/bash /home/pi/acropolis/network_lost_reboot_trigger.sh
+@daily /bin/bash /home/pi/thingsboard-edge-gateway/network_lost_reboot_trigger.sh
 
 # Delete old log files (older than 100 days)
-@daily /usr/bin/find /home/pi/acropolis/logs/ -type f -mtime +100 -delete
+@daily /usr/bin/find /home/pi/thingsboard-edge-gateway/logs/ -type f -mtime +100 -delete
 ```
 
 # Setup Gateway
 
 ```bash
 cd /home/pi
-mkdir -p /home/pi/acropolis/data
-mkdir -p /home/pi/acropolis/logs
+mkdir -p /home/pi/thingsboard-edge-gateway/data
+mkdir -p /home/pi/thingsboard-edge-gateway/logs
 ```
 
 ### **Clone and Build Gateway**
 
 ```bash
-cd /home/pi/acropolis/software/gateway
+cd /home/pi/thingsboard-edge-gateway/software/gateway
 sudo ./build_gateway_runner_docker_image.sh
 cd /home/pi/acropolis
 sudo nano run_dockerized_gateway.sh # Update `THINGSBOARD_PROVISION_*` environment parameters
 ```
 
-(Optional) Skip if you want to create an template image for multiple systems
+(Optional) Skip if you want to create a template image for multiple systems
 
 ```bash
 ./run_dockerized_gateway.sh #registers device with ThingsBoard and creates tb_access_token
@@ -199,7 +199,7 @@ Insert fresh SD Card into personal computer
 ```bash
 diskutil list
 diskutil umountDisk /dev/disk[*]
-gzip -dc //Users/.../acropolis-edge-image.gz | sudo dd of=/dev/disk[*] bs=4M status=progres
+gzip -dc //Users/.../thingsboard-edge-gateway-image.gz | sudo dd of=/dev/disk[*] bs=4M status=progres
 ```
 
 Remove SD Card and insert into RaspberryPi
@@ -215,9 +215,8 @@ reboot
 ### **Run Gateway Script**
 
 ```bash
-cd /home/pi/acopolis/acropolis-edge/software/gateway
+cd /home/pi/thingsboard-edge-gateway
 # make sure no 'tb_access_token' exists
-cd /home/pi/acopolis
 ./run_dockerized_gateway.sh
 docker logs --tail 50 -f acropolis_edge_gateway
 ```

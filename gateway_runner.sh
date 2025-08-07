@@ -6,7 +6,7 @@ echo "Args: $args"
 # Expect the host filesystem to be mounted at /host
 chroot /host /bin/bash <<EOT
 
-cd $ACROPOLIS_GATEWAY_DIR
+cd $TEG_GATEWAY_DIR
 
 echo "Removing old virtual environment and creating a new one"
 rm -rf .venv
