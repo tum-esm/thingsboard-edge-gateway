@@ -139,6 +139,7 @@ class GatewayDockerClient:
                 return
             GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             build_result = self.docker_client.images.build(
+                # TODO: make this path configurable
                 path=os.path.join(os.path.dirname(GATEWAY_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
@@ -194,6 +195,7 @@ class GatewayDockerClient:
                     "bind": "/root/data",
                     "mode": "rw"
                 },
+                # TODO: remove this volume, the data path is sufficient (see above)
                 CONTROLLER_LOGS_PATH: {
                     "bind": "/root/logs",
                     "mode": "rw"

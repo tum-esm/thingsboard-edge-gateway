@@ -7,11 +7,28 @@ from modules.mqtt import GatewayMqttClient
 
 
 def on_msg_check_for_file_hashes_update(msg_payload: Any) -> bool:
-    files_hashes = utils.misc.get_maybe(msg_payload, "client", "files_content_hashes")
-    if files_hashes is None:
+    payload = utils.misc.get_maybe(msg_payload, "shared") or msg_payload
+    file_def_id = None
+    for key in payload:
+        if key.startswith("FILE_"):
+            file_def_id = key.replace("FILE_", "")
+            break
+    if file_def_id is None:
         return False
 
-    info("Files hashes received!")
+    file_def = utils.misc.get_maybe(payload, "FILE_" + file_def_id)
+
+    if file_def is None or not isinstance(file_def, dict):
+        error("Invalid file definition received")
+        return False
+
+    # check path property
+    if "path" not in file_def or not isinstance(file_def["path"], str):
+        error("Invalid file definition received, missing 'path' property")
+        return False
+
+
+    info("File definition received! Def ID: " + file_def_id)
     try:
         for file_id in files_hashes:
             if not isinstance(file_id, str) or not isinstance(files_hashes[file_id], dict):

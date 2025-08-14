@@ -68,6 +68,7 @@ class GatewayFileWriter:
 
     # Read file contents into string, returns a tuple of (file_contents, is_updated)
     def read_file(self, file_path: str) -> (str, bool):
+        # TODO: simplify this
         try:
             with open(file_path, "r") as f:
                 file_contents = f.read()
@@ -111,3 +112,9 @@ class GatewayFileWriter:
         with open(self.files[identifier], "w") as f:
             f.write(content)
         self.write_file_content_to_client_attribute(identifier, self.read_file(self.files[identifier])[0])
+
+    def get_file_hash(self, path: str):
+        if path not in self.hashes:
+            file_content, _ = self.read_file(path)
+            self.hashes[path] = md5(file_content.encode("utf-8")).hexdigest()
+        return self.hashes[path]
