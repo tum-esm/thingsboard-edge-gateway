@@ -20,6 +20,8 @@ from on_mqtt_msg.check_for_files_update import on_msg_check_for_file_hashes_upda
 from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
 from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
+from src.on_mqtt_msg.check_for_file_def_update import on_msg_check_for_file_definition_update
+from src.on_mqtt_msg.check_for_file_hash_update import on_msg_check_for_file_hash_update
 from utils.misc import get_maybe
 
 global_mqtt_client : Optional[GatewayMqttClient] = None
@@ -140,7 +142,9 @@ try:
                     if not any([
                             on_msg_check_for_config_update(msg_payload),
                             on_msg_check_for_ota_update(msg_payload),
-                            on_msg_check_for_file_hashes_update(msg_payload),
+                            on_msg_check_for_files_update(msg_payload),
+                            on_msg_check_for_file_hash_update(msg_payload),
+                            on_msg_check_for_file_definition_update(msg_payload),
                     ]):
                         warn("[MAIN] Got invalid message: " + str(msg))
                         warn("[MAIN] Skipping invalid message...")
