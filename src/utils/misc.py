@@ -26,3 +26,14 @@ def fatal_error(msg) -> None:
     signal.raise_signal( signal.SIGINT )
     sleep(15)
     sys.exit(1)
+
+def file_exists(path: str) -> bool:
+    """Check if a file exists at the given path."""
+    try:
+        with open(path, 'r'):
+            return True
+    except FileNotFoundError:
+        return False
+    except Exception as e:
+        error(f"Error checking if file exists at {path}: {e}")
+        return False

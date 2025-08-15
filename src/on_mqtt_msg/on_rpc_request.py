@@ -46,35 +46,6 @@ def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any):
     info("[RPC] Pong")
     send_rpc_response(rpc_msg_id, "Pong")
 
-def rpc_files_upsert(rpc_msg_id: str, _method: Any, params: Any):
-    if type(params) is not dict:
-        return send_rpc_method_error(rpc_msg_id, "Upserting file definition failed: params is not a dictionary")
-
-    if "identifier" not in params or "path" not in params:
-        return send_rpc_method_error(rpc_msg_id, "Upserting file definition failed: missing 'identifier' or 'path' in params")
-
-    info(f"[RPC] Upserting file definition - {params['identifier']} -> {params['path']}")
-    # Check if the file exists
-    if not os.path.exists(params["path"]) or not os.path.isfile(params["path"]):
-        return send_rpc_method_error(rpc_msg_id, f"Upserting file definition failed: file '{params['path']}' does not exist")
-    GatewayFileWriter().upsert_file(params["identifier"], params["path"])
-    send_rpc_response(rpc_msg_id, f"OK - File definition upserted - {params['identifier']} -> {params['path']}")
-    return None
-
-def rpc_files_remove(rpc_msg_id: str, _method: Any, params: Any):
-    if type(params) is not str:
-        return send_rpc_method_error(rpc_msg_id, "Removing file definition failed: params is not a string")
-
-    info(f"[RPC] Removing file definition '{params}'")
-    GatewayFileWriter().remove_file(params)
-    send_rpc_response(rpc_msg_id, f"OK - File definition removed - '{params}'")
-    return None
-
-
-def rpc_files_list(rpc_msg_id: str, _method: Any, _params: Any):
-    info(f"[RPC] Listing file definitions")
-    send_rpc_response(rpc_msg_id, "OK - File definitions: " + json.dumps(GatewayFileWriter().files, indent=2))
-
 def rpc_file_append_line(rpc_msg_id: str, _method: Any, params: Any):
     if type(params) is not dict:
         return send_rpc_method_error(rpc_msg_id, "Appending file line failed: params is not a dictionary")
@@ -287,18 +258,6 @@ RPC_METHODS = {
     "run_command": {
         "description": "Run arbitrary command ({command: list [str], timeout_s: int [default 30s]}) - use with caution!",
         "exec": rpc_run_command
-    },
-    "files_upsert": {
-        "description": "Upsert file definition ({identifier: str, path: str})",
-        "exec": rpc_files_upsert
-    },
-    "files_remove": {
-        "description": "Remove file definition ({identifier: str})",
-        "exec": rpc_files_remove
-    },
-    "files_list": {
-        "description": "List file definitions",
-        "exec": rpc_files_list
     },
     "file_append_line": {
         "description": "Append line to file ({identifier: str, line: str})",

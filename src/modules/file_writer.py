@@ -27,7 +27,6 @@ class GatewayFileWriter:
 
     def set_files(self, files: dict) -> None:
         self.files = files
-        self.update_all_files_content_client_attributes()
 
     def initialize_files(self) -> None:
         if self.files is not None:
@@ -64,7 +63,10 @@ class GatewayFileWriter:
         GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({"files": self.files}))
 
     def write_file_content_to_client_attribute(self, file_identifier: str, file_content: str) -> None:
-        GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({("file_" + file_identifier): file_content}))
+        GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({("FILE_READ_" + file_identifier): file_content}))
+
+    def write_file_hash_to_client_attribute(self, file_identifier: str, file_hash: str) -> None:
+        GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({("FILE_HASH_" + file_identifier): file_hash}))
 
     # Read file contents into string, returns a tuple of (file_contents, is_updated)
     def read_file(self, file_path: str) -> (str, bool):
@@ -118,3 +120,8 @@ class GatewayFileWriter:
             file_content, _ = self.read_file(path)
             self.hashes[path] = md5(file_content.encode("utf-8")).hexdigest()
         return self.hashes[path]
+
+    def get_files(self):
+        if self.files is None:
+            raise Exception("Files definition is not available")
+        return self.files
