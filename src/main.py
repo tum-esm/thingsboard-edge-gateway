@@ -17,7 +17,7 @@ from modules.git_client import GatewayGitClient
 from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_file_content_update import on_msg_check_for_file_content_update
-from on_mqtt_msg.check_for_file_hashes_update import on_msg_check_for_file_hash_update
+from on_mqtt_msg.check_for_file_hashes_update import on_msg_check_for_file_hash_update, FILE_HASHES_TB_KEY
 from on_mqtt_msg.check_for_files_update import on_msg_check_for_files_update
 from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
 from on_mqtt_msg.on_rpc_request import on_rpc_request
@@ -83,7 +83,7 @@ try:
         git_client: GatewayGitClient = GatewayGitClient()
         args = parse_args()
         debug(f"Args: {args}")
-        access_token = self_provisioning_get_access_token(args)
+        provisioned, access_token = self_provisioning_get_access_token(args)
 
         # initialize sqlite database connections
         archive_sqlite_db = sqlite.SqliteConnection(utils.paths.GATEWAY_ARCHIVE_DB_PATH)
@@ -111,12 +111,18 @@ try:
         info("Gateway started successfully")
         mqtt_client.update_sys_info_attribute()
 
+        if provisioned:
+            info("Gateway is provisioned for first time, initializing attributes...")
+            GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({ FILE_HASHES_TB_KEY: {}}))
+
         # daemon thread for updating file content client attributes every 30 seconds
         def file_update_check_daemon():
             """Daemon thread to check for file updates every 30 seconds."""
             while True:
                 try:
-                    GatewayFileWriter().update_all_files_content_client_attributes()
+                    debug("Checking for file updates...")
+                    # TODO
+                    # GatewayFileWriter().update_all_files_content_client_attributes()
                 except Exception as ex:
                     warn(f"Error updating file content: {ex}")
                 sleep(30)
@@ -194,7 +200,8 @@ try:
                 continue
 
             # automatically restart the controller's docker container if it is not running
-            if not docker_client.is_edge_running():
+            # TODO
+            if False and not docker_client.is_edge_running():
                 info("Controller is not running, starting new container in 10s...")
                 sleep(10)
                 docker_client.start_controller()
@@ -214,7 +221,8 @@ try:
                     }
                 }))
 
-            if max(last_controller_health_check_ts, controller_running_since_ts) < int(time_ns() / 1_000_000) - (6 * 3600_000):
+            # TODO
+            if False and max(last_controller_health_check_ts, controller_running_since_ts) < int(time_ns() / 1_000_000) - (6 * 3600_000):
                 warn("Controller did not send health check in the last 6 hours, restarting container...")
                 docker_client.stop_edge()
 

@@ -3,13 +3,15 @@ import json
 from modules.file_writer import GatewayFileWriter
 from modules.logging import info, error
 from typing import Any
-import utils
-from utils.misc import file_exists
+
+from modules.mqtt import GatewayMqttClient
+from on_mqtt_msg.check_for_file_hashes_update import is_file_readonly, FILE_HASHES_TB_KEY
+from utils.misc import file_exists, get_maybe
 
 FILE_CONTENT_PREFIX = "FILE_CONTENT_"
 
 def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
-    payload = utils.misc.get_maybe(msg_payload, "shared") or msg_payload
+    payload = get_maybe(msg_payload, "shared") or msg_payload
     file_id = None
     for key in payload:
         if key.startswith(FILE_CONTENT_PREFIX):
@@ -24,23 +26,75 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
         return False
     file_definition = files_definitions[file_id]
 
-    file_content = utils.misc.get_maybe(payload, FILE_CONTENT_PREFIX + file_id)
-    if file_content is None:
+    is_readonly = is_file_readonly(file_definition)
+    if is_readonly:
+        error(f"File {file_id} is read-only, ignoring content update")
+        return False
+
+    input_file_content = get_maybe(payload, FILE_CONTENT_PREFIX + file_id)
+    if input_file_content is None:
         error("Invalid file content update received")
         return False
-    if isinstance(file_content, dict):
-        file_content = json.dumps(file_content)
 
-    # check if file exists
-    file_path = file_definition["path"]
-    if not file_exists(file_path):
+    # encode file content to bytes based on content encoding
+    file_encoding = get_maybe(file_definition, "content_encoding")
+    if file_encoding == "json":
+        if isinstance(input_file_content, dict):
+            file_content = json.dumps(input_file_content)
+            file_content = file_content.encode("utf-8")
+        else:
+            error(f"Invalid file content for {file_id}, expected JSON object")
+            return False
+    elif file_encoding == "base64":
+        import base64
+        if isinstance(input_file_content, str):
+            try:
+                file_content = base64.b64decode(input_file_content)
+            except Exception as e:
+                error(f"Failed to decode base64 content for {file_id}: {e}")
+                return False
+        else:
+            error(f"Invalid file content for {file_id}, expected base64 string")
+            return False
+    elif file_encoding == "text":
+        if isinstance(input_file_content, str):
+            # encode as utf-8 bytes
+            file_content = input_file_content.encode("utf-8")
+        else:
+            error(f"Invalid file content for {file_id}, expected text string")
+            return False
+    else:
+        error(f"Unknown content encoding for {file_id}: {file_encoding}")
+        return False
+
+    file_write_version = get_maybe(file_definition, "write_version")
+    file_path = get_maybe(file_definition, "path")
+
+    # check if file already exists, if not, check if it should be created
+    if file_exists(file_path) or get_maybe(file_definition, "create_if_not_exist") in [None, True, "True"]:
         if file_definition["content_encoding"]:
             if file_definition["create_if_not_exist"]:
                 info(f"File {file_id} does not exist at path: {file_path}, creating it")
                 try:
-                    GatewayFileWriter().write_file_content_to_client_attribute(file_id, file_content)
-                    file_content_hash = GatewayFileWriter().get_file_hash(file_path)
-                    GatewayFileWriter().write_file_hash_to_client_attribute(file_id, file_content_hash)
+                    # write content to file
+                    with open(file_path, "wb") as f:
+                        f.write(file_content)
+                    # calculate new file hash and update it to ThingsBoard
+                    file_content_hash = GatewayFileWriter().calc_file_hash(file_path)
+                    file_hashes = GatewayFileWriter().get_file_hashes()
+                    file_hashes[file_id] = {"hash": file_content_hash}
+                    if file_write_version not in [None, ""]:
+                        file_hashes[file_id]["write_version"] = file_write_version
+                    GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
+                        FILE_HASHES_TB_KEY: file_hashes
+                    }))
+                    GatewayFileWriter().set_hashes(file_hashes)
+
+                    # update file content READ attribute
+                    GatewayFileWriter().write_file_content_to_client_attribute(file_id, input_file_content)
+
+                    # request file definitions again to verify everything is correct
+                    GatewayMqttClient().request_attributes({"clientKeys": f"FILES"})
                 except Exception as e:
                     error(f"Failed to create file {file_id} at path {file_path}: {e}")
                     return False

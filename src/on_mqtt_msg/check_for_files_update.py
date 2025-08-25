@@ -1,44 +1,44 @@
 import json
 from modules.logging import info, error
 from typing import Any
-import utils
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
-from src.utils.misc import file_exists
+from src.utils.misc import get_maybe
 
-content_encodings = ["base64", "text"]
+content_encodings = [None, "base64", "text"]
 
 def on_msg_check_for_files_update(msg_payload: Any) -> bool:
-    files = utils.misc.get_maybe(msg_payload, "shared", "FILES")
-    if not isinstance(files, list):
+    files = get_maybe(msg_payload, "shared", "FILES") or get_maybe(msg_payload, "FILES")
+
+    if files is None or not isinstance(files, dict):
         return False
 
-    info("Files hashes received!")
+    info("Files definitions received!")
     try:
         for file_id in files:
-            if not isinstance(files[file_id], dict):
+            if not isinstance(get_maybe(files,file_id), dict):
                 error("Invalid files update received")
                 return False
 
-            if not isinstance(files[file_id]["path"], str):
+            if not isinstance(get_maybe(files,file_id, "path"), str):
                 error("Invalid files update received, missing 'path' property")
                 return False
 
-            if isinstance(files[file_id]["content_encoding"], str) and not content_encodings.__contains__(files[file_id]["content_encoding"]):
-                error("Invalid files update received, unsupported 'content_encoding' property: " + files[file_id]["content_encoding"])
+            if get_maybe(files,file_id, "content_encoding") not in content_encodings:
+                error("Invalid files update received, unsupported 'content_encoding' property: " + get_maybe(files,file_id, "content_encoding"))
                 return False
 
-            if files[file_id]["create_if_not_exist"] and not isinstance(files[file_id]["create_if_not_exist"], bool):
-                error("Invalid files update received, 'create_if_not_exist' property must be a boolean")
+            if get_maybe(files,file_id, "create_if_not_exist") not in [None, True, False]:
+                error("Invalid files update received, optional 'create_if_not_exist' property must be a boolean")
                 return False
 
-            if files[file_id]["restart_controller_on_change"] and not isinstance(files[file_id]["restart_controller_on_change"], bool):
-                error("Invalid files update received, 'restart_controller_on_change' property must be a boolean")
+            if get_maybe(files,file_id, "restart_controller_on_change") not in [None, True, False]:
+                error("Invalid files update received, optional 'restart_controller_on_change' property must be a boolean")
                 return False
 
         GatewayFileWriter().set_files(files)
-        GatewayMqttClient().request_attributes({"clientKeys": f"FILE_CONTENT_HASHES"})
+        GatewayMqttClient().request_attributes({"clientKeys": f"FILE_HASHES"})
 
     except json.JSONDecodeError:
         error("Failed to parse files definition")

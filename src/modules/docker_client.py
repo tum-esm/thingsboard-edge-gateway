@@ -25,7 +25,10 @@ class GatewayDockerClient:
             debug("[DOCKER-CLIENT] Initializing GatewayDockerClient")
             super().__init__()
             singleton_instance = self
-            self.docker_client = docker.from_env()
+            try:
+                self.docker_client = docker.from_env()
+            except Exception as e:
+                error("[DOCKER-CLIENT] Failed to initialize GatewayDockerClient: {}".format(e))
 
     # Singleton pattern
     def __new__(cls: Any) -> Any:
