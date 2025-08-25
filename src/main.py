@@ -120,11 +120,14 @@ try:
             """Daemon thread to check for file updates every 30 seconds."""
             while True:
                 try:
-                    debug("Checking for file updates...")
-                    # TODO
-                    # GatewayFileWriter().update_all_files_content_client_attributes()
+                    debug("Checking for file changes...")
+                    file_definitions = GatewayFileWriter().get_files()
+                    for file_id in file_definitions:
+                        if GatewayFileWriter().did_file_change(get_maybe(file_definitions, file_id, "path")):
+                            info(f"File {file_definitions[file_id]} changed on disk - requesting update")
+                            GatewayMqttClient().request_attributes({"clientKeys": FILE_HASHES_TB_KEY})
                 except Exception as ex:
-                    warn(f"Error updating file content: {ex}")
+                    warn(f"Error checking for file changes: {ex}")
                 sleep(30)
         file_update_thread = threading.Thread(target=file_update_check_daemon, daemon=True)
         file_update_thread.start()

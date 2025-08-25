@@ -3,6 +3,7 @@ from modules.logging import info, error
 from typing import Any
 from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
+from on_mqtt_msg.check_for_file_hashes_update import FILE_HASHES_TB_KEY
 
 from src.utils.misc import get_maybe
 
@@ -38,7 +39,7 @@ def on_msg_check_for_files_update(msg_payload: Any) -> bool:
                 return False
 
         GatewayFileWriter().set_files(files)
-        GatewayMqttClient().request_attributes({"clientKeys": f"FILE_HASHES"})
+        GatewayMqttClient().request_attributes({"clientKeys": FILE_HASHES_TB_KEY})
 
     except json.JSONDecodeError:
         error("Failed to parse files definition")

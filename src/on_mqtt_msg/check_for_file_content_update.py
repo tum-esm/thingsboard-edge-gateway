@@ -69,41 +69,35 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
 
     file_write_version = get_maybe(file_definition, "write_version")
     file_path = get_maybe(file_definition, "path")
-
+    create_if_not_exist = get_maybe(file_definition, "create_if_not_exist") in [None, True, "True"]
     # check if file already exists, if not, check if it should be created
-    if file_exists(file_path) or get_maybe(file_definition, "create_if_not_exist") in [None, True, "True"]:
-        if file_definition["content_encoding"]:
-            if file_definition["create_if_not_exist"]:
-                info(f"File {file_id} does not exist at path: {file_path}, creating it")
-                try:
-                    # write content to file
-                    with open(file_path, "wb") as f:
-                        f.write(file_content)
-                    # calculate new file hash and update it to ThingsBoard
-                    file_content_hash = GatewayFileWriter().calc_file_hash(file_path)
-                    file_hashes = GatewayFileWriter().get_file_hashes()
-                    file_hashes[file_id] = {"hash": file_content_hash}
-                    if file_write_version not in [None, ""]:
-                        file_hashes[file_id]["write_version"] = file_write_version
-                    GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
-                        FILE_HASHES_TB_KEY: file_hashes
-                    }))
-                    GatewayFileWriter().set_hashes(file_hashes)
+    if file_exists(file_path) or create_if_not_exist:
+        info(f"Writing file {file_id} at path: {file_path}")
+        try:
+            # write content to file
+            with open(file_path, "wb") as f:
+                f.write(file_content)
+            # calculate new file hash and update it to ThingsBoard
+            file_content_hash = GatewayFileWriter().calc_file_hash(file_path)
+            file_hashes = GatewayFileWriter().get_tb_file_hashes()
+            file_hashes[file_id] = {"hash": file_content_hash}
+            if file_write_version not in [None, ""]:
+                file_hashes[file_id]["write_version"] = file_write_version
+            GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
+                FILE_HASHES_TB_KEY: file_hashes
+            }))
+            GatewayFileWriter().set_tb_hashes(file_hashes)
 
-                    # update file content READ attribute
-                    GatewayFileWriter().write_file_content_to_client_attribute(file_id, input_file_content)
+            # update file content READ attribute
+            GatewayFileWriter().write_file_content_to_client_attribute(file_id, input_file_content)
 
-                    # request file definitions again to verify everything is correct
-                    GatewayMqttClient().request_attributes({"clientKeys": f"FILES"})
-                except Exception as e:
-                    error(f"Failed to create file {file_id} at path {file_path}: {e}")
-                    return False
-            else:
-                error(f"File {file_id} does not exist at path: {file_path} and 'create_if_not_exist' is set to false")
-                return False
-        else:
-            error(f"File {file_id} does not exist at path: {file_path} and 'content_encoding' is not set")
-            GatewayFileWriter().write_file_content_to_client_attribute(file_id, "")
-            return False
+            # request file definitions again to verify everything is correct
+            GatewayMqttClient().request_attributes({"clientKeys": f"FILES"})
+        except Exception as e:
+            error(f"Failed to create file {file_id} at path {file_path}: {e}")
+            return True
+    else:
+        error(f"File {file_id} does not exist at path: {file_path} and 'create_if_not_exist' is set to false")
+        return True
 
     return True

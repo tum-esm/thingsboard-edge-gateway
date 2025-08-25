@@ -32,7 +32,7 @@ def on_msg_check_for_file_hash_update(msg_payload: Any) -> bool:
             if not is_readonly and get_maybe(file_defs, file_id, "create_if_not_exist") in [None, True, "True"]:
                 # if the file does not exist and should be created, request its content
                 info(f"File {file_path} does not exist, requesting content update for {file_id}")
-                GatewayMqttClient().request_attributes({"clientKeys": f"FILE_CONTENT_" + file_id})
+                GatewayMqttClient().request_attributes({"sharedKeys": f"FILE_CONTENT_" + file_id})
         else:
             # if the file exists, check its hash
             current_file_hash = GatewayFileWriter().calc_file_hash(file_path)
@@ -42,20 +42,21 @@ def on_msg_check_for_file_hash_update(msg_payload: Any) -> bool:
 
             file_changed = file_id not in file_hashes or get_maybe(file_hashes,file_id,"hash") != current_file_hash
             if file_changed:
+                info(f"File {file_path} has changed, updating id '{file_id}'")
                 GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
-                    ("FILE_READ_CONTENT_" + file_id): GatewayFileWriter().read_file(file_path)[0]
+                    ("FILE_READ_" + file_id): GatewayFileWriter().read_file(file_path)
                 }))
                 if not is_readonly:
                     # file is not readonly, request which content should be written to it
-                    info(f"Requesting file content update for {file_id}")
-                    GatewayMqttClient().request_attributes({"clientKeys": f"FILE_CONTENT_" + file_id})
+                    info(f"Requesting file content update for '{file_id}'")
+                    GatewayMqttClient().request_attributes({"sharedKeys": f"FILE_CONTENT_" + file_id})
 
             # check if write version has changed
             if get_maybe(file_defs, file_id, "write_version") not in [None, ""]:
                 write_version_changed = get_maybe(file_defs, file_id, "write_version") != get_maybe(file_hashes, file_id, "write_version")
                 if write_version_changed and not is_readonly:
                     info(f"File {file_path} write version changed, requesting content update for {file_id}")
-                    GatewayMqttClient().request_attributes({"clientKeys": f"FILE_CONTENT_" + file_id})
+                    GatewayMqttClient().request_attributes({"sharedKeys": f"FILE_CONTENT_" + file_id})
 
     GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
         FILE_HASHES_TB_KEY: new_hashes
