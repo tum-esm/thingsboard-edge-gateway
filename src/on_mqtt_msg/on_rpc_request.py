@@ -46,50 +46,6 @@ def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any):
     info("[RPC] Pong")
     send_rpc_response(rpc_msg_id, "Pong")
 
-def rpc_file_append_line(rpc_msg_id: str, _method: Any, params: Any):
-    if type(params) is not dict:
-        return send_rpc_method_error(rpc_msg_id, "Appending file line failed: params is not a dictionary")
-
-    if "identifier" not in params or "line" not in params:
-        return send_rpc_method_error(rpc_msg_id, "Appending file line failed: missing 'identifier' or 'line' in params")
-    if type(params["identifier"]) is not str or type(params["line"]) is not str:
-        return send_rpc_method_error(rpc_msg_id, "Appending file line failed: 'identifier' and 'line' must be strings")
-
-    info(f"[RPC] Appending file line - '{params['identifier']}' += '{params['line']}'")
-    GatewayFileWriter().append_file_line(params["identifier"], params["line"])
-    send_rpc_response(rpc_msg_id, f"OK - File line appended - '{params['identifier']}' += '{params['line']}'")
-    return None
-
-
-def rpc_file_remove_line(rpc_msg_id: str, _method: Any, params: Any):
-    if type(params) is not dict:
-        return send_rpc_method_error(rpc_msg_id, "Removing file line failed: params is not a dictionary")
-
-    if "identifier" not in params or "line" not in params:
-        return send_rpc_method_error(rpc_msg_id, "Removing file line failed: missing 'identifier' or 'line' in params")
-    if type(params["identifier"]) is not str or type(params["line"]) is not str:
-        return send_rpc_method_error(rpc_msg_id, "Removing file line failed: 'identifier' and 'line' must be strings")
-
-    info(f"[RPC] Removing file line - '{params['identifier']}' -= '{params['line']}'")
-    GatewayFileWriter().remove_file_line(params["identifier"], params["line"])
-    send_rpc_response(rpc_msg_id, f"OK - File line removed - '{params['identifier']}' -= '{params['line']}'")
-    return None
-
-
-def rpc_file_overwrite_content(rpc_msg_id: str, _method: Any, params: Any):
-    if type(params) is not dict:
-        return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: params is not a dictionary")
-
-    if "identifier" not in params or "content" not in params:
-        return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: missing 'identifier' or 'content' in params")
-    if type(params["identifier"]) is not str or type(params["content"]) is not str:
-        return send_rpc_method_error(rpc_msg_id, "Overwriting file content failed: 'identifier' and 'content' must be strings")
-
-    info(f"[RPC] Overwriting file content - '{params['identifier']}' = '{params['content']}'")
-    GatewayFileWriter().overwrite_file_content(params["identifier"], params["content"])
-    send_rpc_response(rpc_msg_id, f"OK - File content overwritten - '{params['identifier']}' = '{params['content']}'")
-    return None
-
 def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
     # Read command parameters
     if type(params) is not dict:
@@ -258,18 +214,6 @@ RPC_METHODS = {
     "run_command": {
         "description": "Run arbitrary command ({command: list [str], timeout_s: int [default 30s]}) - use with caution!",
         "exec": rpc_run_command
-    },
-    "file_append_line": {
-        "description": "Append line to file ({identifier: str, line: str})",
-        "exec": rpc_file_append_line
-    },
-    "file_remove_line": {
-        "description": "Remove line from file ({identifier: str, line: str})",
-        "exec": rpc_file_remove_line
-    },
-    "file_overwrite_content": {
-        "description": "Overwrite file content ({identifier: str, content: str})",
-        "exec": rpc_file_overwrite_content
     },
     "archive_republish_messages": {
         "description": "Republish messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})",

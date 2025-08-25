@@ -1,6 +1,6 @@
 import json
 
-from modules.file_writer import GatewayFileWriter
+from modules.file_writer import GatewayFileWriter, write_file_content_to_client_attribute
 from modules.logging import info, error
 from typing import Any
 
@@ -89,7 +89,7 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
             GatewayFileWriter().set_tb_hashes(file_hashes)
 
             # update file content READ attribute
-            GatewayFileWriter().write_file_content_to_client_attribute(file_id, input_file_content)
+            write_file_content_to_client_attribute(file_id, input_file_content)
 
             # request file definitions again to verify everything is correct
             GatewayMqttClient().request_attributes({"clientKeys": f"FILES"})
