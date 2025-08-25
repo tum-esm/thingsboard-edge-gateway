@@ -1,7 +1,7 @@
 import json
 import os
 from modules.logging import info, error
-from modules.file_writer import GatewayFileWriter
+from modules.file_writer import GatewayFileWriter, write_file_content_to_client_attribute
 from typing import Any
 import utils
 from modules.mqtt import GatewayMqttClient
@@ -26,6 +26,11 @@ def on_msg_check_for_file_hash_update(msg_payload: Any) -> bool:
     for file_id in file_defs:
         file_path = get_maybe(file_defs, file_id, "path")
         is_readonly = is_file_readonly(file_defs[file_id])
+        previous_file_hash = get_maybe(file_hashes, file_id, "hash")
+        current_file_hash = GatewayFileWriter().calc_file_hash(file_path)
+        new_hashes[file_id] = {
+            "hash": current_file_hash,
+        }
 
         # check if the file exists and if it doesn't, if it should be created
         if not os.path.exists(file_path) or not os.path.isfile(file_path):
@@ -33,19 +38,14 @@ def on_msg_check_for_file_hash_update(msg_payload: Any) -> bool:
                 # if the file does not exist and should be created, request its content
                 info(f"File {file_path} does not exist, requesting content update for {file_id}")
                 GatewayMqttClient().request_attributes({"sharedKeys": f"FILE_CONTENT_" + file_id})
+            elif is_readonly and current_file_hash != get_maybe(file_hashes, file_id, "hash"):
+                info(f"File {file_path} no longer exists. Updating attributes for id '{file_id}'")
+                write_file_content_to_client_attribute(file_id, GatewayFileWriter().read_file(file_path) or "E_NOFILE")
         else:
             # if the file exists, check its hash
-            current_file_hash = GatewayFileWriter().calc_file_hash(file_path)
-            new_hashes[file_id] = {
-                "hash": current_file_hash,
-            }
-
-            file_changed = file_id not in file_hashes or get_maybe(file_hashes,file_id,"hash") != current_file_hash
-            if file_changed:
+            if previous_file_hash != current_file_hash:
                 info(f"File {file_path} has changed, updating id '{file_id}'")
-                GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
-                    ("FILE_READ_" + file_id): GatewayFileWriter().read_file(file_path)
-                }))
+                write_file_content_to_client_attribute(file_id, GatewayFileWriter().read_file(file_path) or "E_NOFILE")
                 if not is_readonly:
                     # file is not readonly, request which content should be written to it
                     info(f"Requesting file content update for '{file_id}'")

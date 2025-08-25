@@ -38,14 +38,16 @@ class GatewayFileWriter:
         self.tb_hashes = hashes
 
     # Read file contents into string, returns a tuple of (file_contents, is_updated)
-    def read_file(self, file_path: str) -> str:
+    def read_file(self, file_path: str) -> str | None:
         try:
             with open(file_path, "r") as f:
                 file_content = f.read()
+                file_hash = md5(file_content.encode("utf-8")).hexdigest()
                 if file_path not in self.hashes:
-                    self.hashes[file_path] = md5(file_content.encode("utf-8")).hexdigest()
+                    self.hashes[file_path] = file_hash
+                return file_content
         except FileNotFoundError:
-            error(f"No file found at path: {file_path}")
+            return None
 
     def overwrite_file_content(self, identifier, content):
         if self.files is None:
@@ -58,6 +60,8 @@ class GatewayFileWriter:
 
     def calc_file_hash(self, path: str):
         file_content = self.read_file(path)
+        if file_content is None:
+            return "E_NOFILE"
         return md5(file_content.encode("utf-8")).hexdigest()
 
     def did_file_change(self, path: str):
