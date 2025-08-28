@@ -8,6 +8,13 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
+Add local user to the `docker` group to run docker commands without sudo:
+
+```bash
+sudo usermod -a -G docker $USER
+newgrp docker
+```
+
 **Perform type checks:**
 
 ```bash

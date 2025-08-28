@@ -25,7 +25,10 @@ class GatewayDockerClient:
             debug("[DOCKER-CLIENT] Initializing GatewayDockerClient")
             super().__init__()
             singleton_instance = self
-            self.docker_client = docker.from_env()
+            try:
+                self.docker_client = docker.from_env()
+            except Exception as e:
+                error("[DOCKER-CLIENT] Failed to initialize GatewayDockerClient: {}".format(e))
 
     # Singleton pattern
     def __new__(cls: Any) -> Any:
@@ -139,6 +142,7 @@ class GatewayDockerClient:
                 return
             GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             build_result = self.docker_client.images.build(
+                # TODO: make this path configurable
                 path=os.path.join(os.path.dirname(GATEWAY_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
@@ -194,6 +198,7 @@ class GatewayDockerClient:
                     "bind": "/root/data",
                     "mode": "rw"
                 },
+                # TODO: remove this volume, the data path is sufficient (see above)
                 CONTROLLER_LOGS_PATH: {
                     "bind": "/root/logs",
                     "mode": "rw"
