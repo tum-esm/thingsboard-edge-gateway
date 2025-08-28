@@ -17,8 +17,8 @@ from modules.git_client import GatewayGitClient
 from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_file_content_update import on_msg_check_for_file_content_update
-from on_mqtt_msg.check_for_file_hashes_update import on_msg_check_for_file_hash_update, FILE_HASHES_TB_KEY
-from on_mqtt_msg.check_for_files_update import on_msg_check_for_files_update
+from on_mqtt_msg.check_for_file_hashes_update import on_msg_check_for_file_hashes_update, FILE_HASHES_TB_KEY
+from on_mqtt_msg.check_for_files_definition_update import on_msg_check_for_files_definition_update
 from on_mqtt_msg.check_for_ota_updates import on_msg_check_for_ota_update
 from on_mqtt_msg.on_rpc_request import on_rpc_request
 from self_provisioning import self_provisioning_get_access_token
@@ -152,8 +152,8 @@ try:
                     if not any([
                             on_msg_check_for_config_update(msg_payload),
                             on_msg_check_for_ota_update(msg_payload),
-                            on_msg_check_for_files_update(msg_payload),
-                            on_msg_check_for_file_hash_update(msg_payload),
+                            on_msg_check_for_files_definition_update(msg_payload),
+                            on_msg_check_for_file_hashes_update(msg_payload),
                             on_msg_check_for_file_content_update(msg_payload),
                     ]):
                         warn("[MAIN] Got invalid message: " + str(msg))

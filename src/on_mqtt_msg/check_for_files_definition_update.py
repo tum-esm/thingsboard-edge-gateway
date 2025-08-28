@@ -9,13 +9,13 @@ from src.utils.misc import get_maybe
 
 content_encodings = [None, "base64", "text"]
 
-def on_msg_check_for_files_update(msg_payload: Any) -> bool:
+def on_msg_check_for_files_definition_update(msg_payload: Any) -> bool:
     files = get_maybe(msg_payload, "shared", "FILES") or get_maybe(msg_payload, "FILES")
 
     if files is None or not isinstance(files, dict):
         return False
 
-    info("Files definitions received!")
+    info("Files definitions received.")
     try:
         for file_id in files:
             if not isinstance(get_maybe(files,file_id), dict):
@@ -26,8 +26,8 @@ def on_msg_check_for_files_update(msg_payload: Any) -> bool:
                 error("Invalid files update received, missing 'path' property")
                 return False
 
-            if get_maybe(files,file_id, "content_encoding") not in content_encodings:
-                error("Invalid files update received, unsupported 'content_encoding' property: " + get_maybe(files,file_id, "content_encoding"))
+            if get_maybe(files,file_id, "encoding") not in content_encodings:
+                error("Invalid files update received, unsupported 'encoding' property: " + get_maybe(files,file_id, "content_encoding"))
                 return False
 
             if get_maybe(files,file_id, "create_if_not_exist") not in [None, True, False]:

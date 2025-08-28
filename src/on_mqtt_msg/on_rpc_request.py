@@ -4,13 +4,12 @@ import queue
 import signal
 import subprocess
 import threading
-from time import sleep, time, monotonic
+from time import sleep, monotonic
 from typing import Any, Optional
 
 import utils.paths
 from modules import sqlite
 from modules.docker_client import GatewayDockerClient
-from modules.file_writer import GatewayFileWriter
 from modules.mqtt import GatewayMqttClient
 
 from modules.logging import info, error, debug

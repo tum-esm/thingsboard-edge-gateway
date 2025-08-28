@@ -5,7 +5,7 @@ from modules.logging import info, error
 from typing import Any
 
 from modules.mqtt import GatewayMqttClient
-from on_mqtt_msg.check_for_file_hashes_update import is_file_readonly, FILE_HASHES_TB_KEY
+from on_mqtt_msg.check_for_file_hashes_update import FILE_HASHES_TB_KEY
 from utils.misc import file_exists, get_maybe
 
 FILE_CONTENT_PREFIX = "FILE_CONTENT_"
@@ -26,18 +26,13 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
         return False
     file_definition = files_definitions[file_id]
 
-    is_readonly = is_file_readonly(file_definition)
-    if is_readonly:
-        error(f"File {file_id} is read-only, ignoring content update")
-        return False
-
     input_file_content = get_maybe(payload, FILE_CONTENT_PREFIX + file_id)
     if input_file_content is None:
         error("Invalid file content update received")
         return False
 
-    # encode file content to bytes based on content encoding
-    file_encoding = get_maybe(file_definition, "content_encoding")
+    # encode file content to bytes based on content encoding (defaults to "text")
+    file_encoding = get_maybe(file_definition, "encoding") or "text"
     if file_encoding == "json":
         if isinstance(input_file_content, dict):
             file_content = json.dumps(input_file_content)
@@ -80,19 +75,28 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
             # calculate new file hash and update it to ThingsBoard
             file_content_hash = GatewayFileWriter().calc_file_hash(file_path)
             file_hashes = GatewayFileWriter().get_tb_file_hashes()
-            file_hashes[file_id] = {"hash": file_content_hash}
-            if file_write_version not in [None, ""]:
-                file_hashes[file_id]["write_version"] = file_write_version
-            GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
-                FILE_HASHES_TB_KEY: file_hashes
-            }))
-            GatewayFileWriter().set_tb_hashes(file_hashes)
+            if file_hashes is None:
+                error(f"File hashes are not available, cannot update hash for {file_id}")
+            else:
+                old_hash = get_maybe(file_hashes, file_id, "hash")
+                file_hashes[file_id] = {"hash": file_content_hash}
+                if file_write_version not in [None, ""]:
+                    file_hashes[file_id]["write_version"] = file_write_version
+                GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
+                    FILE_HASHES_TB_KEY: file_hashes
+                }))
+                GatewayFileWriter().set_tb_hashes(file_hashes)
 
-            # update file content READ attribute
-            write_file_content_to_client_attribute(file_id, input_file_content)
+                # update file content READ attribute
+                if old_hash != file_content_hash:
+                    info(f"File {file_id} content updated, updating attribute")
+                    write_file_content_to_client_attribute(file_id, input_file_content)
+                    GatewayFileWriter().did_file_change(file_path) # update internal state
+                else:
+                    info(f"File {file_id} content unchanged, not updating attribute")
 
             # request file definitions again to verify everything is correct
-            GatewayMqttClient().request_attributes({"clientKeys": f"FILES"})
+            GatewayMqttClient().request_attributes({"sharedKeys": f"FILES"})
         except Exception as e:
             error(f"Failed to create file {file_id} at path {file_path}: {e}")
             return True
