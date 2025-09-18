@@ -9,7 +9,7 @@ from docker.types import LogConfig
 from modules.git_client import GatewayGitClient
 from modules.logging import debug, info, warn, error
 from modules.mqtt import GatewayMqttClient
-from utils.paths import GATEWAY_GIT_PATH, GATEWAY_DATA_PATH, CONTROLLER_LOGS_PATH
+from utils.paths import CONTROLLER_GIT_PATH, GATEWAY_DATA_PATH, CONTROLLER_LOGS_PATH, CONTROLLER_DATA_PATH
 
 CONTROLLER_CONTAINER_NAME = "teg_controller"
 CONTROLLER_IMAGE_PREFIX = "teg-controller-"
@@ -148,7 +148,7 @@ class GatewayDockerClient:
             GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             self.docker_client.images.build(
                 # TODO: make this path configurable
-                path=os.path.join(os.path.dirname(GATEWAY_GIT_PATH), "software/controller"),
+                path=os.path.join(os.path.dirname(CONTROLLER_GIT_PATH), "software/controller"),
                 dockerfile="./docker/Dockerfile",
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
             )
@@ -184,7 +184,7 @@ class GatewayDockerClient:
                     "bind": "/bin/pigs",
                     "mode": "ro"
                 },
-                GATEWAY_DATA_PATH: {
+                CONTROLLER_DATA_PATH: {
                     "bind": "/root/data",
                     "mode": "rw"
                 },

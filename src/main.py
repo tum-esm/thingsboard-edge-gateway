@@ -16,7 +16,6 @@ from modules import sqlite
 from modules.docker_client import GatewayDockerClient
 from modules.git_client import GatewayGitClient
 from modules.mqtt import GatewayMqttClient
-from on_mqtt_msg.check_for_config_update import on_msg_check_for_config_update
 from on_mqtt_msg.check_for_file_content_update import on_msg_check_for_file_content_update
 from on_mqtt_msg.check_for_file_hashes_update import on_msg_check_for_file_hashes_update, FILE_HASHES_TB_KEY
 from on_mqtt_msg.check_for_files_definition_update import on_msg_check_for_files_definition_update
@@ -151,7 +150,6 @@ try:
                 # check for attribute updates
                 elif "v1/devices/me/attributes" in topic:
                     if not any([
-                            on_msg_check_for_config_update(msg_payload),
                             on_msg_check_for_ota_update(msg_payload),
                             on_msg_check_for_files_definition_update(msg_payload),
                             on_msg_check_for_file_hashes_update(msg_payload),
