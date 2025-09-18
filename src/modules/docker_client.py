@@ -188,7 +188,6 @@ class GatewayDockerClient:
                     "bind": "/root/data",
                     "mode": "rw"
                 },
-                # TODO: remove this volume, the data path is sufficient (see above)
                 CONTROLLER_LOGS_PATH: {
                     "bind": "/root/logs",
                     "mode": "rw"

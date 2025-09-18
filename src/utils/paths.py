@@ -1,13 +1,14 @@
 from os import path, environ
 from os.path import dirname, join
 
-from modules.logging import debug
+from modules.logging import error, debug
 
 PROJECT_DIR = dirname(dirname(dirname(path.abspath(__file__)))) # path to "gateway" folder
 GATEWAY_DATA_PATH = str(environ.get("TEG_DATA_PATH") or PROJECT_DIR)
 CONTROLLER_DATA_PATH = str(environ.get("TEG_CONTROLLER_DATA_PATH") or GATEWAY_DATA_PATH)
 CONTROLLER_LOGS_PATH = str(environ.get("TEG_CONTROLLER_LOGS_PATH") or join(CONTROLLER_DATA_PATH, "logs"))
-CONTROLLER_GIT_PATH = str(environ.get("TEG_CONTROLLER_GIT_PATH") or join(dirname(dirname(PROJECT_DIR)), ".git"))
+CONTROLLER_GIT_PATH = str(environ.get("TEG_CONTROLLER_GIT_PATH") or "UNKNOWN")
+
 
 GATEWAY_LOGS_BUFFER_DB_NAME = "gateway_logs_buffer.db"
 GATEWAY_LOGS_BUFFER_DB_PATH = join(str(GATEWAY_DATA_PATH), GATEWAY_LOGS_BUFFER_DB_NAME)
@@ -17,6 +18,9 @@ GATEWAY_ARCHIVE_DB_PATH = join(str(GATEWAY_DATA_PATH), GATEWAY_ARCHIVE_DB_NAME)
 
 COMMUNICATION_QUEUE_DB_NAME = "communication_queue.db"
 COMMUNICATION_QUEUE_DB_PATH = join(str(CONTROLLER_DATA_PATH), COMMUNICATION_QUEUE_DB_NAME)
+
+if CONTROLLER_GIT_PATH == "UNKNOWN":
+    error("[FATAL_ERROR] TEG_CONTROLLER_GIT_PATH not set!")
 
 debug(f'PROJECT_DIR: {PROJECT_DIR}')
 debug(f'GATEWAY_DATA_PATH: {GATEWAY_DATA_PATH}')
