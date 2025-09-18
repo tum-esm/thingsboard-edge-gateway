@@ -4,7 +4,7 @@ from os.path import dirname, join
 from modules.logging import debug
 
 PROJECT_DIR = dirname(dirname(dirname(path.abspath(__file__)))) # path to "gateway" folder
-GATEWAY_DATA_PATH = str(environ.get("TEG_DATA_PATH") or join(dirname(PROJECT_DIR)))
+GATEWAY_DATA_PATH = str(environ.get("TEG_DATA_PATH") or PROJECT_DIR)
 CONTROLLER_LOGS_PATH = str(environ.get("TEG_CONTROLLER_LOGS_PATH") or join(dirname(dirname(PROJECT_DIR)), "logs"))
 GATEWAY_GIT_PATH = str(environ.get("TEG_GATEWAY_GIT_PATH") or join(dirname(dirname(PROJECT_DIR)), ".git"))
 

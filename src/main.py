@@ -213,8 +213,7 @@ try:
                     continue
                 else:
                     error("Failed to determine last launched controller version, unable to start new container...")
-                    GatewayMqttClient().publish('v1/devices/me/attributes/request/1',
-                                                '{"sharedKeys":"sw_title,sw_url,sw_version"}')
+                    GatewayMqttClient().request_attributes({"sharedKeys": "sw_title,sw_url,sw_version"})
                     GatewayMqttClient().publish_sw_state("UNKNOWN", "FAILED",
                         "No previous version known to launch from, requested version info from ThingsBoard")
                     error("Requested controller version from Thingsboard. Delaying main loop by 20s...")
