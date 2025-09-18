@@ -9,7 +9,7 @@ __pycache__
 .venv
 
 **tb_access_token
-**.db
+**.db*
 *.zip
 **.DS_Store
 
