@@ -160,6 +160,23 @@ try:
 
                 continue  # process next message
 
+            # automatically restart the controller's docker container if it is not running
+            if not docker_client.is_controller_running():
+                info("Controller is not running, starting new container in 10s...")
+                sleep(10)
+                last_launched_version = docker_client.get_last_launched_controller_version()
+                if last_launched_version is not None:
+                    docker_client.start_controller(last_launched_version)
+                    continue
+                else:
+                    error("Failed to determine last launched controller version, unable to start new container...")
+                    GatewayMqttClient().request_attributes({"sharedKeys": "sw_title,sw_url,sw_version"})
+                    GatewayMqttClient().publish_sw_state("UNKNOWN", "FAILED",
+                        "No previous version known to launch from, requested version info from ThingsBoard")
+                    error("Requested controller version from Thingsboard. Delaying main loop by 20s...")
+                    sleep(20)  # it is unlikely that the version to build will be available immediately
+                    continue
+
             if not mqtt_client_thread.is_alive():
                 warn("MQTT client thread died, exiting in 30 seconds...")
                 sleep(30)
@@ -200,23 +217,6 @@ try:
                     communication_sqlite_db.execute(
                         f"DELETE FROM {sqlite.SqliteTables.CONTROLLER_MESSAGES.value} WHERE id = {message[0][0]}")
                 continue
-
-            # automatically restart the controller's docker container if it is not running
-            if not docker_client.is_controller_running():
-                info("Controller is not running, starting new container in 10s...")
-                sleep(10)
-                last_launched_version = docker_client.get_last_launched_controller_version()
-                if last_launched_version is not None:
-                    docker_client.start_controller(last_launched_version)
-                    continue
-                else:
-                    error("Failed to determine last launched controller version, unable to start new container...")
-                    GatewayMqttClient().request_attributes({"sharedKeys": "sw_title,sw_url,sw_version"})
-                    GatewayMqttClient().publish_sw_state("UNKNOWN", "FAILED",
-                        "No previous version known to launch from, requested version info from ThingsBoard")
-                    error("Requested controller version from Thingsboard. Delaying main loop by 20s...")
-                    sleep(20)  # it is unlikely that the version to build will be available immediately
-                    continue
 
             controller_running_since_ts = docker_client.get_edge_startup_timestamp_ms() or 0
             last_controller_health_check_ts = get_last_controller_health_check_ts()
