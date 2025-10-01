@@ -45,4 +45,4 @@ jobs:
       - name: Run static type analysis
         run: |
           source .venv/bin/activate
-          ./scripts/run_mypy.sh
+          bash scripts/run_mypy.sh
