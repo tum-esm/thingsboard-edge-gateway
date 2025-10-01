@@ -63,6 +63,7 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
         error(f"Unknown content encoding for {file_id}: {file_encoding}")
         return False
     
+    # TODO: does the code ever reach this part?
 
     file_write_version = get_maybe(file_definition, "write_version")
     file_path = GatewayFileWriter().expand_file_path(get_maybe(file_definition, "path"))
