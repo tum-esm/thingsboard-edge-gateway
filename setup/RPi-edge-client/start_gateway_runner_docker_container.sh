@@ -4,6 +4,7 @@ docker run -d \
  --restart unless-stopped \
  --privileged \
  -v /:/host \
+ --net=host --pid=host --ipc=host \
  --name thingsboard_edge_gateway \
  --env TEG_GATEWAY_DIR=/home/pi/thingsboard-edge-gateway \
  --env TEG_DATA_PATH=/home/pi/teg-data \
