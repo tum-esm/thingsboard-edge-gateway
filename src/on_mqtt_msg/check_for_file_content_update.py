@@ -36,8 +36,7 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
     file_encoding = get_maybe(file_definition, "encoding") or "text"
     if file_encoding == "json":
         if isinstance(input_file_content, dict):
-            file_content = json.dumps(input_file_content)
-            file_content_bytes = file_content.encode("utf-8")
+            file_content_bytes = json.dumps(input_file_content).encode("utf-8")
         else:
             error(f"Invalid file content for {file_id}, expected JSON object")
             return False

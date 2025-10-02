@@ -32,11 +32,13 @@ class GatewayFileWriter:
             return singleton_instance
         return super(GatewayFileWriter, cls).__new__(cls)
 
-    def expand_file_path(self, file_path: str) -> str:
-        return ((file_path.replace("%DATA_PATH%", CONTROLLER_DATA_PATH)
+    def expand_file_path(self, file_path: str|None) -> str | None:
+        if file_path is not None:
+            return ((file_path.replace("%DATA_PATH%", CONTROLLER_DATA_PATH)
                 .replace("$DATA_PATH$", CONTROLLER_DATA_PATH))
                 .replace("$DATA_PATH", CONTROLLER_DATA_PATH))
-
+        else:
+            return None
 
     def set_files(self, files: dict) -> None:
         self.files = files
@@ -70,21 +72,6 @@ class GatewayFileWriter:
         else:
             error(f"Unknown file encoding: {file_encoding}, defaulting to text")
             return file_content.decode("utf-8")
-
-
-    def overwrite_file_content(self, identifier: str, content: str, encoding: str) -> None:
-        if self.files is None:
-            raise Exception("Files definition is not available")
-        if identifier not in self.files:
-            raise Exception(f"File with identifier '{identifier}' not found")
-        with open(self.files[identifier], "w") as f:
-            f.write(content)
-            
-        content_read = self.read_file(self.files[identifier], encoding)
-        if content_read is not None:
-            write_file_content_to_client_attribute(identifier, content_read)
-        else:
-            return
 
     def calc_file_hash(self, path: str) -> str:
         file_content = self.read_file_raw(path)
