@@ -32,13 +32,14 @@ class GatewayFileWriter:
             return singleton_instance
         return super(GatewayFileWriter, cls).__new__(cls)
 
-    def expand_file_path(self, file_path: str|None) -> str | None:
-        if file_path is not None:
-            return ((file_path.replace("%DATA_PATH%", CONTROLLER_DATA_PATH)
-                .replace("$DATA_PATH$", CONTROLLER_DATA_PATH))
-                .replace("$DATA_PATH", CONTROLLER_DATA_PATH))
-        else:
+    def expand_file_path(self, file_path: Optional[str]) -> Optional[str]:
+        if file_path is None:
             return None
+
+        return ((file_path.replace("%DATA_PATH%", CONTROLLER_DATA_PATH)
+            .replace("$DATA_PATH$", CONTROLLER_DATA_PATH))
+            .replace("$DATA_PATH", CONTROLLER_DATA_PATH))
+
 
     def set_files(self, files: dict) -> None:
         self.files = files

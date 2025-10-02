@@ -68,6 +68,10 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
     create_if_not_exist = get_maybe(file_definition, "create_if_not_exist") in [None, True, "True"]
     restart_controller_on_change = get_maybe(file_definition, "restart_controller_on_change") in [True, "True"]
 
+    if file_path is None:
+        error(f"File definition for {file_id} has no path, unable to write file content update")
+        return True
+
     # check if file already exists, if not, check if it should be created
     if file_exists(file_path) or create_if_not_exist:
         info(f"Writing file {file_id} at path: {file_path}")
