@@ -17,10 +17,14 @@ newgrp docker
 
 **Perform type checks:**
 
+Setup: Install mypy and types:
+```bash
+python -m pip install -r dev-requirements.txt
+```
+
+Run mypy:
 ```bash
 bash scripts/run_mypy.sh
 ```
 
-## TODOS
 
-- in start_edge(): always reset git to correct commit even if image already exists

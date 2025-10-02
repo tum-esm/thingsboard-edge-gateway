@@ -4,12 +4,12 @@ on:
     branches:
       - main
     paths:
-      - software/gateway/**
+      - src/**
   pull_request:
     branches:
       - main
     paths:
-      - software/gateway/**
+      - src/**
 
 jobs:
   test-codebase:
@@ -17,7 +17,7 @@ jobs:
     defaults:
       run:
         # Set working directory to the gateway folder
-        working-directory: software/gateway
+        working-directory: .
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -45,4 +45,4 @@ jobs:
       - name: Run static type analysis
         run: |
           source .venv/bin/activate
-          ./scripts/run_mypy.sh
+          bash scripts/run_mypy.sh
