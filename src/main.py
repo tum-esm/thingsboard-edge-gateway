@@ -30,7 +30,7 @@ archive_sqlite_db = None
 communication_sqlite_db = None
 gateway_logs_buffer_db = None
 STOP_MAINLOOP = False
-AUX_DATA_PUBLISH_INTERVAL_MS = 20_000 # evey 20 seconds
+AUX_DATA_PUBLISH_INTERVAL_MS = 20_000 # every 20 seconds
 aux_data_publish_ts = None
 
 
@@ -38,7 +38,7 @@ aux_data_publish_ts = None
 def shutdown_handler(sig: Any, _frame: Any) -> None:
     global STOP_MAINLOOP
     """Handle program exit gracefully"""
-    # Set a timer to force exit if graceful shutdown fails
+    # Set a timer to force exit if a graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
 
     info("GRACEFUL SHUTDOWN")
@@ -177,7 +177,7 @@ try:
                         warn("[MAIN] Got invalid message: " + str(msg))
                         warn("[MAIN] Skipping invalid message...")
 
-                continue  # process next message
+                continue  # process the next message
 
             # automatically restart the controller's docker container if it is not running
             if restart_controller_if_needed():
@@ -191,7 +191,7 @@ try:
                 sleep(30)
                 utils.misc.fatal_error("MQTT client thread died")
 
-            # check if there are any buffered outgoing log message in the buffer sqlite db
+            # check if there is any buffered outgoing log message in the buffer sqlite db
             if gateway_logs_buffer_db.do_table_values_exist("log_buffer"):
                 # fetch the next message (lowest `id`) from the queue and send it
                 message = gateway_logs_buffer_db.execute(
