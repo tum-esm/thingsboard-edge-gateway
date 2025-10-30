@@ -7,6 +7,9 @@ from logging import error
 from time import sleep, time_ns
 from typing import Any, Optional
 
+from db_schemas.controller_archive_table import *
+from db_schemas.controller_messages_table import *
+from db_schemas.pending_messages_table import *
 from modules.file_writer import GatewayFileWriter
 from modules.logging import info, warn, debug
 import utils.paths
@@ -91,29 +94,10 @@ try:
         archive_sqlite_db = sqlite.SqliteConnection(utils.paths.GATEWAY_ARCHIVE_DB_PATH)
         communication_sqlite_db = sqlite.SqliteConnection(utils.paths.COMMUNICATION_QUEUE_DB_PATH)
         gateway_logs_buffer_db = sqlite.SqliteConnection(utils.paths.GATEWAY_LOGS_BUFFER_DB_PATH)
-        archive_sqlite_db.execute("""
-                CREATE TABLE IF NOT EXISTS controller_archive (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    timestamp_ms INTEGER,
-                    message TEXT
-                );
-            """)
-        archive_sqlite_db.execute("CREATE INDEX IF NOT EXISTS controller_archive_ts_index on controller_archive (timestamp_ms);")
-        communication_sqlite_db.execute(f"""
-            CREATE TABLE IF NOT EXISTS {sqlite.SqliteTables.CONTROLLER_MESSAGES.value} (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type text,
-                message text
-            );
-        """)
-        communication_sqlite_db.execute(f"""      
-            CREATE TABLE IF NOT EXISTS {sqlite.SqliteTables.PENDING_MQTT_MESSAGES.value} (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type text,
-                message text
-            );
-        """)
-
+        archive_sqlite_db.execute(CREATE_CONTROLLER_ARCHIVE_TABLE_QUERY)
+        archive_sqlite_db.execute(CREATE_CONTROLLER_ARCHIVE_INDEX_QUERY)
+        communication_sqlite_db.execute(CREATE_CONTROLLER_MESSAGES_TABLE_QUERY)
+        communication_sqlite_db.execute(CREATE_PENDING_MESSAGES_TABLE_QUERY)
 
         # create and run the mqtt client in a separate thread
         mqtt_client = GatewayMqttClient().init(access_token)
