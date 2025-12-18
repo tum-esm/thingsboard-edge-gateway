@@ -18,7 +18,7 @@ def restart_controller_if_needed():
         if not docker_client.is_controller_running():
             container_restart_delay_ms *= CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR
             info("Controller is not running, starting new container in 10s...")
-            info("New controller restart exponential backoff: " + str(container_restart_delay_ms) + "ms")
+            info("New controller restart exponential backoff: " + str(int(container_restart_delay_ms/1000.0)) + "s")
             sleep(10)
             last_launched_version = docker_client.get_last_launched_controller_version()
             if last_launched_version is not None:
@@ -33,7 +33,7 @@ def restart_controller_if_needed():
                 sleep(20)  # it is unlikely that the version to build will be available immediately
                 return True
         elif container_restart_delay_ms > DEFAULT_CONTAINER_RESTART_DELAY_MS:
-            info("New controller restart exponential backoff: " + str(container_restart_delay_ms) + "ms")
+            info("New controller restart exponential backoff: " + str(int(container_restart_delay_ms / 1000.0)) + "s")
             container_restart_delay_ms = max(
                 DEFAULT_CONTAINER_RESTART_DELAY_MS,
                 int(container_restart_delay_ms / CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR)
