@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from enum import Enum
+from time import sleep
 from typing import Any
 from threading import Lock
 
@@ -34,7 +35,7 @@ class SqliteConnection:
                 fatal_error(
                     f'[SQLITE][FATAL] Failed to connect to sqlite db at "{self.path}": {e}'
                 )
-            self.reset_db_conn(e, nr_retries - 1)
+            self.reset_db_conn(e, nr_retries - 1, "INIT")
 
     def does_table_exist(self, table) -> bool:
         return len(
@@ -63,16 +64,17 @@ class SqliteConnection:
             except Exception as e:
                 if "no such table" in str(e):
                     return [()]
-                self.reset_db_conn(e)
-                return self.execute(query)
+                sleep(3)
+                self.reset_db_conn(e, 3, query)
+                return self.execute(query, params)
             return fetch
 
     def close(self) -> None:
         self.conn.close()
 
-    def reset_db_conn(self, error_msg, nr_retries=3) -> None:
+    def reset_db_conn(self, error_msg, nr_retries=3, query="unknown") -> None:
         self.db_unavailable = True
-        info(f"[SQLITE]: SQLite error at '{self.path}': {str(error_msg)}")
+        info(f"[SQLITE]: SQLite error at '{self.path}': '{str(error_msg)}' - query: '{query}'")
         info(f"[SQLITE]: resetting sqlite db at '{self.path}'")
         try:
             self.close()
