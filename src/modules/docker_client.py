@@ -133,6 +133,12 @@ class GatewayDockerClient:
         self.docker_client.containers.prune()
         info("[DOCKER-CLIENT] Pruned containers")
 
+    def start_controller_safely(self, version_to_launch: str):
+        try:
+            self.start_controller(version_to_launch)
+        except Exception as e:
+            warn("[DOCKER-CLIENT] Failed to start controller: {}".format(e))
+            
     def start_controller(self, version_to_launch: str) -> None:
         if self.docker_client is None:
             error("[DOCKER-CLIENT] start_controller: Docker client not initialized")
@@ -184,7 +190,6 @@ class GatewayDockerClient:
             detach=True,
             name=CONTROLLER_CONTAINER_NAME,
             restart_policy={
-                "Name": "always",
                 "MaximumRetryCount": 3
             },
             log_config=LogConfig(type=LogConfig.types.JSON, config={

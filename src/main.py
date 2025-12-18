@@ -111,8 +111,8 @@ try:
         global_mqtt_client = mqtt_client
 
         sleep(5)
-
         info("Gateway started successfully")
+        sleep(10)
 
         if provisioned:
             info("Gateway is provisioned for first time, initializing attributes...")
@@ -135,6 +135,7 @@ try:
         file_update_thread = threading.Thread(target=file_update_check_daemon, daemon=True)
         file_update_thread.start()
 
+        info("Entering main loop...")
         # *** main loop ***
         while not STOP_MAINLOOP:
             # check if there are any new incoming mqtt messages in the queue, process them
