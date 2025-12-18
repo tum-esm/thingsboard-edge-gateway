@@ -2,7 +2,9 @@ import sqlite3
 
 
 def write_health_check_message(con, timestamp_ms):
-    con.execute("INSERT INTO health_check (timestamp_ms) VALUES (?)", (timestamp_ms,))
+    sql_statement: str = "INSERT OR REPLACE INTO health_check (id, timestamp_ms) VALUES(?, ?);"
+    con.execute(sql_statement, (1, timestamp_ms))
+    con.execute("PRAGMA wal_checkpoint(PASSIVE);")
 
 
 def setup_and_connect_db(db_path):
