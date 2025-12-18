@@ -171,7 +171,7 @@ class GatewayDockerClient:
             GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             self.docker_client.images.build(
                 path=CONTROLLER_PROJECT_PATH,
-                dockerfile="./docker/Dockerfile",
+                dockerfile=str(os.environ.get("TEG_CONTROLLER_DOCKERFILE_PATH") or "./docker/Dockerfile"),
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
             )
             info("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version_to_launch)

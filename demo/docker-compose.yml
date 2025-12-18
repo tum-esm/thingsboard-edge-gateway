@@ -1,26 +1,10 @@
 
 services:
   init_service:
-#    build:
-#      context: .
-#      dockerfile: ./init_service_Dockerfile
     image: alpine/git
     volumes:
       - demo-controller-git-data:/git_repo
-    # entrypoint: "bash"
-    # command: "-c \"cd /git_repo && git clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git && echo 'Done cloning git repo'\""
-    command: "-C \"/git_repo\" pull || clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git /git_repo"
-
-#  controller:
-#    container_name: teg_controller
-#    restart: unless-stopped
-#    build:
-#      context: .
-#      dockerfile: ./example_controller_Dockerfile
-#    volumes:
-#      - thingsboard-edge-gateway-data:/teg_data
-#    environment:
-#      - TEG_DATA_PATH=/teg_data
+    command: "-C \"/git_repo\" fetch -v || clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git /git_repo"
 
   gateway:
     restart: unless-stopped
@@ -37,8 +21,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TEG_DATA_PATH=/teg_data
-      - TEG_CONTROLLER_GIT_PATH=/git_repo
-
+      - TEG_CONTROLLER_GIT_PATH=/git_repo/.git
+      - TEG_DEFAULT_CONTROLLER_VERSION=2a6c781a1436def14ff09f53b5fdbdd12a1e0e4e
+      - TEG_CONTROLLER_DOCKERFILE_PATH=./example_controller_Dockerfile
+      - TEG_CONTROLLER_PROJECT_PATH=/git_repo/demo/
 
 volumes:
   thingsboard-edge-gateway-data:
