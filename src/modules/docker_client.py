@@ -49,6 +49,9 @@ class GatewayDockerClient:
                 self.last_launched_version = last_launched_controller_version
                 return last_launched_controller_version
         except:
+            default_version = os.environ.get("TEG_DEFAULT_CONTROLLER_VERSION")
+            if default_version is not None:
+                return default_version
             return None
 
     def set_last_launched_controller_version(self, last_launched_controller_version: str):
