@@ -30,6 +30,7 @@ class GatewayDockerClient:
                 self.docker_client = docker.from_env()
             except Exception as e:
                 error("[DOCKER-CLIENT] Failed to initialize GatewayDockerClient: {}".format(e))
+                self.docker_client = None
 
     # Singleton pattern
     def __new__(cls: Any) -> Any:
@@ -60,6 +61,9 @@ class GatewayDockerClient:
             error("[DOCKER-CLIENT] Failed to write last launched controller version: {}".format(e))
 
     def is_controller_running(self) -> bool:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] is_controller_running: Docker client not initialized")
+            return False
         containers = self.docker_client.containers.list()
         for container in containers:
             if container.name == CONTROLLER_CONTAINER_NAME:
@@ -67,12 +71,18 @@ class GatewayDockerClient:
         return False
 
     def is_image_available(self, image_tag: str) -> bool:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] is_image_available: Docker client not initialized")
+            return False
         for image in self.docker_client.images.list():
             if image_tag in image.tags:
                 return True
         return False
 
     def get_controller_version(self) -> Optional[str]:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] get_controller_version: Docker client not initialized")
+            return None
         if self.is_controller_running():
             containers = self.docker_client.containers.list()
             for container in containers:
@@ -86,6 +96,9 @@ class GatewayDockerClient:
         return None
 
     def get_edge_startup_timestamp_ms(self) -> Optional[int]:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] get_edge_startup_timestamp_ms: Docker client not initialized")
+            return None
         if self.is_controller_running():
             containers = self.docker_client.containers.list()
             for container in containers:
@@ -111,10 +124,16 @@ class GatewayDockerClient:
             info("[DOCKER-CLIENT] Controller container is not running")
 
     def prune_containers(self) -> None:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] prune_containers: Docker client not initialized")
+            return None
         self.docker_client.containers.prune()
         info("[DOCKER-CLIENT] Pruned containers")
 
     def start_controller(self, version_to_launch: str) -> None:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] start_controller: Docker client not initialized")
+            return None
         if self.is_controller_running():
             running_controller_version = self.get_controller_version()
             if running_controller_version != version_to_launch:
