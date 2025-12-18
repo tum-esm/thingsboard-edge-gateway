@@ -1,13 +1,17 @@
 
 services:
   controller:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: ./example_controller_Dockerfile
     volumes:
       - thingsboard-edge-gateway-data:/teg_data
+    environment:
+      - TEG_DATA_PATH=/teg_data
 
   gateway:
+    restart: unless-stopped
     build:
       context: ../
       dockerfile: ./Dockerfile
