@@ -1,4 +1,4 @@
-CREATE_CONTROLLER_ARCHIVE_TABLE_QUERY = """
+CREATE_CONTROLLER_ARCHIVE_TABLE_QUERY = f"""
 CREATE TABLE IF NOT EXISTS controller_archive (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp_ms INTEGER,
@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS controller_archive (
 );
 """
 
-CREATE_CONTROLLER_ARCHIVE_INDEX_QUERY = """
+CREATE_CONTROLLER_ARCHIVE_INDEX_QUERY = f"""
 CREATE INDEX IF NOT EXISTS controller_archive_ts_index on controller_archive (timestamp_ms);
 """
