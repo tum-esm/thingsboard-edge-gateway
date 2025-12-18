@@ -1,6 +1,7 @@
 
 services:
   controller:
+    container_name: teg_controller
     restart: unless-stopped
     build:
       context: .
