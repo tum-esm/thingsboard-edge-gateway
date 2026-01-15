@@ -49,8 +49,8 @@ def self_provisioning_get_access_token(args: argparse.Namespace) -> Tuple[bool, 
     mqtt_client.publish("/provision/request",
                         payload=json.dumps({
                             "deviceName": get_device_name(args),
-                            "provisionDeviceKey": os.environ.get("THINGSBOARD_PROVISION_DEVICE_KEY") or "u89nftek43npopnvnt21",
-                            "provisionDeviceSecret": os.environ.get("THINGSBOARD_PROVISION_DEVICE_SECRET") or "r4acqug0fzh2wii4o4n6"
+                            "provisionDeviceKey": os.environ.get("THINGSBOARD_PROVISION_DEVICE_KEY"),
+                            "provisionDeviceSecret": os.environ.get("THINGSBOARD_PROVISION_DEVICE_SECRET")
                         }), qos=1 )
 
     for _ in range(100):
