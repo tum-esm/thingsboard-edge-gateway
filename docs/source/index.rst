@@ -21,4 +21,6 @@ Add your documentation here.
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   
+   getting-started
 
