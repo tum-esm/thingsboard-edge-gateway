@@ -7,6 +7,7 @@ services:
     command: "-C \"/git_repo\" fetch -v || clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git /git_repo"
 
   gateway:
+    tty: true
     restart: unless-stopped
     depends_on:
       init_service:
@@ -22,7 +23,7 @@ services:
     environment:
       - TEG_DATA_PATH=/teg_data
       - TEG_CONTROLLER_GIT_PATH=/git_repo/.git
-      - TEG_DEFAULT_CONTROLLER_VERSION=2a6c781a1436def14ff09f53b5fdbdd12a1e0e4e
+      - TEG_DEFAULT_CONTROLLER_VERSION=e3c42b3b1d53947a8d8ada9cf13821dfa5c1d146
       - TEG_CONTROLLER_DOCKERFILE_PATH=./example_controller_Dockerfile
       - TEG_CONTROLLER_PROJECT_PATH=/git_repo/demo/
 
