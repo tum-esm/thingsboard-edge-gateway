@@ -17,16 +17,16 @@ services:
       dockerfile: ./Dockerfile
     command: --tb-host ${TEG_TB_HOST} --tb-port ${TEG_TB_PORT}
     volumes:
-      - thingsboard-edge-gateway-data:/teg_data
       - demo-controller-git-data:/git_repo
       - /var/run/docker.sock:/var/run/docker.sock
+      - ${TEG_DATA_PATH}:${TEG_DATA_PATH}
     environment:
-      - TEG_DATA_PATH=/teg_data
+      - TEG_DATA_PATH=${TEG_DATA_PATH}
       - TEG_CONTROLLER_GIT_PATH=/git_repo/.git
       - TEG_DEFAULT_CONTROLLER_VERSION=e3c42b3b1d53947a8d8ada9cf13821dfa5c1d146
       - TEG_CONTROLLER_DOCKERFILE_PATH=./example_controller_Dockerfile
       - TEG_CONTROLLER_PROJECT_PATH=/git_repo/demo/
+      - TEG_CONTROLLER_DATA_PATH=${TEG_DATA_PATH}
 
 volumes:
-  thingsboard-edge-gateway-data:
   demo-controller-git-data:
