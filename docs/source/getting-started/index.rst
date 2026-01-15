@@ -5,7 +5,7 @@ This section helps you install the project and run your first successful
 example.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    installation
    quickstart

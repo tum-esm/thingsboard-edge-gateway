@@ -4,6 +4,6 @@ API Reference
 Complete reference of public classes, functions, and modules.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    module_reference
