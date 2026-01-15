@@ -9,3 +9,4 @@ example.
 
    installation
    quickstart
+   demo
