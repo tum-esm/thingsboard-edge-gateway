@@ -21,6 +21,10 @@ Add your documentation here.
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   
-   getting-started
+
+   getting-started/index
+   user-guide/index
+   developer-guide/index
+   api/index
+   changelog
 
