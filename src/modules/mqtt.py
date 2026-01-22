@@ -1,3 +1,4 @@
+import os
 import ssl
 import json
 import time
@@ -34,7 +35,11 @@ class GatewayMqttClient(Client):
         super().__init__()
 
         # set up the client
-        self.tls_set(cert_reqs=ssl.CERT_REQUIRED)
+        if os.environ.get("THINGSBOARD_CA_CERT") is not None:
+            print("Using custom CA cert")
+            self.tls_set(cert_reqs=ssl.CERT_REQUIRED, ca_certs=os.environ.get("THINGSBOARD_CA_CERT"))
+        else:
+            self.tls_set(cert_reqs=ssl.CERT_REQUIRED)
         self.username_pw_set(access_token, "")
 
         # set up the callbacks
