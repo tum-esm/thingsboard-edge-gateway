@@ -910,7 +910,7 @@
           "showTitleIcon": false,
           "titleIcon": "thermostat",
           "iconColor": "#1F6BDD",
-          "useDashboardTimewindow": false,
+          "useDashboardTimewindow": true,
           "displayTimewindow": true,
           "titleFont": {
             "size": 16,
@@ -1263,8 +1263,8 @@
       "selectedTab": 0,
       "realtime": {
         "realtimeType": 0,
-        "interval": 1800000,
-        "timewindowMs": 604800000,
+        "interval": 30000,
+        "timewindowMs": 7200000,
         "quickInterval": "CURRENT_DAY",
         "hideInterval": false,
         "hideLastInterval": false,

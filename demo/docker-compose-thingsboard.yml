@@ -1,7 +1,7 @@
 
 services:
   init_service:
-    image: alpine/git
+    image: alpine/git:2.52.0
     volumes:
       - demo-controller-git-data:/git_repo
     command: "-C \"/git_repo\" fetch -v || clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git /git_repo"
@@ -42,10 +42,10 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - type: bind
-        source: ./demo/server_cert.pem
+        source: ./server_cert.pem
         target: /ssl/server_cert.pem
       - type: bind
-        source: ./demo/server_key.pem
+        source: ./server_key.pem
         target: /ssl/server_key.pem
     ports:
       - "8843:8843"
