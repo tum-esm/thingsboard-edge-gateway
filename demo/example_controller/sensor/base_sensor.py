@@ -94,7 +94,7 @@ class Sensor(ABC):
 
         if self.simulate:
             self.logger.info("Simulating read.")
-            return self._simulate_read(*args, **kwargs)
+            return self._simulate_read(*args, **kwargs) * 10.0
 
         try:
             return self._read(*args, **kwargs)

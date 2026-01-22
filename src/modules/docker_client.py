@@ -10,7 +10,7 @@ from modules.git_client import GatewayGitClient
 from modules.logging import debug, info, warn, error
 from modules.mqtt import GatewayMqttClient
 from utils.paths import CONTROLLER_GIT_PATH, GATEWAY_DATA_PATH, CONTROLLER_LOGS_PATH, CONTROLLER_DATA_PATH, \
-    CONTROLLER_PROJECT_PATH
+    CONTROLLER_DOCKERCONTEXT_PATH, CONTROLLER_DOCKERFILE_PATH
 
 CONTROLLER_CONTAINER_NAME = "teg_controller"
 CONTROLLER_IMAGE_PREFIX = "teg-controller-"
@@ -176,8 +176,8 @@ class GatewayDockerClient:
                 return
             GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             self.docker_client.images.build(
-                path=CONTROLLER_PROJECT_PATH,
-                dockerfile=str(os.environ.get("TEG_CONTROLLER_DOCKERFILE_PATH") or "./docker/Dockerfile"),
+                path=CONTROLLER_DOCKERCONTEXT_PATH,
+                dockerfile=CONTROLLER_DOCKERFILE_PATH,
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
             )
             info("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version_to_launch)
