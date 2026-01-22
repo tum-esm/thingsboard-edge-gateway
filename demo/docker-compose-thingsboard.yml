@@ -4,7 +4,8 @@ services:
     image: alpine/git:2.52.0
     volumes:
       - demo-controller-git-data:/git_repo
-    command: "-C \"/git_repo\" fetch -v || clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git /git_repo"
+    entrypoint: "/bin/sh"
+    command: "-c 'git -C \"/git_repo\" fetch -v || git clone -v https://github.com/tum-esm/thingsboard-edge-gateway.git /git_repo'"
 
   tb-postgres:
     restart: unless-stopped
