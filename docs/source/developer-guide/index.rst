@@ -10,3 +10,4 @@ points.
    architecture
    data-flow
    contributing
+   controller-repository
