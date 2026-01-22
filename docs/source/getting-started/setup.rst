@@ -1,11 +1,37 @@
 Setup
 =====
 
+Docker
+------
+
+Create a Docker daemon configuration file:
+
+.. code-block:: bash
+    sudo nano /etc/docker/daemon.json
+    # Add:
+    {
+        "dns": ["8.8.8.8", "1.1.1.1", "8.8.4.4"]
+    }
+
+
+Add the current user to the Docker group and reboot:
+
+.. code-block:: bash
+    sudo usermod -aG docker $USER
+    sudo reboot
+
+
 Environment Variables
 ---------------------
 
 Edit -env file to set up basic configuration of edge-gateway.
 
+.. code-block:: bash
+
+    mv .env.template .env
+    sudo nano .env #edit environment variables as needed
+
+Documentation environment variables:
 
 "TEG_DATA_PATH"
 buffered logs, archive, config, communication queue
@@ -29,7 +55,7 @@ is relative to "TEG_CONTROLLER_DOCKERCONTEXT_PATH"
 defaults to "./Dockerfile"
 
 Prequesites
-- Setup ThingsBoard Server
+- Setup ThingsBoard Server -> Link to documentation: https://thingsboard.io/docs/user-guide/install/installation-options/
 - Setup device profiles in ThingsBoard + Link https://thingsboard.io/docs/user-guide/device-profiles/
 - Configure Name + Transport Type: MQTT + Provisioning Strategy: Secret Provisioning "Allow to create new devices"
 - Configure provisioning secret in edge-gateway (Set as environment variable in.env)
@@ -51,3 +77,8 @@ Device Provisioning
 
 - Initial start of gateway + docker commands or link
 - Device name will match hostname
+
+.. code-block:: bash
+
+    ./run_dockerized_gateway.sh #registers device with ThingsBoard and creates tb_access_token
+    docker logs --tail 50 -f acropolis_edge_gateway
