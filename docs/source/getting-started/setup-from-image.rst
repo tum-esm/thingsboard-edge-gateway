@@ -5,6 +5,8 @@ This section describes how to create an image after the system setup to flash it
 
 Follow installation and setup instructions for a single system first. Skip the provisioning step as this needs to be done for each system individually after flashing the image.
 
+A image can be created from the prepared system and then flashed onto other systems. Then the new systems ca then be renamed and provisioned individually.
+
 Link to installation.rst and setup.rst
 
 Create Backup Image
