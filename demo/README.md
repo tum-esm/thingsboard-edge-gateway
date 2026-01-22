@@ -30,6 +30,36 @@ Once the demo is up and running:
 5. You can then import `example_dashboard.json` in "Dashboards"-> "+" -> "Import" and set the dashboard's device alias 
    to the new device's id.
 
+# Create Controller Config File
+1. Go to Entities -> Devices and open the thermostat device created by self-provisioning.
+2. Open Device details -> Navigate to the Attributes tab -> Select Entities attributes scope
+3. Create a 2 new attributes with the following details:
+   - Key: `FILES`
+   - Value (JSON):
+   ```json
+   {
+      "controller_config":{
+         "path":"$DATA_PATH/config.json",
+         "encoding":"json",
+         "write_version":1,
+         "restart_controller_on_change":true
+      }
+   }
+   ```
+
+   - Key: `FILE_CONTENT_controller_config`
+   - Value (JSON):
+   ```json
+   {
+     "controllerType": "PID",
+     "setPoint": 22.0,
+     "kp": 1.0,
+     "ki": 0.1,
+     "kd": 0.01
+   }
+   ```
+4. Wait for config to be created in ./data/edge-gateway/config.json 
+
 # Additional notes
 ### [OPTIONAL] Generate self-signed certificate
 If you want to generate 
