@@ -7,6 +7,9 @@ example.
 .. toctree::
    :maxdepth: 1
 
-   installation
-   quickstart
    demo
+   installation
+   setup
+   quickstart
+   setup-from-image
+   
