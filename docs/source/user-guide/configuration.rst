@@ -27,6 +27,7 @@ Initialize FILES attribute
 
 Example: Controller Configuration File
 
+- Allows to remotely create or update new files for the controller to use
 - Create new entry "FILE_CONTENT_controller_config" (Type: JSON) in Device Attributes: Shared attributes 
 - Populate the entry with json encoded content of the file
 
@@ -41,6 +42,7 @@ Example: Controller Configuration File
 
 Example: System Crontab File
 
+- Allows to remotely create or update the RaspbianOS system files like crontab
 - Create new entry "FILE_CONTENT_crontab" (Type: String) in Device Attributes: Shared attributes: 
 - Populate the entry with base64 encoded content of the file
 
