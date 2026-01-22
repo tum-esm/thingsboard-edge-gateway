@@ -7,8 +7,8 @@
 Before using the demo, prepare a data folder to be used by the demo edge-gateway:
 > `mkdir -p data/edge-gateway`
 
-Define the data folder in `.env`:
-> `echo"" >> .env && echo "TEG_DATA_FOLDER=$(realpath data/edge-gateway)" >> .env`
+Define the data path in `.env`:
+> `echo"" >> .env && echo "TEG_DATA_PATH=$(realpath data/edge-gateway)" >> .env`
 
 To initialize the demo upon the first use: 
 > `docker compose -f docker-compose-thingsboard.yml run --rm -e INSTALL_TB=true -e LOAD_DEMO=true thingsboard`

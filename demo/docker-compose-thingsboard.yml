@@ -42,10 +42,10 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - type: bind
-        source: /home/lars/Documents/Dev/thingsboard-edge-gateway/demo/server_cert.pem
+        source: ./demo/server_cert.pem
         target: /ssl/server_cert.pem
       - type: bind
-        source: /home/lars/Documents/Dev/thingsboard-edge-gateway/demo/server_key.pem
+        source: ./demo/server_key.pem
         target: /ssl/server_key.pem
     ports:
       - "8843:8843"
