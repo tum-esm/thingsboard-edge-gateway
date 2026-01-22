@@ -32,7 +32,7 @@ Once the demo is up and running:
 
 # Create Controller Config File
 1. Go to Entities -> Devices and open the thermostat device created by self-provisioning.
-2. Open Device details -> Navigate to the Attributes tab -> Select Entities attributes scope
+2. Open Device details -> Navigate to the Attributes tab -> Select "Shared attributes" in Entitiy attributes scope
 3. Create a 2 new attributes with the following details:
    - Key: `FILES`
    - Value (JSON):
@@ -59,6 +59,10 @@ Once the demo is up and running:
    }
    ```
 4. Wait for config to be created in ./data/edge-gateway/config.json 
+5. Change content of the local config file
+6. Go to the Dashboard "Example Sensor" and trigger Exit RPC
+2. Open Device details -> Navigate to the Attributes tab -> Select "Client attributes" in Entitiy attributes scope
+9. Verify that the local change was mirrored to the `FILE_READ_controller_config` attribute
 
 # Additional notes
 ### [OPTIONAL] Generate self-signed certificate
