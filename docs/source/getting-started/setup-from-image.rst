@@ -43,4 +43,4 @@ Provision Device
 ----------------
 
 Follow the device provisioning instructions to register the new device with ThingsBoard. 
-Link to provisioning.rst
+Link to quickstart.rst / Device Provisioning
