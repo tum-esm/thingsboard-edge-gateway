@@ -49,3 +49,20 @@ Example: System Crontab File
 .. code-block:: text
 
     U0hFTEw9L2Jpbi9iYXNoClBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluCkhPTUU9L3Jvb3QKCiMgRG9ja2VyCkBkYWlseSBkb2NrZXIgc3lzdGVtIHBydW5lIC1hIC0tZm9yY2UgLS1maWx0ZXIgInVudGlsPTg3NjBoIgoKIyBEZWxldGUgb2xkIGxvZyBmaWxlcyAob2xkZXIgdGhhbiAxMDAgZGF5cykKQGRhaWx5IC91c3IvYmluL2ZpbmQgL2hvbWUvcGkvY29udHJvbGxlci9sb2dzLyAtdHlwZSBmIC1tdGltZSArMTAwIC1kZWxldGUK
+
+
+OTA Update Packages
+-------------------
+
+- Go to Advanced features/OTA Updates in the ThingsBoard Web UI
+- Create new entry
+- Fill Title to identify version 
+- Version matching the Github version tag of the controller release (e.g. v1.0.0)
+- Chose Device profiles matching the edge gateway devices
+- Package Type: Software
+- Use external URL: fill "-"
+
+.. image:: ../_static/images/new_ota_package.png
+   :alt: OTA package creation workflow
+   :width: 80%
+   :align: center
