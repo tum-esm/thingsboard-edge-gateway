@@ -1193,6 +1193,93 @@
         "row": 0,
         "col": 0,
         "id": "e292f205-44c0-f07c-3cc3-e335fa638e76"
+      },
+      "6b0b01ce-8b41-fc07-a645-8f3b806e5404": {
+        "typeFullFqn": "system.cards.timeseries_table",
+        "type": "timeseries",
+        "sizeX": 8,
+        "sizeY": 6.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": "",
+              "entityAliasId": "c0975861-1c3f-6119-da88-818cbe618a5a",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "message",
+                  "type": "timeseries",
+                  "label": "Message",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.06509182622354426,
+                  "units": null,
+                  "decimals": 0
+                },
+                {
+                  "name": "severity",
+                  "type": "timeseries",
+                  "label": "Severity",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.8254429447092695,
+                  "decimals": 0
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              },
+              "latestDataKeys": []
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "interval": 1000,
+              "timewindowMs": 60000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showTimestamp": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "enableSearch": true,
+            "enableSelectColumnDisplay": true
+          },
+          "title": "Gateway Logs",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {},
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "displayTimewindow": true,
+          "configMode": "basic",
+          "titleFont": null,
+          "titleColor": null,
+          "titleIcon": null
+        },
+        "row": 0,
+        "col": 0,
+        "id": "6b0b01ce-8b41-fc07-a645-8f3b806e5404"
       }
     },
     "states": {
@@ -1206,27 +1293,33 @@
                 "sizeX": 18,
                 "sizeY": 5,
                 "mobileHeight": null,
-                "row": 0,
+                "row": 7,
                 "col": 0
               },
               "66834464-3283-507e-1d6f-60cc431e9e9a": {
                 "sizeX": 18,
                 "sizeY": 5,
                 "mobileHeight": null,
-                "row": 5,
+                "row": 12,
                 "col": 0
               },
               "7307bd2d-8f97-f2ce-1c46-9a6b6bf06b09": {
                 "sizeX": 7,
-                "sizeY": 3,
-                "row": 0,
+                "sizeY": 5,
+                "row": 7,
                 "col": 18
               },
               "e292f205-44c0-f07c-3cc3-e335fa638e76": {
                 "sizeX": 7,
-                "sizeY": 3,
-                "row": 3,
+                "sizeY": 5,
+                "row": 12,
                 "col": 18
+              },
+              "6b0b01ce-8b41-fc07-a645-8f3b806e5404": {
+                "sizeX": 25,
+                "sizeY": 7,
+                "row": 0,
+                "col": 0
               }
             },
             "gridSettings": {
@@ -1250,7 +1343,7 @@
           "resolveMultiple": false,
           "singleEntity": {
             "entityType": "DEVICE",
-            "id": "96981860-f7a5-11f0-a8a6-471ea9ccdfd8"
+            "id": "e14b8710-f7b5-11f0-8302-5db6fbec5c28"
           }
         }
       }
@@ -1264,7 +1357,7 @@
       "realtime": {
         "realtimeType": 0,
         "interval": 30000,
-        "timewindowMs": 7200000,
+        "timewindowMs": 1800000,
         "quickInterval": "CURRENT_DAY",
         "hideInterval": false,
         "hideLastInterval": false,

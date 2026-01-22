@@ -19,10 +19,13 @@ To run the demo once it has been initialized:
 Once the demo is up and running:
 1. You can access the local thingsboard instance at http://localhost:8080/
 2. You can sign in using the default credentials: user: "tenant@thingsboard.org" / pw: "tenant"
-3. You can assign the following self provisioning credentials to the "thermostat" device profile:
-   a. Provision device key: cl4ozm17lhwpafnz8jau
-   b. Provision device secret: 7jemz65a0498pb5wzuk8
-   c. Confirm with "save"
+3. You can assign the following self-provisioning credentials to the "thermostat" device profile:
+   a. Open the device profile "thermostat" 
+      -> device provisioning -> edit 
+      -> Provision strategy "Allow to create new devices"
+   b. Provision device key: cl4ozm17lhwpafnz8jau
+   c. Provision device secret: 7jemz65a0498pb5wzuk8
+   d. Confirm with "save"
 4. The demo edge-gateway will then automatically self-provision and start broadcasting simulated data.
 5. You can then import `example_dashboard.json` in "Dashboards"-> "+" -> "Import" and set the dashboard's device alias 
    to the new device's id.
