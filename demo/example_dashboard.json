@@ -1236,14 +1236,35 @@
             }
           ],
           "timewindow": {
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "hideTimezone": false,
+            "selectedTab": 0,
             "realtime": {
+              "realtimeType": 0,
               "interval": 1000,
-              "timewindowMs": 60000
+              "timewindowMs": 604800000,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideQuickInterval": false
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": null,
+              "quickInterval": "CURRENT_DAY",
+              "hideInterval": false,
+              "hideLastInterval": false,
+              "hideFixedInterval": false,
+              "hideQuickInterval": false
             },
             "aggregation": {
               "type": "NONE",
               "limit": 200
-            }
+            },
+            "timezone": null
           },
           "showTitle": true,
           "backgroundColor": "rgb(255, 255, 255)",
@@ -1336,7 +1357,7 @@
             "appearance": {
               "type": "outlined",
               "showLabel": true,
-              "label": "Exit controller",
+              "label": "Exit gateway",
               "showIcon": true,
               "icon": "arrow_outward",
               "iconSize": 24,
@@ -1501,7 +1522,7 @@
           "resolveMultiple": false,
           "singleEntity": {
             "entityType": "DEVICE",
-            "id": "e14b8710-f7b5-11f0-8302-5db6fbec5c28"
+            "id": "b97aa370-fd18-11f0-ac96-df6f044c2df4"
           }
         }
       }
