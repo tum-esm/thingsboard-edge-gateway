@@ -4,6 +4,7 @@ from time import sleep
 from typing import Any, Optional
 
 import docker
+from docker import DockerClient
 from docker.types import LogConfig
 
 from modules.git_client import GatewayGitClient
@@ -19,6 +20,7 @@ singleton_instance : Optional["GatewayDockerClient"] = None
 
 class GatewayDockerClient:
     last_launched_version = None
+    docker_client : None|DockerClient = None
 
     def __init__(self) -> None:
         global singleton_instance
@@ -114,6 +116,9 @@ class GatewayDockerClient:
         return None
 
     def stop_controller(self) -> None:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] stop_controller: Docker client not initialized")
+            return None
         if self.is_controller_running():
             containers = self.docker_client.containers.list()
             for container in containers:
