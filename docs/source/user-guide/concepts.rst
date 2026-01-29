@@ -12,8 +12,7 @@ Shared Attributeds are used to remotely push file content to the Edge Gateway. T
 
 (1) Initialize FILES attribute
 
-- Update FILES entry in Device Attributes: Shared attributes
-- Link to API documentation for encoding and other parameters in this context
+The FILES attribute is a JSON object that contains metadata for each file to be managed. It includes the file path, encoding type, and optional parameters like write version, restart_controller_on_change.
 
 .. code-block:: json
     
@@ -32,6 +31,16 @@ Shared Attributeds are used to remotely push file content to the Edge Gateway. T
     }
 
 
+The path parameter defines the target location on the Edge Gateway filesystem. It can be a relative or absolute path. Locally defined environment variables can be used in the path, e.g. $DATA_PATH. 
+The encoding parameter defines how the file content will be encoded when pushed. Encoding it into base64 enables to include lines breaks or special characters. 
+Write version is an optional parameter that can be used to manage file updates while the system is not connected. This ensures that the latest version is applied once the connection is restored.
+The restart_controller_on_change is an optional boolean parameter that indicates whether the Edge Gateway controller should be restarted after the file is updated.
+
+- Link to API documentation for encoding and other parameters in this context
+
+(2) Define file content attributes
+
+
 Example: Controller Configuration File
 
 - Allows to remotely create or update new files for the controller to use
@@ -44,7 +53,6 @@ Example: Controller Configuration File
         "setting1": "value1",
         "setting2": "value2"
     }
-
 
 
 Example: System Crontab File
