@@ -14,8 +14,8 @@
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Quickstart" href="quickstart.html" />
-    <link rel="prev" title="Getting Started" href="index.html" />
+    <link rel="next" title="Setup" href="setup.html" />
+    <link rel="prev" title="Demo" href="demo.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -34,6 +34,59 @@
             
   <div class="section" id="installation">
 <h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="install-dependencies">
+<h2>Install Dependencies<a class="headerlink" href="#install-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Update the package list and install required dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo apt update <span class="o">&amp;&amp;</span> sudo apt upgrade -y
+sudo apt install -y <span class="se">\</span>
+    build-essential libssl-dev libbz2-dev <span class="se">\</span>
+    libexpat1-dev liblzma-dev zlib1g-dev <span class="se">\</span>
+    libffi-dev openssl docker.io git <span class="se">\</span>
+    tldr ncdu minicom pigpio libsqlite3-dev <span class="se">\</span>
+    wget screen udhcpc
+</pre></div>
+</div>
+<p>Enable <strong>I2C Interface</strong> using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo raspi-config
+<span class="c1"># Navigate to: Interface Options → I2C → Enable</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="python">
+<h2>Python<a class="headerlink" href="#python" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://www.python.org/ftp/python/3.12.8/Python-3.12.8.tgz
+sudo tar zxf Python-3.12.8.tgz
+<span class="nb">cd</span> Python-3.12.8
+sudo ./configure --enable-optimizations --enable-loadable-sqlite-extensions
+sudo make -j <span class="m">4</span>
+sudo make install
+curl -sSL https://install.python-poetry.org/ <span class="p">|</span> python3.12 -
+</pre></div>
+</div>
+</div>
+<div class="section" id="download-gateway">
+<h2>Download Gateway<a class="headerlink" href="#download-gateway" title="Permalink to this headline">¶</a></h2>
+<p>You can download the latest release of ThingsBoard Edge Gateway from the GitHub repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /home/pi/
+mkdir gateway
+<span class="nb">cd</span> gateway
+git init
+git clone https://github.com/tum-esm/thingsboard-edge-gateway.git
+</pre></div>
+</div>
+<p>Folder structure:
+- “.env.template”: Template for environment variable configuration - rename to “.env” and edit as needed</p>
+</div>
+<div class="section" id="download-controller">
+<h2>Download Controller<a class="headerlink" href="#download-controller" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /home/pi/
+mkdir controller
+<span class="nb">cd</span> controller
+git init
+git clone &lt;...&gt;
+</pre></div>
+</div>
+</div>
 </div>
 
 
@@ -56,8 +109,11 @@
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="demo.html">Demo</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-from-image.html">Setup from Image</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
@@ -71,8 +127,8 @@
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Getting Started</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Getting Started</a></li>
-      <li>Next: <a href="quickstart.html" title="next chapter">Quickstart</a></li>
+      <li>Previous: <a href="demo.html" title="previous chapter">Demo</a></li>
+      <li>Next: <a href="setup.html" title="next chapter">Setup</a></li>
   </ul></li>
   </ul></li>
 </ul>

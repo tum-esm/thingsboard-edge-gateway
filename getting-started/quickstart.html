@@ -14,8 +14,8 @@
     <script src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="User Guide" href="../user-guide/index.html" />
-    <link rel="prev" title="Installation" href="installation.html" />
+    <link rel="next" title="Setup from Image" href="setup-from-image.html" />
+    <link rel="prev" title="Setup" href="setup.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -34,6 +34,17 @@
             
   <div class="section" id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="device-provisioning">
+<h2>Device Provisioning<a class="headerlink" href="#device-provisioning" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Initial start of gateway + docker commands or link</p></li>
+<li><p>Device name will match hostname</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./run_dockerized_gateway.sh <span class="c1">#registers device with ThingsBoard and creates tb_access_token</span>
+docker logs --tail <span class="m">50</span> -f acropolis_edge_gateway
+</pre></div>
+</div>
+</div>
 </div>
 
 
@@ -56,8 +67,11 @@
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="demo.html">Demo</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">Setup</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-from-image.html">Setup from Image</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
@@ -71,8 +85,8 @@
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Getting Started</a><ul>
-      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
-      <li>Next: <a href="../user-guide/index.html" title="next chapter">User Guide</a></li>
+      <li>Previous: <a href="setup.html" title="previous chapter">Setup</a></li>
+      <li>Next: <a href="setup-from-image.html" title="next chapter">Setup from Image</a></li>
   </ul></li>
   </ul></li>
 </ul>

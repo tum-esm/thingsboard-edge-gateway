@@ -34,6 +34,63 @@
             
   <div class="section" id="configuration">
 <h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="shared-attributes">
+<h2>Shared Attributes<a class="headerlink" href="#shared-attributes" title="Permalink to this headline">¶</a></h2>
+<p>Initialize FILES attribute</p>
+<ul class="simple">
+<li><p>Update FILES entry in Device Attributes: Shared attributes</p></li>
+<li><p>Link to API documentation for encoding and other parameters in this context</p></li>
+</ul>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;crontab&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;/var/spool/cron/crontabs/root&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;encoding&quot;</span><span class="p">:</span> <span class="s2">&quot;base64&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;write_version&quot;</span><span class="p">:</span> <span class="mi">1</span>
+    <span class="p">},</span>
+    <span class="nt">&quot;controller_config&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;$DATA_PATH/config.json&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;encoding&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;write_version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nt">&quot;restart_controller_on_change&quot;</span><span class="p">:</span> <span class="kc">true</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example: Controller Configuration File</p>
+<ul class="simple">
+<li><p>Allows to remotely create or update new files for the controller to use</p></li>
+<li><p>Create new entry “FILE_CONTENT_controller_config” (Type: JSON) in Device Attributes: Shared attributes</p></li>
+<li><p>Populate the entry with json encoded content of the file</p></li>
+</ul>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;setting1&quot;</span><span class="p">:</span> <span class="s2">&quot;value1&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;setting2&quot;</span><span class="p">:</span> <span class="s2">&quot;value2&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Example: System Crontab File</p>
+<ul class="simple">
+<li><p>Allows to remotely create or update the RaspbianOS system files like crontab</p></li>
+<li><p>Create new entry “FILE_CONTENT_crontab” (Type: String) in Device Attributes: Shared attributes:</p></li>
+<li><p>Populate the entry with base64 encoded content of the file</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>U0hFTEw9L2Jpbi9iYXNoClBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluCkhPTUU9L3Jvb3QKCiMgRG9ja2VyCkBkYWlseSBkb2NrZXIgc3lzdGVtIHBydW5lIC1hIC0tZm9yY2UgLS1maWx0ZXIgInVudGlsPTg3NjBoIgoKIyBEZWxldGUgb2xkIGxvZyBmaWxlcyAob2xkZXIgdGhhbiAxMDAgZGF5cykKQGRhaWx5IC91c3IvYmluL2ZpbmQgL2hvbWUvcGkvY29udHJvbGxlci9sb2dzLyAtdHlwZSBmIC1tdGltZSArMTAwIC1kZWxldGUK
+</pre></div>
+</div>
+</div>
+<div class="section" id="ota-update-packages">
+<h2>OTA Update Packages<a class="headerlink" href="#ota-update-packages" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Go to Advanced features/OTA Updates in the ThingsBoard Web UI</p></li>
+<li><p>Create new entry</p></li>
+<li><p>Fill Title to identify version</p></li>
+<li><p>Version matching the Github version tag of the controller release (e.g. v1.0.0)</p></li>
+<li><p>Chose Device profiles matching the edge gateway devices</p></li>
+<li><p>Package Type: Software</p></li>
+<li><p>Use external URL: fill “-“</p></li>
+</ul>
+<a class="reference internal image-reference" href="../_images/new_ota_package.png"><img alt="OTA package creation workflow" class="align-center" src="../_images/new_ota_package.png" style="width: 80%;" /></a>
+</div>
 </div>
 
 

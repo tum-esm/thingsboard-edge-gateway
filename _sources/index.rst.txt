@@ -15,8 +15,6 @@ documentation for details.
    This project is under active development.
 
 
-Add your documentation here.
-
 
 .. toctree::
    :maxdepth: 2

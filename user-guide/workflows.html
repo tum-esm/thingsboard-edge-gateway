@@ -34,6 +34,45 @@
             
   <div class="section" id="workflows">
 <h1>Workflows<a class="headerlink" href="#workflows" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="device-provisioning">
+<h2>Device Provisioning<a class="headerlink" href="#device-provisioning" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="remote-software-update">
+<h2>Remote Software Update<a class="headerlink" href="#remote-software-update" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Create new version in GitHub controller repository</p></li>
+<li><p>Create OTA update entry in ThingsBoard</p></li>
+<li><p>Asign OTA update to device(s)</p></li>
+</ul>
+</div>
+<div class="section" id="remote-file-creation">
+<h2>Remote File Creation<a class="headerlink" href="#remote-file-creation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Update FILES entry in Device Attributes: Shared attributes</p></li>
+</ul>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;controller_config&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;$DATA_PATH/config.json&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;encoding&quot;</span><span class="p">:</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;write_version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nt">&quot;restart_controller_on_change&quot;</span><span class="p">:</span> <span class="kc">true</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Create new entry “FILE_CONTENT_controller_config” in Device Attributes: Shared attributes</p></li>
+<li><p>Populate the entry with json encoded content of the file</p></li>
+</ul>
+</div>
+<div class="section" id="remote-file-update">
+<h2>Remote File Update<a class="headerlink" href="#remote-file-update" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Update Device Attributes: Shared attributes entry</p></li>
+<li><p>Update Write Version</p></li>
+</ul>
+<p>Example: Confuguration File</p>
+</div>
 </div>
 
 
