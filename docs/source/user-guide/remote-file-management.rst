@@ -78,7 +78,7 @@ After applying the update, the Edge Gateway mirrors the current file content int
 Use case: Update the system crontab
 """""""""""""""""""""""""""""""""""
 
-System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters.
+System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters. Here an attribute ``FILE_CONTENT_crontab`` is created with the base64-encoded content of the desired crontab file.
 
 .. code-block:: text
 
@@ -88,7 +88,7 @@ System-level files such as the OS crontab can be managed in the same way. In thi
 Client Attributes
 -----------------
 
-Client attributes are used to report file state and synchronization status back to ThingsBoard.
+Client attributes are used to report file content back to ThingsBoard and preserve synchronization status.
 
 For each file defined in the ``FILES`` attribute:
 
