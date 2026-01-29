@@ -78,12 +78,13 @@ After applying the update, the Edge Gateway mirrors the current file content int
 Use case: Update the system crontab
 """""""""""""""""""""""""""""""""""
 
-System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters. Here an attribute ``FILE_CONTENT_crontab`` is created with the base64-encoded content of the desired crontab file.
+System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters. Here an shared attribute ``FILE_CONTENT_crontab`` is created with the base64-encoded content of the desired crontab file.
 
 .. code-block:: text
 
     U0hFTEw9L2Jpbi9iYXNoClBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluCkhPTUU9L3Jvb3QKCiMgRG9ja2VyCkBkYWlseSBkb2NrZXIgc3lzdGVtIHBydW5lIC1hIC0tZm9yY2UgLS1maWx0ZXIgInVudGlsPTg3NjBoIgoKIyBEZWxldGUgb2xkIGxvZyBmaWxlcyAob2xkZXIgdGhhbiAxMDAgZGF5cykKQGRhaWx5IC91c3IvYmluL2ZpbmQgL2hvbWUvcGkvY29udHJvbGxlci9sb2dzLyAtdHlwZSBmIC1tdGltZSArMTAwIC1kZWxldGUK
 
+After the update is applied, the Edge Gateway mirrors the current crontab content encoded as ``base64`` into the client attribute ``FILE_READ_crontab``.
 
 Client Attributes
 -----------------
