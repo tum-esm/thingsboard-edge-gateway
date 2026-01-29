@@ -7,6 +7,7 @@ Docker
 Create a Docker daemon configuration file:
 
 .. code-block:: bash
+
     sudo nano /etc/docker/daemon.json
     # Add:
     {
@@ -17,6 +18,7 @@ Create a Docker daemon configuration file:
 Add the current user to the Docker group and reboot:
 
 .. code-block:: bash
+    
     sudo usermod -aG docker $USER
     sudo reboot
 
