@@ -20,7 +20,7 @@ documentation for details.
    :maxdepth: 2
    :caption: Contents:
 
-   getting-started/index
+   getting-started/0_index
    user-guide/index
    developer-guide/index
    api/index
