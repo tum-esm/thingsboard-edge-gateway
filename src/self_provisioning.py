@@ -32,7 +32,11 @@ def self_provisioning_get_access_token(args: argparse.Namespace) -> Tuple[bool, 
     debug("No access token found, performing self-provisioning...")
     mqtt_client = Client()
     mqtt_client.username_pw_set("provision", None)
-    mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
+    if os.environ.get("THINGSBOARD_CA_CERT") is not None:
+        print("Using custom CA cert")
+        mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED, ca_certs=os.environ.get("THINGSBOARD_CA_CERT"))
+    else:
+        mqtt_client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
     mqtt_client.on_connect = (lambda client, userdata, flags, rc: debug(f"Connected to ThingsBoard for self-provisioning with result code {rc}"))
     mqtt_client.connect(args.tb_host, args.tb_port)
 
@@ -49,8 +53,8 @@ def self_provisioning_get_access_token(args: argparse.Namespace) -> Tuple[bool, 
     mqtt_client.publish("/provision/request",
                         payload=json.dumps({
                             "deviceName": get_device_name(args),
-                            "provisionDeviceKey": os.environ.get("THINGSBOARD_PROVISION_DEVICE_KEY") or "u89nftek43npopnvnt21",
-                            "provisionDeviceSecret": os.environ.get("THINGSBOARD_PROVISION_DEVICE_SECRET") or "r4acqug0fzh2wii4o4n6"
+                            "provisionDeviceKey": os.environ.get("THINGSBOARD_PROVISION_DEVICE_KEY"),
+                            "provisionDeviceSecret": os.environ.get("THINGSBOARD_PROVISION_DEVICE_SECRET")
                         }), qos=1 )
 
     for _ in range(100):

@@ -4,13 +4,14 @@ from time import sleep
 from typing import Any, Optional
 
 import docker
+from docker import DockerClient
 from docker.types import LogConfig
 
 from modules.git_client import GatewayGitClient
 from modules.logging import debug, info, warn, error
 from modules.mqtt import GatewayMqttClient
 from utils.paths import CONTROLLER_GIT_PATH, GATEWAY_DATA_PATH, CONTROLLER_LOGS_PATH, CONTROLLER_DATA_PATH, \
-    CONTROLLER_PROJECT_PATH
+    CONTROLLER_DOCKERCONTEXT_PATH, CONTROLLER_DOCKERFILE_PATH
 
 CONTROLLER_CONTAINER_NAME = "teg_controller"
 CONTROLLER_IMAGE_PREFIX = "teg-controller-"
@@ -19,6 +20,7 @@ singleton_instance : Optional["GatewayDockerClient"] = None
 
 class GatewayDockerClient:
     last_launched_version = None
+    docker_client : None|DockerClient = None
 
     def __init__(self) -> None:
         global singleton_instance
@@ -114,6 +116,9 @@ class GatewayDockerClient:
         return None
 
     def stop_controller(self) -> None:
+        if self.docker_client is None:
+            error("[DOCKER-CLIENT] stop_controller: Docker client not initialized")
+            return None
         if self.is_controller_running():
             containers = self.docker_client.containers.list()
             for container in containers:
@@ -121,8 +126,9 @@ class GatewayDockerClient:
                     running_controller_version = self.get_controller_version()
                     if running_controller_version is not None:
                         self.set_last_launched_controller_version(running_controller_version)
+                    info("[DOCKER-CLIENT] Stopping controller container...")
                     container.stop(timeout=60)
-                    info("[DOCKER-CLIENT] Stopped Controller container")
+                    info("[DOCKER-CLIENT] Stopped controller container")
         else:
             info("[DOCKER-CLIENT] Controller container is not running")
 
@@ -176,8 +182,8 @@ class GatewayDockerClient:
                 return
             GatewayMqttClient().publish_sw_state(version_to_launch, "DOWNLOADED")
             self.docker_client.images.build(
-                path=CONTROLLER_PROJECT_PATH,
-                dockerfile=str(os.environ.get("TEG_CONTROLLER_DOCKERFILE_PATH") or "./docker/Dockerfile"),
+                path=CONTROLLER_DOCKERCONTEXT_PATH,
+                dockerfile=CONTROLLER_DOCKERFILE_PATH,
                 tag=CONTROLLER_IMAGE_PREFIX + version_to_launch + ":latest"
             )
             info("[DOCKER-CLIENT] Built image for commit " + commit_hash + " with tag " + CONTROLLER_IMAGE_PREFIX + version_to_launch)
