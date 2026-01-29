@@ -8,5 +8,5 @@ operation.
    :maxdepth: 2
 
    configuration
-   concepts
+   remote-file-management
    workflows
