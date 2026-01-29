@@ -13,6 +13,7 @@ Create Backup Image
 -------------------
 
 .. code-block:: bash
+
     diskutil list
     diskutil umountDisk /dev/disk[*]
     dd status=progress bs=4M  if=/dev/disk[*] | gzip > //Users/.../
@@ -24,6 +25,7 @@ Create Fresh System
 -------------------
 
 .. code-block:: bash
+
     diskutil list
     diskutil umountDisk /dev/disk[*]
     gzip -dc //Users/.../acropolis-edge-image.gz | sudo dd of=/dev/disk[*] bs=4M status=progress
@@ -34,6 +36,7 @@ Remove SD Card and insert into RaspberryPi.
 Change Hostname:
 
 .. code-block:: bash
+    
     sudo raspi-config
     # Navigate to: System Options → Change Hostname
     sudo reboot

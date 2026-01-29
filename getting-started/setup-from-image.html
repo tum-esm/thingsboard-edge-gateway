@@ -40,12 +40,27 @@
 <p>Link to installation.rst and setup.rst</p>
 <div class="section" id="create-backup-image">
 <h2>Create Backup Image<a class="headerlink" href="#create-backup-image" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>diskutil list
+diskutil umountDisk /dev/disk<span class="o">[</span>*<span class="o">]</span>
+dd <span class="nv">status</span><span class="o">=</span>progress <span class="nv">bs</span><span class="o">=</span>4M  <span class="k">if</span><span class="o">=</span>/dev/disk<span class="o">[</span>*<span class="o">]</span> <span class="p">|</span> gzip &gt; //Users/.../
+</pre></div>
+</div>
 <p>Insert fresh SD Card into personal computer</p>
 </div>
 <div class="section" id="create-fresh-system">
 <h2>Create Fresh System<a class="headerlink" href="#create-fresh-system" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>diskutil list
+diskutil umountDisk /dev/disk<span class="o">[</span>*<span class="o">]</span>
+gzip -dc //Users/.../acropolis-edge-image.gz <span class="p">|</span> sudo dd <span class="nv">of</span><span class="o">=</span>/dev/disk<span class="o">[</span>*<span class="o">]</span> <span class="nv">bs</span><span class="o">=</span>4M <span class="nv">status</span><span class="o">=</span>progress
+</pre></div>
+</div>
 <p>Remove SD Card and insert into RaspberryPi.</p>
 <p>Change Hostname:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo raspi-config
+<span class="c1"># Navigate to: System Options → Change Hostname</span>
+sudo reboot
+</pre></div>
+</div>
 </div>
 <div class="section" id="provision-device">
 <h2>Provision Device<a class="headerlink" href="#provision-device" title="Permalink to this headline">¶</a></h2>

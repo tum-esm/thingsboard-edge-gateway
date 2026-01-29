@@ -37,7 +37,18 @@
 <div class="section" id="docker">
 <h2>Docker<a class="headerlink" href="#docker" title="Permalink to this headline">¶</a></h2>
 <p>Create a Docker daemon configuration file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo nano /etc/docker/daemon.json
+<span class="c1"># Add:</span>
+<span class="o">{</span>
+    <span class="s2">&quot;dns&quot;</span>: <span class="o">[</span><span class="s2">&quot;8.8.8.8&quot;</span>, <span class="s2">&quot;1.1.1.1&quot;</span>, <span class="s2">&quot;8.8.4.4&quot;</span><span class="o">]</span>
+<span class="o">}</span>
+</pre></div>
+</div>
 <p>Add the current user to the Docker group and reboot:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo usermod -aG docker <span class="nv">$USER</span>
+sudo reboot
+</pre></div>
+</div>
 </div>
 <div class="section" id="environment-variables">
 <h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this headline">¶</a></h2>
