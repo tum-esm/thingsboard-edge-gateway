@@ -121,8 +121,9 @@ class GatewayDockerClient:
                     running_controller_version = self.get_controller_version()
                     if running_controller_version is not None:
                         self.set_last_launched_controller_version(running_controller_version)
+                    info("[DOCKER-CLIENT] Stopping controller container...")
                     container.stop(timeout=60)
-                    info("[DOCKER-CLIENT] Stopped Controller container")
+                    info("[DOCKER-CLIENT] Stopped controller container")
         else:
             info("[DOCKER-CLIENT] Controller container is not running")
 
