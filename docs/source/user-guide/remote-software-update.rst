@@ -1,22 +1,31 @@
 Remote Software Update
 ======================
 
-The remote software update feature allows you to push a new version of the Edge Gateway controller software to the device using ThingsBoard's OTA update mechanism. This is particularly useful for deploying bug fixes, performance improvements, or new features without requiring physical access to the device.
+The *Remote Software Update* feature allows you to deploy new versions of the Edge Gateway controller software to devices using ThingsBoard's OTA update mechanism. This enables the rollout of bug fixes, performance improvements, and new features without requiring physical access to deployed hardware.
 
-OTA Update Packages reference version tags or commit hases from the controller's GitHub repository. When a new OTA package is created and associated with the relevant device or device profile, the Edge Gateway devices will receive these updates, download the new code and deploy them locally using docker. 
+OTA update packages reference version tags or commit hashes from the controller's GitHub repository. Once an OTA package is created and assigned to a device or device profile, Edge Gateway devices automatically receive the update, download the corresponding source code, build a Docker image locally if required, and deploy the new controller version.
 
-The big strength of the split between the Edge Gateway and the controller is that the Edge Gateway can stays unaffected by software updates to the controller. This means that even if there are issues with the new controller version, the Edge Gateway can continue to operate and report data back to ThingsBoard, allowing you to monitor the situation and roll back to a previous version if needed.
 
-Create a OTA Update Package
----------------------------
+Architecture Rationale
+----------------------
 
-- Go to Advanced features/OTA Updates in the ThingsBoard Web UI
-- Create new entry
-- Fill Title to identify version 
-- Version matching the Github version tag or commit hash of the controller release (e.g. v1.0.0)
-- Chose Device profiles matching the edge gateway devices
-- Package Type: Software
-- Use external URL: fill "-"
+A key design principle of the Edge Gateway is the strict separation between the gateway runtime and the controller software. This separation ensures that software updates to the controller do not affect the core Edge Gateway functionality.
+
+Even if a newly deployed controller version contains errors or fails to start correctly, the Edge Gateway itself remains operational. It continues to report device status and update progress to ThingsBoard, allowing operators to monitor deployments and safely roll back to a previous, stable controller version when necessary.
+
+
+Create an OTA Update Package
+----------------------------
+
+To deploy a new controller version, an OTA update package must first be created in the ThingsBoard Web UI.
+
+1. Navigate to **Advanced features → OTA Updates**.
+2. Create a new OTA update entry.
+3. Set the **Title** to identify the controller version.
+4. Set **Version** to match the GitHub version tag or commit hash of the controller release (for example ``v1.0.0``).
+5. Select the **Device Profiles** corresponding to the Edge Gateway devices.
+6. Set **Package type** to *Software*.
+7. Enable **Use external URL** and leave the URL field empty (``-``).
 
 .. image:: ../_static/images/new_ota_package.png
    :alt: OTA package creation workflow
@@ -24,28 +33,46 @@ Create a OTA Update Package
    :align: center
 
 
-Update Device Software Version
-------------------------------
+Assign the OTA Package to a Device
+----------------------------------
 
-- Go to Entities/Devices in the ThingsBoard Web UI
-- Select the target device
-- Go to first tab "Details" and click "Edit"
-- Selected "Assigned Software" and chose the OTA package created in the previous step from the dropdown list
-- Click "OK" to apply the changes
+After creating the OTA package, it must be assigned to the target device.
+
+1. Navigate to **Entities → Devices**.
+2. Select the target Edge Gateway device.
+3. Open the **Details** tab and click **Edit**.
+4. Under **Assigned Software**, select the previously created OTA package from the dropdown list.
+5. Click **OK** to apply the changes.
 
 .. image:: ../_static/images/update_device_software_version.png
    :alt: Update device software version workflow
    :width: 80%
    :align: center
 
-After applying the update, the Edge Gateway will automatically stop the current controller, download the new software version, deploy it locally using docker and restart the `Edge Controller` to run the new version. The device will report its current status  back to ThingsBoard utilizing the update states available through ThingsBoard's OTA update mechanism. You can monitor the update progress and status in the ThingsBoard Update Dashboard using the ``sw_state``attribute.
 
-For more details see the official ThingsBoard documentation on OTA updates: https://thingsboard.io/docs/user-guide/ota-updates/
+Update Execution and Monitoring
+-------------------------------
 
-Updating to previous versions
------------------------------
+Once the OTA package is assigned, the Edge Gateway performs the update automatically:
 
-The remote software update mechanism also allows you to roll back to a previous version of the controller software if needed. To do this, select the OTA package referencing the desired previous version tag or commit hash and assign it to the device as described in the steps above. The Edge Gateway will then the previously created docker image of the selected version and restart the controller to run that version.
+- The currently running controller is stopped.
+- The new controller version is downloaded.
+- A Docker image is created locally if it does not already exist.
+- The controller is restarted using the new version.
 
-In case the docker image of the selected version is not available locally, the Edge Gateway will attempt to download the software from GitHub and create a new docker image. This allows you to easily switch between different versions of the controller software as needed and reroll back to a previous version if any issues arise with the latest release.
+Throughout the process, the Edge Gateway reports its update state back to ThingsBoard using the standard OTA update attributes. The update progress and final status can be monitored via the ThingsBoard Update Dashboard using the ``sw_state`` attribute.
 
+For additional details on OTA update states and workflows, refer to the official ThingsBoard documentation:
+https://thingsboard.io/docs/user-guide/ota-updates/
+
+
+Rolling Back to Previous Versions
+---------------------------------
+
+The remote software update mechanism also supports rolling back to earlier controller versions.
+
+To perform a rollback, assign an OTA package that references the desired previous version tag or commit hash to the device. The Edge Gateway will stop the currently running controller and restart it using the selected version.
+
+If a Docker image for the requested version is already available locally, it is reused. Otherwise, the Edge Gateway automatically downloads the corresponding source code from GitHub and builds a new Docker image.
+
+This approach enables rapid switching between controller versions and provides a reliable recovery path in case issues arise with newly deployed releases.
