@@ -1,5 +1,5 @@
-Remote Procedure Calls (RPC)
-============================
+Remote Procedure Calls
+======================
 
 The Edge Gateway supports *Remote Procedure Calls (RPC)* via ThingsBoard's built-in RPC mechanism. RPCs allow external applications, automation scripts, or ThingsBoard dashboards to invoke predefined commands on the Edge Gateway controller and receive immediate feedback.
 
