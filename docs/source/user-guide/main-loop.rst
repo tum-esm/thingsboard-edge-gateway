@@ -76,18 +76,6 @@ The Edge Gateway responds gracefully to shutdown signals:
 A forced shutdown is only triggered if graceful termination fails within a defined
 timeout.
 
-What the Main Loop Does *Not* Do
---------------------------------
-
-For clarity, the main loop intentionally does **not**:
-
-- Reboot the host system
-- Modify managed files autonomously
-- Execute arbitrary commands without explicit RPC requests
-- Update its own runtime software via OTA
-
-These actions are either explicitly triggered by remote commands or handled by
-other subsystems.
 
 Operational Notes
 -----------------
