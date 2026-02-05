@@ -1,3 +1,19 @@
+"""Self-provisioning logic for the Edge Gateway.
+
+This module implements MQTT-based self-provisioning against ThingsBoard to obtain
+an access token for the Edge Gateway at first startup.
+
+If an access token already exists locally, self-provisioning is skipped. Otherwise,
+the gateway connects using the ThingsBoard provisioning credentials and requests
+a new device access token, which is persisted locally for future use.
+
+Notes
+-----
+- Provisioning uses the ThingsBoard MQTT provisioning API.
+- TLS is always enabled; a custom CA certificate can be supplied via environment
+  variables.
+- Provisioning is a blocking operation and is expected to run only during startup.
+"""
 import json
 import os
 import socket
@@ -11,12 +27,24 @@ from paho.mqtt.client import Client
 
 from modules.logging import debug
 
-# global variable to contain the reply from the self-provisioning request
+# Global variable used to store the provisioning response payload
 provision_reply = None
 
 
-# Perform self-provisioning if needed to get an access-token for the gateway
 def self_provisioning_get_access_token(args: argparse.Namespace) -> Tuple[bool, str]:
+    """Obtain a ThingsBoard access token via self-provisioning if required.
+
+    The function first checks whether an access token already exists locally. If so,
+    it returns the existing token. Otherwise, it performs MQTT-based self-provisioning
+    to request a new access token from ThingsBoard.
+
+    Args:
+      args: Parsed command-line arguments containing ThingsBoard connection details.
+
+    Returns:
+      Tuple ``(created, access_token)``, where ``created`` indicates whether a new
+      token was generated during this call.
+    """
     global provision_reply
     # check if access token exists
     access_token_path_env_var = os.environ.get("THINGSBOARD_ACCESS_TOKEN") or "./tb_access_token"
@@ -90,8 +118,22 @@ def self_provisioning_get_access_token(args: argparse.Namespace) -> Tuple[bool, 
 
 
 def get_device_name(args: argparse.Namespace) -> str:
+    """Determine the ThingsBoard device name for this gateway.
+
+    The device name is resolved in the following order:
+    1. Explicit ``--device-name`` CLI argument (if present)
+    2. ``THINGSBOARD_DEVICE_NAME`` environment variable
+    3. Local hostname
+    4. Randomly generated fallback name
+
+    Args:
+      args: Parsed command-line arguments.
+
+    Returns:
+      Resolved device name string.
+    """
     return (
-            getattr(args, "device_name", None)
+        getattr(args, "device_name", None)
         or os.environ.get("THINGSBOARD_DEVICE_NAME")
         or socket.gethostname()
         or ("teg-" + str(randrange(1000000, 9999999, 1)))

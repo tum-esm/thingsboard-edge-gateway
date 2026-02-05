@@ -1,15 +1,43 @@
+"""Controller restart watchdog for the Edge Gateway.
+
+This module implements a lightweight watchdog that ensures the controller Docker
+container is running. If the controller is not running, it attempts to restart it
+using the last successfully launched controller version.
+
+To avoid rapid restart loops, restarts are rate-limited and use an exponential
+backoff strategy. If no previous version is known, the watchdog requests OTA
+version information from ThingsBoard and reports a FAILED software state.
+
+Notes
+-----
+- Controller lifecycle operations are executed via :class:`modules.docker_client.GatewayDockerClient`.
+- OTA software state reporting is published via :class:`modules.mqtt.GatewayMqttClient`.
+"""
+
 from time import time_ns, sleep
+from typing import Optional
 
 from modules.docker_client import GatewayDockerClient
 from modules.logging import info, error
 from modules.mqtt import GatewayMqttClient
 
-DEFAULT_CONTAINER_RESTART_DELAY_MS = 600_000
-CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR = 1.6
-container_restart_delay_ms = DEFAULT_CONTAINER_RESTART_DELAY_MS
-last_container_restart_ts = 0
+DEFAULT_CONTAINER_RESTART_DELAY_MS: int = 600_000
+CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR: float = 1.6
+container_restart_delay_ms: float = DEFAULT_CONTAINER_RESTART_DELAY_MS
+last_container_restart_ts: int = 0
 
-def restart_controller_if_needed():
+def restart_controller_if_needed() -> bool:
+    """Restart the controller container if it is not running.
+
+    The watchdog checks whether the controller container is running. If it is not,
+    it waits briefly and attempts to restart it using the last launched version.
+    Restart attempts are rate-limited and use exponential backoff to avoid repeated
+    rapid restarts.
+
+    Returns:
+      ``True`` if the watchdog performed an action that should delay or influence
+      the main loop (restart attempt, OTA request), otherwise ``False``.
+    """
     global container_restart_delay_ms, last_container_restart_ts
 
     if int(time_ns() / 1_000_000) - last_container_restart_ts > container_restart_delay_ms:

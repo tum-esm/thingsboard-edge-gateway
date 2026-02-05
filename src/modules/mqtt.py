@@ -1,3 +1,23 @@
+"""MQTT client for ThingsBoard communication.
+
+This module implements :class:`~modules.mqtt.GatewayMqttClient`, a thin wrapper
+around the Paho MQTT client used by the Edge Gateway to communicate with
+ThingsBoard.
+
+The client is responsible for:
+- Establishing a TLS-secured MQTT connection using a ThingsBoard access token.
+- Subscribing to RPC, attribute, and OTA update topics.
+- Publishing telemetry and attributes (including OTA software state ``sw_state``).
+- Providing a thread-safe inbound message queue for the gateway main loop.
+
+Notes
+-----
+- The client follows a singleton pattern to avoid multiple concurrent MQTT clients
+  in the gateway process.
+- The ``init()`` method configures callbacks and resets internal state; it is not
+  the same as object construction.
+"""
+
 import os
 import ssl
 import json
@@ -9,13 +29,22 @@ from paho.mqtt.client import Client
 
 from modules.logging import info, error, debug, warn
 
-singleton_instance : Optional["GatewayMqttClient"] = None
+singleton_instance: Optional["GatewayMqttClient"] = None
 
 class GatewayMqttClient(Client):
+    """MQTT client used by the Edge Gateway to communicate with ThingsBoard.
+
+    The client subscribes to RPC requests, shared/client attributes, and OTA update
+    topics and exposes helper methods to publish telemetry, attributes, and software
+    update state.
+
+    Incoming MQTT messages are placed into :attr:`message_queue` as dictionaries with
+    ``topic`` and parsed JSON ``payload`` fields.
+    """
     attribute_request_id: int = 0
-    initialized = False
-    connected = False
-    message_queue : Queue = Queue()
+    initialized: bool = False
+    connected: bool = False
+    message_queue: Queue = Queue()
 
     def __init__(self):
         global singleton_instance
@@ -32,6 +61,14 @@ class GatewayMqttClient(Client):
         return super(GatewayMqttClient, cls).__new__(cls)
 
     def init(self, access_token: str):
+        """Configure the MQTT client for ThingsBoard access.
+
+        Args:
+          access_token: ThingsBoard device access token.
+
+        Returns:
+          The configured client instance (self).
+        """
         super().__init__()
 
         # set up the client
@@ -54,6 +91,7 @@ class GatewayMqttClient(Client):
         return self
 
     def graceful_exit(self) -> None:
+        """Disconnect and stop the MQTT network loop."""
         info("[MQTT] Exiting MQTT-client gracefully...")
         self.disconnect()
         self.loop_stop()
@@ -86,6 +124,13 @@ class GatewayMqttClient(Client):
         })
 
     def publish_sw_state(self, version: str, state: str, msg : Optional[str]=None) -> None:
+        """Publish ThingsBoard OTA software state telemetry.
+
+        Args:
+          version: Controller version tag/commit hash reported as current software.
+          state: OTA state string (e.g. ``DOWNLOADING``, ``UPDATED``).
+          msg: Optional error message (published as ``sw_error``).
+        """
         self.publish_telemetry(json.dumps({
             "current_sw_title": version,
             "current_sw_version": version,
@@ -94,9 +139,26 @@ class GatewayMqttClient(Client):
         }))
 
     def publish_telemetry(self, message: str) -> bool:
+        """Publish a telemetry payload to ThingsBoard.
+
+        Args:
+          message: JSON-encoded telemetry payload.
+
+        Returns:
+          ``True`` if the publish succeeded, otherwise ``False``.
+        """
         return self.publish_message_raw("v1/devices/me/telemetry", message)
 
     def publish_message_raw(self, topic: str, message: str) -> bool:
+        """Publish a raw MQTT message to a topic.
+
+        Args:
+          topic: MQTT topic.
+          message: JSON-encoded payload string.
+
+        Returns:
+          ``True`` if the publish succeeded, otherwise ``False``.
+        """
         if not self.initialized or not self.connected:
             print(f'[MQTT] MQTT client is not connected/initialized, cannot publish message "{message}" to topic "{topic}"')
             return False
@@ -110,11 +172,31 @@ class GatewayMqttClient(Client):
         return True
 
     def request_attributes(self, request_dict: dict) -> bool:
+        """Request shared/client attributes from ThingsBoard.
+
+        Args:
+          request_dict: Request payload as defined by ThingsBoard attributes API.
+
+        Returns:
+          ``True`` if the request was published successfully, otherwise ``False``.
+        """
         self.attribute_request_id += 1
         return self.publish_message_raw(f"v1/devices/me/attributes/request/{str(self.attribute_request_id)}",
                                  json.dumps(request_dict))
 
     def publish_log(self, log_level, log_message, timestamp_ms = None) -> bool:
+        """Publish a log record as telemetry.
+
+        Args:
+          log_level: Severity string.
+          log_message: Log message text. The gateway prefixes the message with
+            ``GATEWAY -`` followed by a space before publishing.
+          timestamp_ms: Optional Unix timestamp in milliseconds. If not provided, a
+            timestamp is generated locally.
+
+        Returns:
+          ``True`` if the publish succeeded, otherwise ``False``.
+        """
         time.sleep(1/1000) # sleep for 1ms to avoid duplicate timestamps
         return self.publish_telemetry(json.dumps({
             "ts": timestamp_ms or int(time.time_ns() / 1000_000),
@@ -125,6 +207,11 @@ class GatewayMqttClient(Client):
         }))
 
     def update_sys_info_attribute(self) -> None:
+        """Publish basic system information as a client attribute.
+
+        Reads ``/proc/stat`` and publishes its parsed content under the ``sys_info``
+        attribute.
+        """
         sys_info_data = {}
         try:
             with open('/proc/stat', 'r') as f:
