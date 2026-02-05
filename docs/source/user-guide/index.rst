@@ -10,4 +10,5 @@ operation.
    configuration
    remote-file-management
    remote-software-update
+   remote-procedure-calls
    workflows
