@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Remote Procedure Calls &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Developer Guide" href="../developer-guide/index.html" />
+    <link rel="prev" title="Remote Software Update" href="remote-software-update.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">User Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html">Main Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-file-management.html">Remote File Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html">Remote Software Update</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Remote Procedure Calls</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">User Guide</a><ul>
+      <li>Previous: <a href="remote-software-update.html" title="previous chapter">Remote Software Update</a></li>
+      <li>Next: <a href="../developer-guide/index.html" title="next chapter">Developer Guide</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="remote-procedure-calls">
+<h1>Remote Procedure Calls<a class="headerlink" href="#remote-procedure-calls" title="Permalink to this heading">¶</a></h1>
+<p>The Edge Gateway supports <em>Remote Procedure Calls (RPC)</em> via ThingsBoard’s built-in RPC mechanism. RPCs allow external applications, automation scripts, or ThingsBoard dashboards to invoke predefined commands on the Edge Gateway controller and receive immediate feedback.</p>
+<p>This mechanism is primarily intended for operational control, diagnostics, and maintenance tasks that must be executed on-demand without direct access to the device.</p>
+<p>RPCs follow a <em>controller-executed</em> model. All RPC commands are handled by the Edge Gateway controller, while the Edge Gateway runtime acts as a secure transport and execution environment. This separation ensures that operational commands can be executed without interrupting the gateway process itself, unless explicitly intended.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
+<p>ThingsBoard provides an RPC widget that acts as an interactive console within dashboards. Using this widget, users can send RPC requests to a specific Edge Gateway device and inspect the returned responses in real time.</p>
+<p>RPCs are executed by the Edge Gateway controller and are restricted to a predefined set of supported commands to ensure safe and controlled operation. Unsupported or unknown RPC methods are rejected and return an error response without executing any action on the device.</p>
+<p>For a general introduction to ThingsBoard RPCs, refer to the official documentation:
+<a class="reference external" href="https://thingsboard.io/docs/user-guide/rpc/">https://thingsboard.io/docs/user-guide/rpc/</a></p>
+<a class="reference internal image-reference" href="../_images/rpc-widget.png"><img alt="ThingsBoard Dashboard RPC widget" class="align-center" src="../_images/rpc-widget.png" style="width: 80%;" /></a>
+</section>
+<section id="built-in-rpc-command-list">
+<h2>Built-in RPC Command: <code class="docutils literal notranslate"><span class="pre">list</span></code><a class="headerlink" href="#built-in-rpc-command-list" title="Permalink to this heading">¶</a></h2>
+<p>The Edge Gateway controller exposes a built-in RPC command named <code class="docutils literal notranslate"><span class="pre">list</span></code>. This command returns a human-readable list of all RPC commands currently supported by the controller, including a short description of each command and its expected parameters.</p>
+<p>This command is useful for quickly verifying controller capabilities and for debugging RPC availability after software updates.</p>
+<p>The output of this command reflects the currently running controller version. After controller updates, the list of available RPC commands may change accordingly.</p>
+<p>Example response:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;Available RPC methods:&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;reboot: Reboot the device&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;shutdown: Shutdown the device&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;exit: Exits the gateway process (triggers gateway restart)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;ping: Ping the device (returns &#39;pong&#39; reply)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;init_files: Initialize file-related client attributes (FILE_HASHES, FILE_READ_*)&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;restart_controller: Restart the controller docker container&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;run_command: Run arbitrary command ({command: list [str], timeout_s: int [default 30s]}) - use with caution!&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;archive_republish_messages: Republish messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;archive_discard_messages: Discard messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})&quot;</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="supported-rpc-commands">
+<h2>Supported RPC Commands<a class="headerlink" href="#supported-rpc-commands" title="Permalink to this heading">¶</a></h2>
+<p>The following RPC commands are currently supported by the Edge Gateway controller. Command availability may depend on the deployed controller version.</p>
+<section id="ping">
+<h3><code class="docutils literal notranslate"><span class="pre">ping</span></code><a class="headerlink" href="#ping" title="Permalink to this heading">¶</a></h3>
+<p>Performs a simple connectivity check.</p>
+<dl class="simple">
+<dt><strong>Description</strong></dt><dd><p>Returns a static <code class="docutils literal notranslate"><span class="pre">pong</span></code> response if the controller is reachable and responsive.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><p>None</p>
+</dd>
+<dt><strong>Typical use cases</strong></dt><dd><ul class="simple">
+<li><p>Verify basic connectivity</p></li>
+<li><p>Confirm controller responsiveness</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="reboot">
+<h3><code class="docutils literal notranslate"><span class="pre">reboot</span></code><a class="headerlink" href="#reboot" title="Permalink to this heading">¶</a></h3>
+<p>Reboots the Edge Gateway host system.</p>
+<dl class="simple">
+<dt><strong>Description</strong></dt><dd><p>Performs a full system reboot of the device.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><p>None</p>
+</dd>
+<dt><strong>Notes</strong></dt><dd><ul class="simple">
+<li><p>This command interrupts all running services.</p></li>
+<li><p>Use with care on production systems.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="shutdown">
+<h3><code class="docutils literal notranslate"><span class="pre">shutdown</span></code><a class="headerlink" href="#shutdown" title="Permalink to this heading">¶</a></h3>
+<p>Shuts down the Edge Gateway host system.</p>
+<dl class="simple">
+<dt><strong>Description</strong></dt><dd><p>Powers off the device gracefully.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><p>None</p>
+</dd>
+<dt><strong>Notes</strong></dt><dd><ul class="simple">
+<li><p>Physical access is required to restart the device afterward.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="exit">
+<h3><code class="docutils literal notranslate"><span class="pre">exit</span></code><a class="headerlink" href="#exit" title="Permalink to this heading">¶</a></h3>
+<p>Terminates the Edge Gateway process.</p>
+<dl class="simple">
+<dt><strong>Description</strong></dt><dd><p>Stops the gateway process, which triggers an automatic restart by Docker.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><p>None</p>
+</dd>
+<dt><strong>Notes</strong></dt><dd><ul class="simple">
+<li><p>Performs a clean restart of the gateway process</p></li>
+<li><p>Allows to apply gateway-level configuration or software changes.</p></li>
+<li><p>The restart is performed by the container runtime and does not reboot the host system.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="restart-controller">
+<h3><code class="docutils literal notranslate"><span class="pre">restart_controller</span></code><a class="headerlink" href="#restart-controller" title="Permalink to this heading">¶</a></h3>
+<p>Restarts the Edge Gateway controller container.</p>
+<dl>
+<dt><strong>Description</strong></dt><dd><p>Stops and restarts the controller Docker container without affecting the gateway runtime.</p>
+<p>This command does not restart the Edge Gateway process itself. Telemetry buffering, file synchronization, and connectivity to ThingsBoard remain active during the controller restart.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><p>None</p>
+</dd>
+<dt><strong>Typical use cases</strong></dt><dd><ul class="simple">
+<li><p>Manually apply controller configuration changes</p></li>
+<li><p>Recover from transient controller errors</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="init-files">
+<h3><code class="docutils literal notranslate"><span class="pre">init_files</span></code><a class="headerlink" href="#init-files" title="Permalink to this heading">¶</a></h3>
+<p>Initializes file-related client attributes required for remote file management.</p>
+<dl class="simple">
+<dt><strong>Description</strong></dt><dd><p>Creates and initializes the client attributes required for the <em>Remote File Management</em> feature, most notably <code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code> and all <code class="docutils literal notranslate"><span class="pre">FILE_READ_&lt;file_key&gt;</span></code> attributes.
+This RPC allows the file management initialization process to be triggered manually. Under normal conditions, it is executed automatically after a successful device provisioning.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><p>None</p>
+</dd>
+<dt><strong>Typical use cases</strong></dt><dd><ul class="simple">
+<li><p>Manually trigger file management initialization</p></li>
+<li><p>Recover from incomplete or failed provisioning</p></li>
+<li><p>Initialize file management on pre-configured or cloned devices</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="run-command">
+<h3><code class="docutils literal notranslate"><span class="pre">run_command</span></code><a class="headerlink" href="#run-command" title="Permalink to this heading">¶</a></h3>
+<p>Executes an arbitrary command on the Edge Gateway host.</p>
+<dl class="simple">
+<dt><strong>Description</strong></dt><dd><p>Executes a shell command on the device and returns the command output.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">command</span></code> (list of strings, required): Command and arguments</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">timeout_s</span></code> (integer, optional): Command timeout in seconds (default: 30)</p></li>
+</ul>
+</dd>
+<dt><strong>Notes</strong></dt><dd><ul class="simple">
+<li><p>This command is performed within the gateway runtime environment, not within the controller container.</p></li>
+<li><p>The command is executed with the same permissions as the gateway process, which may have security implications.</p></li>
+<li><p>Use with extreme caution, as it can lead to service interruptions or security risks if misused.</p></li>
+<li><p>Command execution is synchronous and blocks until completion or timeout. Long-running commands may temporarily delay other RPC handling.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="archive-republish-messages">
+<h3><code class="docutils literal notranslate"><span class="pre">archive_republish_messages</span></code><a class="headerlink" href="#archive-republish-messages" title="Permalink to this heading">¶</a></h3>
+<p>Republishes archived telemetry messages.</p>
+<dl>
+<dt><strong>Description</strong></dt><dd><p>Republishes previously archived telemetry messages within a specified time range. This allows locally stored messages that were lost in transmission to be reprocessed and sent to ThingsBoard.</p>
+<p>The specified time range is inclusive and evaluated using the message timestamps stored in the local archive.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">start_timestamp_ms</span></code> (integer): Start of the time range (Unix timestamp in milliseconds)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">end_timestamp_ms</span></code> (integer): End of the time range (Unix timestamp in milliseconds)</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="archive-discard-messages">
+<h3><code class="docutils literal notranslate"><span class="pre">archive_discard_messages</span></code><a class="headerlink" href="#archive-discard-messages" title="Permalink to this heading">¶</a></h3>
+<p>Discards archived telemetry messages.</p>
+<dl>
+<dt><strong>Description</strong></dt><dd><p>Permanently deletes archived telemetry messages within a specified time range. This allows to free up local storage space by removing messages that are no longer needed or have already been successfully transmitted to ThingsBoard.</p>
+<p>The specified time range is inclusive and evaluated using the message timestamps stored in the local archive.</p>
+</dd>
+<dt><strong>Parameters</strong></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">start_timestamp_ms</span></code> (integer): Start of the time range (Unix timestamp in milliseconds)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">end_timestamp_ms</span></code> (integer): End of the time range (Unix timestamp in milliseconds)</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</section>
+<section id="security-considerations">
+<h2>Security Considerations<a class="headerlink" href="#security-considerations" title="Permalink to this heading">¶</a></h2>
+<p>RPC commands provide powerful control over Edge Gateway devices. It is strongly recommended to:</p>
+<ul class="simple">
+<li><p>Restrict RPC access to trusted users and dashboards only</p></li>
+<li><p>Avoid exposing sensitive commands such as <code class="docutils literal notranslate"><span class="pre">run_command</span></code> to non-administrative users</p></li>
+<li><p>Use ThingsBoard role-based access control to limit operational impact</p></li>
+</ul>
+<p>Improper use of RPC commands may lead to service interruptions or security risks.</p>
+<p>For production deployments, it is recommended to disable or restrict destructive RPC commands entirely and rely on automated workflows where possible.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/user-guide/remote-procedure-calls.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

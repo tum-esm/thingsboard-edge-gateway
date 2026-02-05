@@ -1,5 +1,0 @@
-Concepts
-========
-
-System Architecture
--------------------

@@ -13,7 +13,7 @@
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="next" title="Main Loop" href="main-loop.html" />
     <link rel="prev" title="Setup from Image" href="../getting-started/setup-from-image.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -40,9 +40,10 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html">Getting Started</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="concepts.html">Concepts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflows.html">Workflows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html">Main Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-file-management.html">Remote File Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html">Remote Software Update</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-procedure-calls.html">Remote Procedure Calls</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
@@ -55,7 +56,7 @@
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
       <li>Previous: <a href="../getting-started/setup-from-image.html" title="previous chapter">Setup from Image</a></li>
-      <li>Next: <a href="configuration.html" title="next chapter">Configuration</a></li>
+      <li>Next: <a href="main-loop.html" title="next chapter">Main Loop</a></li>
   </ul></li>
 </ul>
 </div>
@@ -79,24 +80,40 @@
             
   <section id="user-guide">
 <h1>User Guide<a class="headerlink" href="#user-guide" title="Permalink to this heading">¶</a></h1>
-<p>Detailed instructions and explanations for using the system in daily
-operation.</p>
+<p>This user guide provides practical, operator-focused documentation for managing and operating the Edge Gateway in production environments. It covers the core remote management features exposed through ThingsBoard and explains how to safely control, update, and maintain deployed devices without physical access.</p>
+<p>The guide is intended for system operators, developers, and administrators who work with Edge Gateway deployments and require reliable tools for configuration management, software updates, and operational control.</p>
+<p>Use the sections below to explore individual features in detail, including remote file synchronization, software updates, and on-demand remote actions via RPC.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="configuration.html#shared-attributes">Shared Attributes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="configuration.html#ota-update-packages">OTA Update Packages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="main-loop.html">Main Loop</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html#startup-phase">Startup Phase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html#steady-state-operation">Steady-State Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html#failure-handling-and-resilience">Failure Handling and Resilience</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html#shutdown-behavior">Shutdown Behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main-loop.html#operational-notes">Operational Notes</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="concepts.html#system-architecture">System Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote-file-management.html">Remote File Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="remote-file-management.html#shared-attributes">Shared Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-file-management.html#client-attributes">Client Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-file-management.html#file-hashes-and-synchronization">File Hashes and Synchronization</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="workflows.html">Workflows</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="workflows.html#device-provisioning">Device Provisioning</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflows.html#remote-software-update">Remote Software Update</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflows.html#remote-file-creation">Remote File Creation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflows.html#remote-file-update">Remote File Update</a></li>
+<li class="toctree-l1"><a class="reference internal" href="remote-software-update.html">Remote Software Update</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html#architecture-rationale">Architecture Rationale</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html#create-an-ota-update-package">Create an OTA Update Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html#assign-the-ota-package-to-a-device">Assign the OTA Package to a Device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html#update-execution-and-monitoring">Update Execution and Monitoring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html#rolling-back-to-previous-versions">Rolling Back to Previous Versions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-software-update.html#operational-notes">Operational Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="remote-procedure-calls.html">Remote Procedure Calls</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="remote-procedure-calls.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-procedure-calls.html#built-in-rpc-command-list">Built-in RPC Command: <code class="docutils literal notranslate"><span class="pre">list</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-procedure-calls.html#supported-rpc-commands">Supported RPC Commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote-procedure-calls.html#security-considerations">Security Considerations</a></li>
 </ul>
 </li>
 </ul>
