@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Utilities &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Local Data Persistence" href="persistence.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html">Gateway Runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="communication.html">MQTT Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote_file_management.html">Remote File Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ota.html">Over-the-Air Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rpc.html">Remote Procedure Calls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="persistence.html">Local Data Persistence</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="persistence.html" title="previous chapter">Local Data Persistence</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="utilities">
+<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h1>
+<p>This section documents utility and support modules used across the Edge Gateway.
+These modules provide configuration, logging, and defensive helper functions.</p>
+<section id="module-utils.misc">
+<span id="miscellaneous-helpers"></span><h2>Miscellaneous Helpers<a class="headerlink" href="#module-utils.misc" title="Permalink to this heading">¶</a></h2>
+<p>Miscellaneous helper utilities for the Edge Gateway.</p>
+<p>This module provides small, reusable helper functions that are used across
+multiple subsystems of the Edge Gateway. The functions are intentionally simple,
+stateless (where possible), and defensive to avoid propagating errors in critical
+runtime paths.</p>
+<p>The utilities in this module focus on:
+- Safe access to nested data structures.
+- Defensive type extraction from loosely structured inputs.
+- Graceful shutdown handling on fatal errors.
+- Basic filesystem existence checks.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Functions in this module are designed to never raise unexpected exceptions.</p></li>
+<li><p>Logging is used instead of raising where failure must not crash the gateway.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.misc.fatal_error">
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">fatal_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#fatal_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.fatal_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a fatal error and terminate the gateway gracefully.</p>
+<p>The function logs the error together with a stack trace, waits briefly to allow
+logs to be flushed, and then triggers a graceful shutdown using SIGINT followed
+by process termination.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> – Error message or exception object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.misc.file_exists">
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#file_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.file_exists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether a file exists at the given path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>path</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – File path to check.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the file exists and is readable, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.misc.get_instance_maybe">
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_instance_maybe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inst_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#get_instance_maybe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.get_instance_maybe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the first value matching a given type.</p>
+<p>Iterates over the provided values and returns the first element that is an
+instance of the requested type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inst_type</strong> – Expected type.</p></li>
+<li><p><strong>*properties</strong> – Values to inspect.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>First matching instance or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.misc.get_maybe">
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_maybe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#get_maybe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.get_maybe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely retrieve a nested value from a dictionary.</p>
+<p>This helper traverses a dictionary using a sequence of keys and returns <code class="docutils literal notranslate"><span class="pre">None</span></code>
+if any intermediate key is missing or if the input is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dictionary</strong> – Source dictionary (may be <code class="docutils literal notranslate"><span class="pre">None</span></code>).</p></li>
+<li><p><strong>*properties</strong> – Sequence of keys to traverse.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The resolved value or <code class="docutils literal notranslate"><span class="pre">None</span></code> if not found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-modules.logging">
+<span id="logging"></span><h2>Logging<a class="headerlink" href="#module-modules.logging" title="Permalink to this heading">¶</a></h2>
+<p>Logging utilities for the Edge Gateway.</p>
+<p>This module provides lightweight logging helpers used throughout the Edge Gateway
+and controller runtime. Log messages are printed to stdout and, when possible,
+published to ThingsBoard via MQTT.</p>
+<p>If log publication fails (e.g. due to connectivity issues), messages are buffered
+locally in an SQLite database and can be forwarded later once connectivity is
+restored.</p>
+<section id="design-goals">
+<h3>Design goals<a class="headerlink" href="#design-goals" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Avoid circular imports by resolving dependencies at runtime.</p></li>
+<li><p>Never block or crash the gateway due to logging failures.</p></li>
+<li><p>Preserve log messages during temporary connectivity outages.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The log level is controlled via the <code class="docutils literal notranslate"><span class="pre">LOG_LEVEL</span></code> environment variable.</p></li>
+<li><p>Buffered log messages are stored in <code class="docutils literal notranslate"><span class="pre">GATEWAY_LOGS_BUFFER_DB_PATH</span></code>.</p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.logging.debug">
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#debug"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.debug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a DEBUG-level message.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.logging.error">
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log an ERROR-level message.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.logging.info">
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log an INFO-level message.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.logging.log">
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a message and attempt to publish it via MQTT.</p>
+<p>The message is always printed to stdout. If the MQTT publication fails, the log
+entry is stored locally in an SQLite buffer database for later processing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>level</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Log level (e.g. <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code>, <code class="docutils literal notranslate"><span class="pre">INFO</span></code>, <code class="docutils literal notranslate"><span class="pre">WARN</span></code>, <code class="docutils literal notranslate"><span class="pre">ERROR</span></code>).</p></li>
+<li><p><strong>message</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Log message text.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="modules.logging.warn">
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">warn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#warn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.warn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a WARN-level message.</p>
+</dd></dl>
+
+</section>
+<section id="paths-and-configuration">
+<h2>Paths and Configuration<a class="headerlink" href="#paths-and-configuration" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="module-args">
+<span id="args"></span><h2>Args<a class="headerlink" href="#module-args" title="Permalink to this heading">¶</a></h2>
+<p>Command-line argument parsing for the Edge Gateway.</p>
+<p>This module defines the command-line interface (CLI) arguments supported by the
+ThingsBoard Edge Gateway entry point. Parsed arguments are used to override
+runtime configuration such as the ThingsBoard host and port.</p>
+<p>The CLI is intentionally minimal and primarily intended for local testing,
+development, and containerized deployments.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="args.parse_args">
+<span class="sig-prename descclassname"><span class="pre">args.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/args.html#parse_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#args.parse_args" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse command-line arguments for the Edge Gateway.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Namespace</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed command-line arguments as an <code class="xref py py-class docutils literal notranslate"><span class="pre">argparse.Namespace</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api/utilities.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

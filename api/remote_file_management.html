@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Developer Guide &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <title>Remote File Management &#8212; thingsboard-edge-gateway 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
@@ -13,8 +13,8 @@
     <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Architecture" href="architecture.html" />
-    <link rel="prev" title="Workflows" href="../user-guide/workflows.html" />
+    <link rel="next" title="Over-the-Air Updates" href="ota.html" />
+    <link rel="prev" title="MQTT Communication" href="communication.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -40,23 +40,28 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Developer Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l2"><a class="reference internal" href="data-flow.html">Data Flows</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="controller-repository.html">Controller Repository</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="core.html">Gateway Runtime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="communication.html">MQTT Communication</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Remote File Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ota.html">Over-the-Air Updates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rpc.html">Remote Procedure Calls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="persistence.html">Local Data Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
 </ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="../user-guide/workflows.html" title="previous chapter">Workflows</a></li>
-      <li>Next: <a href="architecture.html" title="next chapter">Architecture</a></li>
+  <li><a href="index.html">API Reference</a><ul>
+      <li>Previous: <a href="communication.html" title="previous chapter">MQTT Communication</a></li>
+      <li>Next: <a href="ota.html" title="next chapter">Over-the-Air Updates</a></li>
+  </ul></li>
   </ul></li>
 </ul>
 </div>
@@ -78,18 +83,26 @@
 
           <div class="body" role="main">
             
-  <section id="developer-guide">
-<h1>Developer Guide<a class="headerlink" href="#developer-guide" title="Permalink to this heading">¶</a></h1>
-<p>Internal documentation describing architecture, data flow, and extension
-points.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data-flow.html">Data Flows</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="controller-repository.html">Controller Repository</a></li>
-</ul>
-</div>
+  <section id="remote-file-management">
+<h1>Remote File Management<a class="headerlink" href="#remote-file-management" title="Permalink to this heading">¶</a></h1>
+<p>This section documents the remote file management subsystem, which enables
+configuration files to be defined, synchronized, validated, and applied remotely
+via ThingsBoard attributes.</p>
+<section id="file-writer">
+<h2>File Writer<a class="headerlink" href="#file-writer" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="definition-and-synchronization">
+<h2>Definition and Synchronization<a class="headerlink" href="#definition-and-synchronization" title="Permalink to this heading">¶</a></h2>
+<section id="file-definition-update">
+<h3>File Definition Update<a class="headerlink" href="#file-definition-update" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="file-hashes-update">
+<h3>File Hashes Update<a class="headerlink" href="#file-hashes-update" title="Permalink to this heading">¶</a></h3>
+</section>
+</section>
+<section id="content-application">
+<h2>Content Application<a class="headerlink" href="#content-application" title="Permalink to this heading">¶</a></h2>
+</section>
 </section>
 
 
@@ -107,7 +120,7 @@ points.</p>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
-      <a href="../_sources/developer-guide/index.rst.txt"
+      <a href="../_sources/api/remote_file_management.rst.txt"
           rel="nofollow">Page source</a>
     </div>
 

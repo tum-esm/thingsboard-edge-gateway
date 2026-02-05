@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>modules.logging &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=45b6c4fc" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=e031e9a9"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for modules.logging</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Logging utilities for the Edge Gateway.</span>
+
+<span class="sd">This module provides lightweight logging helpers used throughout the Edge Gateway</span>
+<span class="sd">and controller runtime. Log messages are printed to stdout and, when possible,</span>
+<span class="sd">published to ThingsBoard via MQTT.</span>
+
+<span class="sd">If log publication fails (e.g. due to connectivity issues), messages are buffered</span>
+<span class="sd">locally in an SQLite database and can be forwarded later once connectivity is</span>
+<span class="sd">restored.</span>
+
+<span class="sd">Design goals</span>
+<span class="sd">------------</span>
+<span class="sd">- Avoid circular imports by resolving dependencies at runtime.</span>
+<span class="sd">- Never block or crash the gateway due to logging failures.</span>
+<span class="sd">- Preserve log messages during temporary connectivity outages.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- The log level is controlled via the ``LOG_LEVEL`` environment variable.</span>
+<span class="sd">- Buffered log messages are stored in ``GATEWAY_LOGS_BUFFER_DB_PATH``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="c1"># get log level from env var</span>
+<span class="n">LOG_LEVEL</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;LOG_LEVEL&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;INFO&#39;</span>
+
+<span class="n">Sqlite</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">GatewayMqttClient</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">UtilsPaths</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">gateway_logs_buffer_db</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="log"><a class="viewcode-back" href="../../api/utilities.html#modules.logging.log">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">log</span><span class="p">(</span><span class="n">level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log a message and attempt to publish it via MQTT.</span>
+
+<span class="sd">    The message is always printed to stdout. If the MQTT publication fails, the log</span>
+<span class="sd">    entry is stored locally in an SQLite buffer database for later processing.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      level: Log level (e.g. ``DEBUG``, ``INFO``, ``WARN``, ``ERROR``).</span>
+<span class="sd">      message: Log message text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s1">] </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="s1">&#39;DEBUG&#39;</span> <span class="ow">and</span> <span class="n">LOG_LEVEL</span> <span class="o">!=</span> <span class="s1">&#39;DEBUG&#39;</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="c1"># import GatewayMqttClient at runtime to avoid circular imports</span>
+    <span class="k">global</span> <span class="n">GatewayMqttClient</span>
+    <span class="k">if</span> <span class="n">GatewayMqttClient</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">GatewayMqttClient</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;modules.mqtt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">GatewayMqttClient</span>
+
+    <span class="c1"># import UtilsPaths at runtime to avoid circular imports</span>
+    <span class="k">global</span> <span class="n">UtilsPaths</span>
+    <span class="k">if</span> <span class="n">UtilsPaths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">UtilsPaths</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;utils.paths&#39;</span><span class="p">)</span>
+
+    <span class="c1"># import sqlite at runtime to avoid circular imports</span>
+    <span class="k">global</span> <span class="n">Sqlite</span>
+    <span class="k">if</span> <span class="n">Sqlite</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Sqlite</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;modules.sqlite&#39;</span><span class="p">)</span>
+
+    <span class="c1"># initialize gateway_logs_buffer_db if not already initialized</span>
+    <span class="k">global</span> <span class="n">gateway_logs_buffer_db</span>
+    <span class="k">if</span> <span class="n">gateway_logs_buffer_db</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">gateway_logs_buffer_db</span> <span class="o">=</span> <span class="n">Sqlite</span><span class="o">.</span><span class="n">SqliteConnection</span><span class="p">(</span><span class="n">UtilsPaths</span><span class="o">.</span><span class="n">GATEWAY_LOGS_BUFFER_DB_PATH</span><span class="p">,</span> <span class="n">dont_retry</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gateway_logs_buffer_db</span><span class="o">.</span><span class="n">db_unavailable</span><span class="p">:</span>
+            <span class="n">gateway_logs_buffer_db</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># attempt to publish log message via MQTT</span>
+    <span class="n">publish_failure</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_log</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+            <span class="n">publish_failure</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Failed to publish log message via MQTT.&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">publish_failure</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Failed to publish log message via MQTT: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="c1"># buffer unpublished message in sqlite db to be published later</span>
+    <span class="k">if</span> <span class="n">publish_failure</span> <span class="ow">and</span> <span class="n">gateway_logs_buffer_db</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Buffering unpublished message.&#39;</span><span class="p">)</span>
+        <span class="n">gateway_logs_buffer_db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            CREATE TABLE IF NOT EXISTS log_buffer (</span>
+<span class="s2">                id INTEGER PRIMARY KEY AUTOINCREMENT,</span>
+<span class="s2">                log_level text,</span>
+<span class="s2">                message text,</span>
+<span class="s2">                timestamp_ms INTEGER</span>
+<span class="s2">            );</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">gateway_logs_buffer_db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO log_buffer (log_level, message, timestamp_ms) VALUES (?, ?, ?)&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000_000</span><span class="p">))</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="debug"><a class="viewcode-back" href="../../api/utilities.html#modules.logging.debug">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">debug</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log a DEBUG-level message.&quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="p">(</span><span class="s1">&#39;DEBUG&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="info"><a class="viewcode-back" href="../../api/utilities.html#modules.logging.info">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">info</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log an INFO-level message.&quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="p">(</span><span class="s1">&#39;INFO&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="error"><a class="viewcode-back" href="../../api/utilities.html#modules.logging.error">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">error</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log an ERROR-level message.&quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="p">(</span><span class="s1">&#39;ERROR&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="warn"><a class="viewcode-back" href="../../api/utilities.html#modules.logging.warn">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">warn</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Log a WARN-level message.&quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="p">(</span><span class="s1">&#39;WARN&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

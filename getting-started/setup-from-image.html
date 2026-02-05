@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title>Setup from Image &#8212; thingsboard-edge-gateway 0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-    <script src="../_static/jquery.js"></script>
-    <script src="../_static/underscore.js"></script>
-    <script src="../_static/doctools.js"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="User Guide" href="../user-guide/index.html" />
@@ -23,57 +22,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
   </head><body>
-  
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          
-
-          <div class="body" role="main">
-            
-  <div class="section" id="setup-from-image">
-<h1>Setup from Image<a class="headerlink" href="#setup-from-image" title="Permalink to this headline">¶</a></h1>
-<p>This section describes how to create an image after the system setup to flash it on multiple systems. This allows to avoid repeating the setup steps on each system.</p>
-<p>Follow installation and setup instructions for a single system first. Skip the provisioning step as this needs to be done for each system individually after flashing the image.</p>
-<p>A image can be created from the prepared system and then flashed onto other systems. Then the new systems ca then be renamed and provisioned individually.</p>
-<p>Link to installation.rst and setup.rst</p>
-<div class="section" id="create-backup-image">
-<h2>Create Backup Image<a class="headerlink" href="#create-backup-image" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>diskutil list
-diskutil umountDisk /dev/disk<span class="o">[</span>*<span class="o">]</span>
-dd <span class="nv">status</span><span class="o">=</span>progress <span class="nv">bs</span><span class="o">=</span>4M  <span class="k">if</span><span class="o">=</span>/dev/disk<span class="o">[</span>*<span class="o">]</span> <span class="p">|</span> gzip &gt; //Users/.../
-</pre></div>
-</div>
-<p>Insert fresh SD Card into personal computer</p>
-</div>
-<div class="section" id="create-fresh-system">
-<h2>Create Fresh System<a class="headerlink" href="#create-fresh-system" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>diskutil list
-diskutil umountDisk /dev/disk<span class="o">[</span>*<span class="o">]</span>
-gzip -dc //Users/.../acropolis-edge-image.gz <span class="p">|</span> sudo dd <span class="nv">of</span><span class="o">=</span>/dev/disk<span class="o">[</span>*<span class="o">]</span> <span class="nv">bs</span><span class="o">=</span>4M <span class="nv">status</span><span class="o">=</span>progress
-</pre></div>
-</div>
-<p>Remove SD Card and insert into RaspberryPi.</p>
-<p>Change Hostname:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo raspi-config
-<span class="c1"># Navigate to: System Options → Change Hostname</span>
-sudo reboot
-</pre></div>
-</div>
-</div>
-<div class="section" id="provision-device">
-<h2>Provision Device<a class="headerlink" href="#provision-device" title="Permalink to this headline">¶</a></h2>
-<p>Follow the device provisioning instructions to register the new device with ThingsBoard.
-Link to quickstart.rst / Device Provisioning</p>
-</div>
-</div>
-
-
-          </div>
-          
-        </div>
-      </div>
+  <div class="document">
+    
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
@@ -98,8 +48,8 @@ Link to quickstart.rst / Device Provisioning</p>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
 </ul>
 
 <div class="relations">
@@ -122,24 +72,64 @@ Link to quickstart.rst / Device Provisioning</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
-
-
-
-
-
-
-
-
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="setup-from-image">
+<h1>Setup from Image<a class="headerlink" href="#setup-from-image" title="Permalink to this heading">¶</a></h1>
+<p>This section describes how to create an image after the system setup to flash it on multiple systems. This allows to avoid repeating the setup steps on each system.</p>
+<p>Follow installation and setup instructions for a single system first. Skip the provisioning step as this needs to be done for each system individually after flashing the image.</p>
+<p>A image can be created from the prepared system and then flashed onto other systems. Then the new systems ca then be renamed and provisioned individually.</p>
+<p>Link to installation.rst and setup.rst</p>
+<section id="create-backup-image">
+<h2>Create Backup Image<a class="headerlink" href="#create-backup-image" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>diskutil<span class="w"> </span>list
+diskutil<span class="w"> </span>umountDisk<span class="w"> </span>/dev/disk<span class="o">[</span>*<span class="o">]</span>
+dd<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w">  </span><span class="k">if</span><span class="o">=</span>/dev/disk<span class="o">[</span>*<span class="o">]</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span>//Users/.../
+</pre></div>
+</div>
+<p>Insert fresh SD Card into personal computer</p>
+</section>
+<section id="create-fresh-system">
+<h2>Create Fresh System<a class="headerlink" href="#create-fresh-system" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>diskutil<span class="w"> </span>list
+diskutil<span class="w"> </span>umountDisk<span class="w"> </span>/dev/disk<span class="o">[</span>*<span class="o">]</span>
+gzip<span class="w"> </span>-dc<span class="w"> </span>//Users/.../acropolis-edge-image.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/disk<span class="o">[</span>*<span class="o">]</span><span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
+</pre></div>
+</div>
+<p>Remove SD Card and insert into RaspberryPi.</p>
+<p>Change Hostname:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>raspi-config
+<span class="c1"># Navigate to: System Options → Change Hostname</span>
+sudo<span class="w"> </span>reboot
+</pre></div>
+</div>
+</section>
+<section id="provision-device">
+<h2>Provision Device<a class="headerlink" href="#provision-device" title="Permalink to this heading">¶</a></h2>
+<p>Follow the device provisioning instructions to register the new device with ThingsBoard.
+Link to quickstart.rst / Device Provisioning</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
     <div class="footer">
       &copy;2025, Aigner Patrick, Frölich Lars.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
