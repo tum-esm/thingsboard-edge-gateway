@@ -5,13 +5,15 @@ The Edge Gateway supports *Remote Procedure Calls (RPC)* via ThingsBoard's built
 
 This mechanism is primarily intended for operational control, diagnostics, and maintenance tasks that must be executed on-demand without direct access to the device.
 
+RPCs follow a *controller-executed* model. All RPC commands are handled by the Edge Gateway controller, while the Edge Gateway runtime acts as a secure transport and execution environment. This separation ensures that operational commands can be executed without interrupting the gateway process itself, unless explicitly intended.
+
 
 Overview
 --------
 
 ThingsBoard provides an RPC widget that acts as an interactive console within dashboards. Using this widget, users can send RPC requests to a specific Edge Gateway device and inspect the returned responses in real time.
 
-RPCs are executed by the Edge Gateway controller and are restricted to a predefined set of supported commands to ensure safe and controlled operation.
+RPCs are executed by the Edge Gateway controller and are restricted to a predefined set of supported commands to ensure safe and controlled operation. Unsupported or unknown RPC methods are rejected and return an error response without executing any action on the device.
 
 For a general introduction to ThingsBoard RPCs, refer to the official documentation:
 https://thingsboard.io/docs/user-guide/rpc/
@@ -29,6 +31,8 @@ Built-in RPC Command: ``list``
 The Edge Gateway controller exposes a built-in RPC command named ``list``. This command returns a human-readable list of all RPC commands currently supported by the controller, including a short description of each command and its expected parameters.
 
 This command is useful for quickly verifying controller capabilities and for debugging RPC availability after software updates.
+
+The output of this command reflects the currently running controller version. After controller updates, the list of available RPC commands may change accordingly.
 
 Example response:
 
@@ -117,6 +121,7 @@ Terminates the Edge Gateway process.
 **Notes**
   - Performs a clean restart of the gateway process
   - Allows to apply gateway-level configuration or software changes.
+  - The restart is performed by the container runtime and does not reboot the host system.
 
 
 ``restart_controller``
@@ -126,6 +131,8 @@ Restarts the Edge Gateway controller container.
 
 **Description**
   Stops and restarts the controller Docker container without affecting the gateway runtime.
+
+  This command does not restart the Edge Gateway process itself. Telemetry buffering, file synchronization, and connectivity to ThingsBoard remain active during the controller restart.
 
 **Parameters**
   None
@@ -169,6 +176,7 @@ Executes an arbitrary command on the Edge Gateway host.
   - This command is performed within the gateway runtime environment, not within the controller container.
   - The command is executed with the same permissions as the gateway process, which may have security implications.
   - Use with extreme caution, as it can lead to service interruptions or security risks if misused. 
+  - Command execution is synchronous and blocks until completion or timeout. Long-running commands may temporarily delay other RPC handling.
 
 
 ``archive_republish_messages``
@@ -178,6 +186,8 @@ Republishes archived telemetry messages.
 
 **Description**
   Republishes previously archived telemetry messages within a specified time range. This allows locally stored messages that were lost in transmission to be reprocessed and sent to ThingsBoard.
+
+  The specified time range is inclusive and evaluated using the message timestamps stored in the local archive.
 
 **Parameters**
   - ``start_timestamp_ms`` (integer): Start of the time range (Unix timestamp in milliseconds)
@@ -191,6 +201,8 @@ Discards archived telemetry messages.
 
 **Description**
   Permanently deletes archived telemetry messages within a specified time range. This allows to free up local storage space by removing messages that are no longer needed or have already been successfully transmitted to ThingsBoard.
+
+  The specified time range is inclusive and evaluated using the message timestamps stored in the local archive.
 
 **Parameters**
   - ``start_timestamp_ms`` (integer): Start of the time range (Unix timestamp in milliseconds)
@@ -207,3 +219,5 @@ RPC commands provide powerful control over Edge Gateway devices. It is strongly 
 - Use ThingsBoard role-based access control to limit operational impact
 
 Improper use of RPC commands may lead to service interruptions or security risks.
+
+For production deployments, it is recommended to disable or restrict destructive RPC commands entirely and rely on automated workflows where possible.
