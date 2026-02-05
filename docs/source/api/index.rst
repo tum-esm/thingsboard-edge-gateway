@@ -1,9 +1,16 @@
 API Reference
 =============
 
-Complete reference of public classes, functions, and modules.
+This section documents the public Python API of the ThingsBoard Edge Gateway.
+It is organized by functional subsystem rather than by source directory.
 
 .. toctree::
    :maxdepth: 2
 
-   module_reference
+   core
+   communication
+   remote_file_management
+   ota
+   rpc
+   persistence
+   utilities

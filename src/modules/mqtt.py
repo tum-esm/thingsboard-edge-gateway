@@ -189,7 +189,8 @@ class GatewayMqttClient(Client):
 
         Args:
           log_level: Severity string.
-          log_message: Log message text (prefixed with ``GATEWAY - ``).
+          log_message: Log message text. The gateway prefixes the message with
+            ``GATEWAY -`` followed by a space before publishing.
           timestamp_ms: Optional Unix timestamp in milliseconds. If not provided, a
             timestamp is generated locally.
 

@@ -16,9 +16,6 @@ Some RPC methods (notably ``run_command``) can execute arbitrary commands on the
 host system. Access to such methods must be restricted using ThingsBoard
 permissions and dashboard access control.
 
-See also
---------
-- User Guide: Remote Procedure Calls (RPC)
 """
 
 import json
