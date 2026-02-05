@@ -1,3 +1,28 @@
+"""Main entry point for the ThingsBoard Edge Gateway.
+
+This module implements the primary runtime loop of the Edge Gateway. It is
+responsible for initializing all subsystems, establishing communication with
+ThingsBoard, and coordinating message flow between the controller, local
+persistence layers, and remote services.
+
+Responsibilities
+----------------
+- Parse command-line arguments and perform self-provisioning if required.
+- Initialize local SQLite databases used for buffering and archiving.
+- Start and supervise the MQTT client connection to ThingsBoard.
+- Dispatch incoming MQTT messages to RPC, OTA, and remote file management handlers.
+- Persist and forward controller telemetry and log messages.
+- Supervise the controller container and trigger restarts if required.
+- Publish auxiliary health and timing telemetry.
+
+Notes
+-----
+- The main loop is intentionally single-threaded for deterministic behavior.
+- Background daemon threads are used only for MQTT I/O and file change detection.
+- Fatal errors result in a graceful shutdown followed by forced termination if
+  necessary.
+"""
+
 import json
 import os
 import signal
@@ -28,10 +53,10 @@ from self_provisioning import self_provisioning_get_access_token
 from utils.controller_restart import restart_controller_if_needed
 from utils.misc import get_maybe
 
-global_mqtt_client : Optional[GatewayMqttClient] = None
-archive_sqlite_db = None
-communication_sqlite_db = None
-gateway_logs_buffer_db = None
+global_mqtt_client: Optional[GatewayMqttClient] = None
+archive_sqlite_db: Optional[sqlite.SqliteConnection] = None
+communication_sqlite_db: Optional[sqlite.SqliteConnection] = None
+gateway_logs_buffer_db: Optional[sqlite.SqliteConnection] = None
 STOP_MAINLOOP = False
 AUX_DATA_PUBLISH_INTERVAL_MS = 20_000 # every 20 seconds
 aux_data_publish_ts = None
@@ -39,8 +64,17 @@ aux_data_publish_ts = None
 
 # Set up signal handling for safe shutdown
 def shutdown_handler(sig: Any, _frame: Any) -> None:
+    """Handle graceful shutdown of the Edge Gateway.
+
+    This handler is invoked on SIGINT and SIGTERM. It attempts to shut down all
+    subsystems cleanly, including MQTT connections and SQLite databases, before
+    terminating the process.
+
+    Args:
+      sig: Received signal number.
+      _frame: Current stack frame (unused).
+    """
     global STOP_MAINLOOP
-    """Handle program exit gracefully"""
     # Set a timer to force exit if a graceful shutdown fails
     signal.setitimer(signal.ITIMER_REAL, 20)
 
@@ -61,12 +95,25 @@ def shutdown_handler(sig: Any, _frame: Any) -> None:
 
 # Set up signal handling for forced shutdown in case graceful shutdown fails
 def forced_shutdown_handler(_sig: Any, _frame: Any) -> None:
+    """Handle forced shutdown if graceful shutdown fails.
+
+    This handler is triggered by a SIGALRM when the graceful shutdown timeout is
+    exceeded and terminates the process immediately.
+    """
     warn("FORCEFUL SHUTDOWN")
     sys.stdout.flush()
     os._exit(1)
 
 
-def get_last_controller_health_check_ts():
+def get_last_controller_health_check_ts() -> int:
+    """Return the timestamp of the last controller health check.
+
+    Returns:
+      Unix timestamp in milliseconds of the last recorded health check, or ``0``
+      if no health check has been recorded.
+    """
+    if communication_sqlite_db is None:
+        return 0
     if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
         last_controller_health_check_ts_result = communication_sqlite_db.execute(
             "SELECT timestamp_ms FROM health_check WHERE id = 1")
@@ -83,6 +130,7 @@ signal.signal(signal.SIGTERM, shutdown_handler)
 
 try:
     if __name__ == '__main__':
+        # --- Startup and initialization ---
         # setup
         docker_client: GatewayDockerClient = GatewayDockerClient()
         git_client: GatewayGitClient = GatewayGitClient()
@@ -99,6 +147,7 @@ try:
         communication_sqlite_db.execute(CREATE_CONTROLLER_MESSAGES_TABLE_QUERY)
         communication_sqlite_db.execute(CREATE_PENDING_MESSAGES_TABLE_QUERY)
 
+        # --- MQTT client startup ---
         # create and run the mqtt client in a separate thread
         mqtt_client = GatewayMqttClient().init(access_token)
         try:
@@ -118,6 +167,7 @@ try:
             info("Gateway is provisioned for first time, initializing attributes...")
             GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({ FILE_HASHES_TB_KEY: {}}))
 
+        # --- Background file change detection thread ---
         # daemon thread for updating file content client attributes every 30 seconds
         def file_update_check_daemon():
             """Daemon thread to check for file updates every 30 seconds."""
@@ -135,6 +185,7 @@ try:
         file_update_thread = threading.Thread(target=file_update_check_daemon, daemon=True)
         file_update_thread.start()
 
+        # --- Main event loop ---
         info("Entering main loop...")
         # *** main loop ***
         while not STOP_MAINLOOP:
@@ -234,9 +285,11 @@ try:
                         f"DELETE FROM {sqlite.SqliteTables.PENDING_MQTT_MESSAGES.value} WHERE id = {message[0][0]}")
                 continue
 
+            # --- Controller supervision ---
             controller_running_since_ts = docker_client.get_edge_startup_timestamp_ms() or 0
             last_controller_health_check_ts = get_last_controller_health_check_ts()
 
+            # --- Auxiliary health telemetry ---
             # publish controller startup time and health check time to mqtt
             if aux_data_publish_ts is None or int(time_ns() / 1_000_000) - aux_data_publish_ts > AUX_DATA_PUBLISH_INTERVAL_MS:
                 aux_data_publish_ts = int(time_ns() / 1_000_000)
@@ -260,5 +313,3 @@ try:
 
 except Exception as e:
     utils.misc.fatal_error(f"An error occurred in gateway main loop: {e}")
-
-

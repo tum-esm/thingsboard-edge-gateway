@@ -1,3 +1,23 @@
+"""Handle ThingsBoard RPC requests for the Edge Gateway.
+
+This module implements the Edge Gateway's server-side handling of ThingsBoard
+Remote Procedure Calls (RPC). Incoming RPC requests are dispatched to a curated
+set of supported methods and a response is sent back on the corresponding
+ThingsBoard RPC response topic.
+
+The RPC interface is intended for operational control, diagnostics, and
+maintenance tasks, such as rebooting the device, restarting the controller,
+initializing remote file management attributes, or republishing archived
+telemetry.
+
+Security notes
+--------------
+Some RPC methods (notably ``run_command``) can execute arbitrary commands on the
+host system. Access to such methods must be restricted using ThingsBoard
+permissions and dashboard access control.
+
+"""
+
 import json
 import os
 import queue
@@ -18,39 +38,51 @@ from on_mqtt_msg.check_for_file_hashes_update import FILE_HASHES_TB_KEY
 
 import utils.controller_restart
 
-def rpc_reboot(rpc_msg_id: str, _method: Any, _params: Any):
-    """Reboot the device"""
+def rpc_reboot(rpc_msg_id: str, _method: Any, _params: Any) -> None:
+    """Reboot the Edge Gateway host system.
+
+    Sends an RPC response immediately and triggers a system reboot shortly after.
+    """
     info("[RPC] Rebooting...")
     send_rpc_response(rpc_msg_id, "OK - Rebooting")
     sleep(3)
     os.system("reboot")
     sleep(3)
 
-def rpc_shutdown(rpc_msg_id: str, _method: Any, _params: Any):
+def rpc_shutdown(rpc_msg_id: str, _method: Any, _params: Any) -> None:
+    """Shut down (power off) the Edge Gateway host system."""
     info("[RPC] Shutting down...")
     send_rpc_response(rpc_msg_id, "OK - Shutting down")
     sleep(3)
     os.system("shutdown now")
 
-def rpc_exit(rpc_msg_id: str, _method: Any, _params: Any):
+def rpc_exit(rpc_msg_id: str, _method: Any, _params: Any) -> None:
+    """Terminate the gateway process to trigger a supervised restart."""
     info("[RPC] Exiting...")
     send_rpc_response(rpc_msg_id, "OK - Exiting")
     sleep(3)
     signal.raise_signal(signal.SIGTERM)
 
-def rpc_restart_controller(rpc_msg_id: str, _method: Any, _params: Any):
+def rpc_restart_controller(rpc_msg_id: str, _method: Any, _params: Any) -> None:
+    """Restart the controller container without rebooting the host."""
     info("[RPC] Restarting controller...")
     send_rpc_response(rpc_msg_id, "OK - Restarting Controller")
     sleep(3)
     GatewayDockerClient().stop_controller()
     utils.controller_restart.last_container_restart_ts = 0 # restart the container immediately
 
-def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any):
+def rpc_ping(rpc_msg_id: str, _method: Any, _params: Any) -> None:
+    """Health check RPC that returns a static 'Pong' response."""
     info("[RPC] Pong")
     send_rpc_response(rpc_msg_id, "Pong")
 
 
-def rpc_init_files(rpc_msg_id: str, _method: Any, _params: Any):
+def rpc_init_files(rpc_msg_id: str, _method: Any, _params: Any) -> None:
+    """Initialize client attributes required for remote file management.
+
+    This creates an empty ``FILE_HASHES`` client attribute and requests the
+    ``FILES`` shared attribute to re-run definition validation and synchronization.
+    """
     info("[RPC] Init files")
 
     # setup file hashes client attribute
@@ -63,7 +95,15 @@ def rpc_init_files(rpc_msg_id: str, _method: Any, _params: Any):
     GatewayMqttClient().request_attributes({"sharedKeys": f"FILES"})
     send_rpc_response(rpc_msg_id, "Files client attributes initialized")
 
-def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
+def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any) -> None:
+    """Execute a command on the Edge Gateway host.
+
+    This method executes an arbitrary command and returns its combined stdout/stderr
+    output. The command is killed if it exceeds the provided timeout.
+
+    Parameters are validated strictly. This method is powerful and must be
+    protected via ThingsBoard access control.
+    """
     # Read command parameters
     if type(params) is not dict:
         return send_rpc_method_error(rpc_msg_id, "Running command failed: params is not a dictionary")
@@ -77,6 +117,7 @@ def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
     command = params["command"]
 
     info(f"[RPC] Running command: ['{command}']")
+    # Helpers to stream subprocess output without blocking the gateway loop
     def read_stream_to_queue(stream, out_q: queue.Queue[str]) -> None:
         """Continuously read lines from `stream` and put them on a queue."""
         with stream:  # closes the pipe on exit
@@ -92,7 +133,7 @@ def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
              collected_lines.append(line)
         return collected_lines
 
-    # Run the command
+    # Spawn subprocess and capture combined stdout/stderr as text
     start_timestamp = monotonic()
     sub_process = subprocess.Popen(
         command,
@@ -137,6 +178,15 @@ def rpc_run_command(rpc_msg_id: str, _method: Any, params: Any):
 
 
 def verify_start_end_timestamp_params(params: Any) -> Optional[str]:
+    """Validate timestamp range parameters for archive operations.
+
+    Args:
+      params: RPC params dictionary expected to contain ``start_timestamp_ms`` and
+        ``end_timestamp_ms`` as integers.
+
+    Returns:
+      An error string if invalid, otherwise ``None``.
+    """
     if type(params) is not dict:
         return "params is not a dictionary"
     if "start_timestamp_ms" not in params or "end_timestamp_ms" not in params:
@@ -150,7 +200,8 @@ def verify_start_end_timestamp_params(params: Any) -> Optional[str]:
     return None
 
 
-def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
+def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any) -> None:
+    """Republish archived telemetry messages within a time range."""
     params_verify_err = verify_start_end_timestamp_params(params)
     if params_verify_err is not None:
         return send_rpc_method_error(rpc_msg_id, f"Republishing archived messages failed: {params_verify_err}")
@@ -185,7 +236,8 @@ def rpc_archive_republish_messages(rpc_msg_id: str, _method: Any, params: Any):
     return None
 
 
-def rpc_archive_discard_messages(rpc_msg_id: str, _method: Any, params: Any):
+def rpc_archive_discard_messages(rpc_msg_id: str, _method: Any, params: Any) -> None:
+    """Discard (delete) archived telemetry messages within a time range."""
     params_verify_err = verify_start_end_timestamp_params(params)
     if params_verify_err is not None:
         return send_rpc_method_error(rpc_msg_id, f"Discarding archived messages failed: {params_verify_err}")
@@ -207,7 +259,8 @@ def rpc_archive_discard_messages(rpc_msg_id: str, _method: Any, params: Any):
     return None
 
 
-RPC_METHODS = {
+# Registry of supported RPC methods. Used by the ``list`` command and dispatcher.
+RPC_METHODS: dict[str, dict[str, Any]] = {
     "reboot": {
         "description": "Reboot the device",
         "exec": rpc_reboot
@@ -248,7 +301,13 @@ RPC_METHODS = {
 
 
 def on_rpc_request(rpc_msg_id: str, method: str, params: Any) -> None:
-    """Handle incoming RPC requests"""
+    """Dispatch an incoming RPC request.
+
+    Args:
+      rpc_msg_id: ThingsBoard RPC request identifier.
+      method: RPC method name.
+      params: RPC params payload (type depends on method).
+    """
     info(f"RPC request: {rpc_msg_id} {method} ({params})")
     if method in RPC_METHODS:
         try:
@@ -275,6 +334,7 @@ def send_rpc_response(rpc_msg_id: str, response: Any) -> bool:
         json.dumps({"message": response})
     )
 
-def send_rpc_method_error(rpc_msg_id, msg):
+def send_rpc_method_error(rpc_msg_id: str, msg: str) -> None:
+    """Send a standardized error response for an RPC method."""
     error(f"[RPC] {msg}")
     send_rpc_response(rpc_msg_id, f"Error - {msg}")

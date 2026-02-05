@@ -1,9 +1,30 @@
+"""Logging utilities for the Edge Gateway.
+
+This module provides lightweight logging helpers used throughout the Edge Gateway
+and controller runtime. Log messages are printed to stdout and, when possible,
+published to ThingsBoard via MQTT.
+
+If log publication fails (e.g. due to connectivity issues), messages are buffered
+locally in an SQLite database and can be forwarded later once connectivity is
+restored.
+
+Design goals
+------------
+- Avoid circular imports by resolving dependencies at runtime.
+- Never block or crash the gateway due to logging failures.
+- Preserve log messages during temporary connectivity outages.
+
+Notes
+-----
+- The log level is controlled via the ``LOG_LEVEL`` environment variable.
+- Buffered log messages are stored in ``GATEWAY_LOGS_BUFFER_DB_PATH``.
+"""
 import importlib
 import os
 import time
 
 # get log level from env var
-LOG_LEVEL = os.getenv('LOG_LEVEL') or 'INFO'
+LOG_LEVEL: str = os.getenv('LOG_LEVEL') or 'INFO'
 
 Sqlite = None
 GatewayMqttClient = None
@@ -11,6 +32,15 @@ UtilsPaths = None
 gateway_logs_buffer_db = None
 
 def log(level: str, message: str):
+    """Log a message and attempt to publish it via MQTT.
+
+    The message is always printed to stdout. If the MQTT publication fails, the log
+    entry is stored locally in an SQLite buffer database for later processing.
+
+    Args:
+      level: Log level (e.g. ``DEBUG``, ``INFO``, ``WARN``, ``ERROR``).
+      message: Log message text.
+    """
     print(f'[{level}] {message}')
     if level == 'DEBUG' and LOG_LEVEL != 'DEBUG':
         return
@@ -64,13 +94,17 @@ def log(level: str, message: str):
         )
 
 def debug(message: str):
+    """Log a DEBUG-level message."""
     log('DEBUG', message)
 
 def info(message: str):
+    """Log an INFO-level message."""
     log('INFO', message)
 
 def error(message: str):
+    """Log an ERROR-level message."""
     log('ERROR', message)
 
 def warn(message: str):
+    """Log a WARN-level message."""
     log('WARN', message)
