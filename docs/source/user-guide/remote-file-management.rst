@@ -3,6 +3,8 @@ Remote File Management
 
 The Edge Gateway supports remote file management via ThingsBoard shared attributes. This mechanism allows configuration and system files on the gateway to be created, updated, monitored, and synchronized in a controlled and traceable way. The approach is designed to be robust against intermittent connectivity and to support both read-only mirroring and active configuration management.
 
+The remote file management mechanism follows a *server-authoritative* model. ThingsBoard shared attributes define the desired state of all managed files. The Edge Gateway never propagates local file changes upstream, except for mirroring file content and reporting synchronization status.
+
 
 Shared Attributes
 -----------------
@@ -27,7 +29,7 @@ Supported metadata fields:
   Monotonically increasing version number used to ensure that the latest file version is applied after temporary disconnections.
 
 - ``restart_controller_on_change`` (optional)  
-  Boolean flag indicating whether the Edge Gateway controller should be restarted after a successful file update.
+  Boolean flag indicating whether the Edge Gateway controller should be restarted after a successful file update. Only the managed controller is restarted when this flag is set. The Edge Gateway process itself continues running and is not restarted.
 
 Example: Managing a controller configuration file and the system crontab
 
@@ -51,6 +53,8 @@ When a new entry is added to the ``FILES`` attribute, the Edge Gateway evaluates
 
 - If file content is available, the file is created or updated accordingly.
 - If no file content attribute exists, the file is treated as read-only and its current content is mirrored back to ThingsBoard.
+
+Read-only mirroring is intended for observability and auditing of files that are not actively managed by the Edge Gateway, for example system or configuration files modified by other services.
 
 In both cases, the Edge Gateway creates a client attribute named ``FILE_READ_<file_key>`` containing the latest local file content.
 
@@ -78,11 +82,11 @@ After applying the update, the Edge Gateway mirrors the current file content int
 Use case: Update the system crontab
 """""""""""""""""""""""""""""""""""
 
-System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters. Here an shared attribute ``FILE_CONTENT_crontab`` is created with the base64-encoded content of the desired crontab file.
+System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters. Here a shared attribute ``FILE_CONTENT_crontab`` is created with the base64-encoded content of the desired crontab file.
 
 .. code-block:: text
 
-    U0hFTEw9L2Jpbi9iYXNoClBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluCkhPTUU9L3Jvb3QKCiMgRG9ja2VyCkBkYWlseSBkb2NrZXIgc3lzdGVtIHBydW5lIC1hIC0tZm9yY2UgLS1maWx0ZXIgInVudGlsPTg3NjBoIgoKIyBEZWxldGUgb2xkIGxvZyBmaWxlcyAob2xkZXIgdGhhbiAxMDAgZGF5cykKQGRhaWx5IC91c3IvYmluL2ZpbmQgL2hvbWUvcGkvY29udHJvbGxlci9sb2dzLyAtdHlwZSBmIC1tdGltZSArMTAwIC1kZWxldGUK
+    U0hFTEw9L2Jpbi9iYXNoClBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluCkhPTUU9L3Jvb3QKCiMgRG9ja2VyCkBkYWlseSBkb2NrZXIgc3lzdGVtIHBydW5lIC1hIC0tZm9yY2UgLS1maWx0ZXIgInVudGlsPTg3NjBoIgoKIyBEZWxldGUgb2xkIGxvZyBmaWxlcyAob2xkZXIgdGhhbiAxMDAgZGF5cykKQGRhaWx5IC91c3IvYmluL2ZpbmQgL2hvbWUvcGkvY29udHJvbGxlci9sb2dzLyAtdHlwZSBmIC1tdGltZSArMTAwIC1kZWxldGUK
 
 After the update is applied, the Edge Gateway mirrors the current crontab content encoded as ``base64`` into the client attribute ``FILE_READ_crontab``.
 
@@ -108,6 +112,9 @@ If a mismatch is detected:
 
 - The Edge Gateway requests the latest content from ``FILE_CONTENT_<file_key>``.
 - If the shared attribute is missing or empty, no action is taken.
+- If a managed file was modified locally, the detected hash mismatch causes the Edge Gateway to re-apply the remote file content, restoring the desired state defined in ThingsBoard.
+
+If a file update fails, for example due to invalid encoding, insufficient permissions, or temporary I/O errors, the Edge Gateway logs the error locally and does not update the corresponding hash entry. This allows the issue to be diagnosed and retried once corrected without leaving the system in an inconsistent state.
 
 Example: ``FILE_HASHES`` client attribute
 
