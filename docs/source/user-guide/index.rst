@@ -9,4 +9,5 @@ operation.
 
    configuration
    remote-file-management
+   remote-software-update
    workflows
