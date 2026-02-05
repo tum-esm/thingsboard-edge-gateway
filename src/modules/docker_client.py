@@ -1,3 +1,29 @@
+"""Docker runtime management for the Edge Gateway controller.
+
+This module provides the :class:`~modules.docker_client.GatewayDockerClient`, a thin
+wrapper around the Docker Engine API used by the Edge Gateway to manage the
+*controller* container.
+
+Responsibilities
+----------------
+- Detect whether the controller container is running and determine its version.
+- Start/stop the controller container in a controlled way.
+- Build controller images from a Git tag or commit hash if the image is not available.
+- Publish ThingsBoard OTA-related software state updates via MQTT (``sw_state``).
+
+The controller is deployed as a Docker container (``teg_controller``) with images
+tagged as ``teg-controller-<version>:latest``. Versions may be Git tags (e.g. ``v1.2.3``)
+or full commit hashes.
+
+Notes
+-----
+- This client is implemented as a process-level singleton to avoid repeated Docker
+  client initialization.
+- The implementation assumes host networking and a privileged container, as required
+  for the deployed Raspberry Pi environment.
+
+"""
+
 import datetime
 import os
 from time import sleep
@@ -13,14 +39,32 @@ from modules.mqtt import GatewayMqttClient
 from utils.paths import CONTROLLER_GIT_PATH, GATEWAY_DATA_PATH, CONTROLLER_LOGS_PATH, CONTROLLER_DATA_PATH, \
     CONTROLLER_DOCKERCONTEXT_PATH, CONTROLLER_DOCKERFILE_PATH
 
-CONTROLLER_CONTAINER_NAME = "teg_controller"
-CONTROLLER_IMAGE_PREFIX = "teg-controller-"
+CONTROLLER_CONTAINER_NAME: str = "teg_controller"
+CONTROLLER_IMAGE_PREFIX: str = "teg-controller-"
 
-singleton_instance : Optional["GatewayDockerClient"] = None
+singleton_instance: Optional["GatewayDockerClient"] = None
 
 class GatewayDockerClient:
-    last_launched_version = None
-    docker_client : None|DockerClient = None
+    """Manage the controller Docker container for an Edge Gateway device.
+
+    The gateway and controller are intentionally separated: the Edge Gateway remains
+    stable while controller versions can be updated independently (e.g. via OTA
+    packages in ThingsBoard).
+
+    This class wraps Docker operations (list, stop, run, build) and integrates with
+    the gateway’s Git and MQTT clients to support automated controller updates.
+
+    Attributes
+    ----------
+    last_launched_version:
+      Cached version string of the last successfully launched controller.
+    docker_client:
+      Docker SDK client instance created via :func:`docker.from_env`, or ``None`` if
+      Docker is unavailable.
+
+    """
+    last_launched_version: Optional[str] = None
+    docker_client: Optional[DockerClient] = None
 
     def __init__(self) -> None:
         global singleton_instance
@@ -42,6 +86,16 @@ class GatewayDockerClient:
         return super(GatewayDockerClient, cls).__new__(cls)
 
     def get_last_launched_controller_version(self) -> Optional[str]:
+        """Return the last launched controller version.
+
+        The value is cached in-memory and persisted in
+        ``$GATEWAY_DATA_PATH/last_launched_controller_version.txt``. If the file is not
+        available, the environment variable ``TEG_DEFAULT_CONTROLLER_VERSION`` is used
+        as a fallback.
+
+        Returns:
+          The version tag/commit hash, or ``None`` if unknown.
+        """
         if self.last_launched_version is not None:
             return self.last_launched_version
         # read controller version from file
@@ -57,6 +111,11 @@ class GatewayDockerClient:
             return None
 
     def set_last_launched_controller_version(self, last_launched_controller_version: str):
+        """Persist the last launched controller version.
+
+        Args:
+          last_launched_controller_version: Git tag or commit hash to store.
+        """
         self.last_launched_version = last_launched_controller_version
         # write to file
         try:
@@ -66,6 +125,11 @@ class GatewayDockerClient:
             error("[DOCKER-CLIENT] Failed to write last launched controller version: {}".format(e))
 
     def is_controller_running(self) -> bool:
+        """Check whether the controller container is running.
+
+        Returns:
+          ``True`` if the container exists and is running, otherwise ``False``.
+        """
         if self.docker_client is None:
             error("[DOCKER-CLIENT] is_controller_running: Docker client not initialized")
             return False
@@ -76,6 +140,14 @@ class GatewayDockerClient:
         return False
 
     def is_image_available(self, image_tag: str) -> bool:
+        """Check whether a Docker image tag exists locally.
+
+        Args:
+          image_tag: Full Docker image tag to look up (e.g. ``teg-controller-v1.0.0:latest``).
+
+        Returns:
+          ``True`` if the image tag exists locally, otherwise ``False``.
+        """
         if self.docker_client is None:
             error("[DOCKER-CLIENT] is_image_available: Docker client not initialized")
             return False
@@ -85,6 +157,12 @@ class GatewayDockerClient:
         return False
 
     def get_controller_version(self) -> Optional[str]:
+        """Return the controller version inferred from the running container image.
+
+        Returns:
+          The Git tag/commit hash parsed from the image name, or ``None`` if the
+          controller is not running or the version cannot be determined.
+        """
         if self.docker_client is None:
             error("[DOCKER-CLIENT] get_controller_version: Docker client not initialized")
             return None
@@ -101,6 +179,11 @@ class GatewayDockerClient:
         return None
 
     def get_edge_startup_timestamp_ms(self) -> Optional[int]:
+        """Return the controller container start time as Unix milliseconds.
+
+        Returns:
+          Start timestamp in milliseconds (UTC) if the controller is running, else ``None``.
+        """
         if self.docker_client is None:
             error("[DOCKER-CLIENT] get_edge_startup_timestamp_ms: Docker client not initialized")
             return None
@@ -116,6 +199,14 @@ class GatewayDockerClient:
         return None
 
     def stop_controller(self) -> None:
+        """Stop the running controller container (if any).
+
+        This stores the currently running controller version as the last-launched
+        version before stopping the container.
+
+        Returns:
+          None
+        """
         if self.docker_client is None:
             error("[DOCKER-CLIENT] stop_controller: Docker client not initialized")
             return None
@@ -133,6 +224,7 @@ class GatewayDockerClient:
             info("[DOCKER-CLIENT] Controller container is not running")
 
     def prune_containers(self) -> None:
+        """Remove stopped containers to keep the Docker environment clean."""
         if self.docker_client is None:
             error("[DOCKER-CLIENT] prune_containers: Docker client not initialized")
             return None
@@ -140,12 +232,33 @@ class GatewayDockerClient:
         info("[DOCKER-CLIENT] Pruned containers")
 
     def start_controller_safely(self, version_to_launch: str):
+        """Start the controller and suppress unexpected exceptions.
+
+        Args:
+          version_to_launch: Git tag or commit hash to run.
+        """
         try:
             self.start_controller(version_to_launch)
         except Exception as e:
             warn("[DOCKER-CLIENT] Failed to start controller: {}".format(e))
             
     def start_controller(self, version_to_launch: str) -> None:
+        """Start the controller container for a given version.
+
+        If the requested version is already running, the method is a no-op. If the
+        required image is not available locally, the controller repository is fetched,
+        reset to the referenced commit, and a Docker image is built from the local
+        Docker context.
+
+        During the update lifecycle, the method publishes OTA-related states via MQTT
+        (e.g. ``DOWNLOADING``, ``DOWNLOADED``, ``UPDATING``, ``UPDATED``).
+
+        Args:
+          version_to_launch: Git tag (e.g. ``v1.0.0``) or full commit hash.
+
+        Returns:
+          None
+        """
         if self.docker_client is None:
             error("[DOCKER-CLIENT] start_controller: Docker client not initialized")
             return None
