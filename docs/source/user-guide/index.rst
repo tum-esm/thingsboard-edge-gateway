@@ -10,6 +10,7 @@ Use the sections below to explore individual features in detail, including remot
 .. toctree::
    :maxdepth: 2
 
+   main-loop
    remote-file-management
    remote-software-update
    remote-procedure-calls
