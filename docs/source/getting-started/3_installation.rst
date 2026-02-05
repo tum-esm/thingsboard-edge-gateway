@@ -13,15 +13,7 @@ Update the package list and install required dependencies:
         build-essential libssl-dev libbz2-dev \
         libexpat1-dev liblzma-dev zlib1g-dev \
         libffi-dev openssl docker.io git \
-        tldr ncdu minicom pigpio libsqlite3-dev \
-        wget screen udhcpc
-
-Enable **I2C Interface** using:
-
-.. code-block:: bash
-
-    sudo raspi-config
-    # Navigate to: Interface Options → I2C → Enable
+        libsqlite3-dev wget
 
 Python
 ------
