@@ -53,10 +53,10 @@ from self_provisioning import self_provisioning_get_access_token
 from utils.controller_restart import restart_controller_if_needed
 from utils.misc import get_maybe
 
-global_mqtt_client : Optional[GatewayMqttClient] = None
-archive_sqlite_db = None
-communication_sqlite_db = None
-gateway_logs_buffer_db = None
+global_mqtt_client: Optional[GatewayMqttClient] = None
+archive_sqlite_db: Optional[sqlite.SqliteConnection] = None
+communication_sqlite_db: Optional[sqlite.SqliteConnection] = None
+gateway_logs_buffer_db: Optional[sqlite.SqliteConnection] = None
 STOP_MAINLOOP = False
 AUX_DATA_PUBLISH_INTERVAL_MS = 20_000 # every 20 seconds
 aux_data_publish_ts = None
@@ -112,6 +112,8 @@ def get_last_controller_health_check_ts() -> int:
       Unix timestamp in milliseconds of the last recorded health check, or ``0``
       if no health check has been recorded.
     """
+    if communication_sqlite_db is None:
+        return 0
     if communication_sqlite_db.do_table_values_exist(sqlite.SqliteTables.HEALTH_CHECK.value):
         last_controller_health_check_ts_result = communication_sqlite_db.execute(
             "SELECT timestamp_ms FROM health_check WHERE id = 1")
