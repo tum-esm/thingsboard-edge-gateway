@@ -11,7 +11,9 @@ Create a Docker daemon configuration file:
     sudo nano /etc/docker/daemon.json
     # Add:
     {
-        "dns": ["8.8.8.8", "1.1.1.1", "8.8.4.4"]
+        "dns": ["8.8.8.8", "1.1.1.1", "8.8.4.4"],
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "100m", "max-file": "3" }
     }
 
 
