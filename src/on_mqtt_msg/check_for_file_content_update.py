@@ -1,3 +1,23 @@
+"""Handle remote file content updates received via MQTT.
+
+This module processes ThingsBoard shared attribute updates of the form
+``FILE_CONTENT_<file_key>`` and applies the corresponding file changes on the
+Edge Gateway filesystem.
+
+It implements the *apply* side of the Remote File Management workflow:
+- Decode incoming file content according to its declared encoding.
+- Write updated file contents to disk.
+- Recalculate and publish file hashes (``FILE_HASHES``).
+- Mirror updated file contents back via ``FILE_READ_<file_key>`` attributes.
+- Optionally trigger a controller restart if required by the file definition.
+
+Notes
+-----
+- File metadata (paths, encodings, flags) is defined in the ``FILES`` shared attribute.
+- Hash synchronization logic is coordinated with
+  ``on_mqtt_msg.check_for_file_hashes_update``.
+"""
+
 import json
 
 from modules.docker_client import GatewayDockerClient
@@ -9,11 +29,22 @@ from modules.mqtt import GatewayMqttClient
 from on_mqtt_msg.check_for_file_hashes_update import FILE_HASHES_TB_KEY
 from utils.misc import file_exists, get_maybe
 
+"""Prefix used to identify file content updates in shared attributes."""
 FILE_CONTENT_PREFIX = "FILE_CONTENT_"
 
 def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
+    """Process an incoming file content update message.
+
+    Args:
+      msg_payload: MQTT message payload containing shared attributes.
+
+    Returns:
+      ``True`` if the message was handled (even if no update was applied),
+      ``False`` if the message is not related to file content updates.
+    """
     payload = get_maybe(msg_payload, "shared") or msg_payload
     file_id = None
+    # Identify the first FILE_CONTENT_<file_key> entry in the payload
     for key in payload:
         if key.startswith(FILE_CONTENT_PREFIX):
             file_id = key.replace(FILE_CONTENT_PREFIX, "")
@@ -32,7 +63,7 @@ def on_msg_check_for_file_content_update(msg_payload: Any) -> bool:
         error("Invalid file content update received")
         return False
 
-    # encode file content to bytes based on content encoding (defaults to "text")
+    # Decode incoming file content according to the declared encoding
     file_encoding = get_maybe(file_definition, "encoding") or "text"
     if file_encoding == "json":
         if isinstance(input_file_content, dict):

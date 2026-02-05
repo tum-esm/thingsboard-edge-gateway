@@ -1,3 +1,25 @@
+"""Handle remote file hash synchronization updates received via MQTT.
+
+This module processes ThingsBoard client attribute updates for ``FILE_HASHES`` and
+implements the *synchronization* side of the Remote File Management workflow.
+
+Responsibilities
+----------------
+- Compare local file hashes with hashes reported by ThingsBoard.
+- Detect missing, modified, or outdated files on the Edge Gateway.
+- Request file content updates via ``FILE_CONTENT_<file_key>`` when required.
+- Mirror local file state back to ThingsBoard using ``FILE_READ_<file_key>``.
+- Publish updated ``FILE_HASHES`` client attributes after reconciliation.
+
+Notes
+-----
+- File metadata (paths, encodings, write versions) is defined via the ``FILES``
+  shared attribute.
+- This module complements
+  ``on_mqtt_msg.check_for_file_content_update``, which applies incoming file
+  content updates.
+"""
+
 import json
 import os
 from modules.logging import info, error, warn
@@ -7,8 +29,19 @@ import utils
 from modules.mqtt import GatewayMqttClient
 from utils.misc import get_maybe
 
+"""Client attribute key used to exchange file hash metadata with ThingsBoard."""
 FILE_HASHES_TB_KEY = "FILE_HASHES"
 def on_msg_check_for_file_hashes_update(msg_payload: Any) -> bool:
+    """Process an incoming file hash synchronization message.
+
+    Args:
+      msg_payload: MQTT message payload containing client attributes.
+
+    Returns:
+      ``True`` if the message was handled as a file hash update,
+      ``False`` otherwise.
+    """
+    # Extract FILE_HASHES client attribute from the incoming payload
     file_hashes = utils.misc.get_maybe(msg_payload, "client", FILE_HASHES_TB_KEY)
 
     if file_hashes is None:
@@ -23,11 +56,13 @@ def on_msg_check_for_file_hashes_update(msg_payload: Any) -> bool:
     file_defs = GatewayFileWriter().get_files()
     new_hashes = {}
 
+    # Remove hashes for files that are no longer defined
     for file_id in file_hashes:
         if file_id not in file_defs:
             warn(f"File {file_id} is no longer defined, removing from client attributes")
             write_file_content_to_client_attribute(file_id, "")
 
+    # Reconcile local files against reported hashes and write versions
     for file_id in file_defs:
         file_path = GatewayFileWriter().expand_file_path(get_maybe(file_defs, file_id, "path"))
         if file_path is None:
@@ -66,6 +101,7 @@ def on_msg_check_for_file_hashes_update(msg_payload: Any) -> bool:
                     info(f"File {file_path} write version changed, requesting content update for {file_id}")
                     GatewayMqttClient().request_attributes({"sharedKeys": f"FILE_CONTENT_" + file_id})
 
+    # Publish updated file hash state back to ThingsBoard
     GatewayMqttClient().publish_message_raw("v1/devices/me/attributes", json.dumps({
         FILE_HASHES_TB_KEY: new_hashes
     }))
