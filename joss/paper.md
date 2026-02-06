@@ -116,9 +116,10 @@ Footnote[^1]
 
 # Citations
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
+If you want to cite a software repository URL (e.g. something on GitHub without a preferred citation) then you can do it with the example BibTeX entry below for.
 
+@IPCC_2021_WGI_SPM
+[@IPCC_2021_WGI_SPM]
 
 # Figures
 
