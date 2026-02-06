@@ -109,17 +109,35 @@ bibliography: paper.bib
 - Static type checking using mypy
 - Documentation generated using Sphinx
 
-# Mathematics
+# State of the Art
 
-Footnote[^1]
+Open Source:
+- Thingsboard Edge: https://github.com/thingsboard/thingsboard-edge
+- EdgeX Foundry: https://www.edgexfoundry.org/
+- Eclipse Kura: https://www.eclipse.org/kura/
+- Ivy: https://joss.theoj.org/papers/10.21105/joss.08862
+- Thin Edge: https://thin-edge.io/
+- IoT Fledge: https://github.com/fledge-iot/fledge
+- Kube Edge: https://kubeedge.io/en/
+
+Commercial:
+- AWS IoT Greengrass: https://aws.amazon.com/greengrass/
+- Azure IoT Edge: https://azure.microsoft.com/en-us/services/iot-edge/
+
+Alternatives to Thingsboard:
+- Belena: https://www.balena.io/
+- Tenta: https://joss.theoj.org/papers/10.21105/joss.07311
 
 
 # Citations
 
 If you want to cite a software repository URL (e.g. something on GitHub without a preferred citation) then you can do it with the example BibTeX entry below for.
 
-@IPCC_2021_WGI_SPM
-[@IPCC_2021_WGI_SPM]
+In Text Citation: @IPCC_2021_WGI_SPM
+
+In Bracket Citation: [@IPCC_2021_WGI_SPM]
+
+Footnote[^1]
 
 # Figures
 
