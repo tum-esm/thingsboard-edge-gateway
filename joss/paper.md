@@ -40,25 +40,17 @@ bibliography: paper.bib
 - Physical access to devices is limited or costly
 - Network connectivity can be intermittent or unreliable
 
-- Shared operational requirements across projects:
-  - Reliable bidirectional communication with a central platform
-  - Local buffering of data during network outages
-  - Remote configuration and maintenance capabilities
-  - Safe software updates without disrupting measurements
-  - Ability to recover from failures without physical intervention
-
 - Sensor networks differ mainly in:
   - sensor hardware
   - acquisition protocols
   - domain-specific processing
 - Infrastructure needs are largely identical across projects
+  - Reliable bidirectional communication with a central platform
+  - Local buffering of data during network outages
+  - Remote configuration and maintenance capabilities
+  - Safe software updates without disrupting measurements
+  - Ability to recover from failures without physical intervention
 - A reusable architectural baseline reduces duplicated engineering effort
-
-- The ThingsBoard Edge Gateway provides:
-  - A stable and reusable gateway architecture
-  - Clear separation between infrastructure and application logic
-  - Persistent connectivity, buffering, and remote management
-  - Supervision of an external, application-specific controller
 
 - Research projects can:
   - Start from a proven gateway design
@@ -66,50 +58,17 @@ bibliography: paper.bib
   - Reduce engineering overhead at project start
   - Deploy new sensor networks more rapidly
 
+- The ThingsBoard Edge Gateway provides:
+  - A stable and reusable gateway architecture
+  - Clear separation between infrastructure and application logic
+  - Persistent connectivity, buffering, and remote management
+  - Supervision of an external, application-specific controller
+
 - Broader impact:
   - Architectural consistency across scientific projects
-  - Improved long-term maintainability
   - Reuse beyond a single study or funding cycle
-  - A documented reference architecture for sensor networks
 
-# Design and Architecture
-
-- Two-component architecture:
-  - Edge Gateway (this software)
-  - External Edge Controller (project-specific)
-- Gateway responsibilities:
-  - Connectivity to ThingsBoard
-  - Persistence and buffering
-  - Remote management and supervision
-- Controller responsibilities:
-  - Sensor hardware interaction
-  - Data acquisition and processing
-- Gateway runs as a long-lived Python process
-- Controller runs in a Docker container
-- Controller is not part of this repository
-- Architecture supports continuous gateway availability during controller restarts and updates
-
-# Functionality
-
-- MQTT-based communication with ThingsBoard
-- Local buffering of telemetry and logs
-- Remote configuration via shared attributes
-- Remote procedure calls for operational control
-- Controller-only over-the-air (OTA) updates
-- Rollback to previous controller versions
-- Self-provisioning against ThingsBoard
-- Graceful handling of network outages and controller failures
-
-# Implementation
-
-- Implemented in Python (version 3.12+)
-- Modular code structure separating communication, persistence, and management
-- SQLite used for lightweight local persistence
-- Docker used for controller isolation
-- Static type checking using mypy
-- Documentation generated using Sphinx
-
-# State of the Art
+# State of the Field
 
 Open Source:
 - Thingsboard Edge: https://github.com/thingsboard/thingsboard-edge
@@ -129,19 +88,56 @@ Alternatives to Thingsboard:
 - Tenta: https://joss.theoj.org/papers/10.21105/joss.07311
 
 
+# Software Design
+
+- Two-component architecture:
+  - Edge Gateway (this software)
+  - External Edge Controller (project-specific, we provide an example implementation)
+- Good Scaling properties:
+  - Multiple controllers can be supervised by a single gateway
+  - Controllers can be added or removed from the network as needed 
+- Gateway functionality:
+  - MQTT-based communication with ThingsBoard
+  - Local buffering of telemetry and logs
+  - Remote configuration via shared attributes
+  - Remote procedure calls for operational control
+  - Controller-only over-the-air (OTA) updates
+  - Rollback to previous controller versions
+  - Self-provisioning against ThingsBoard
+  - Graceful handling of network outages and controller failures
+- Controller responsibilities:
+  - Sensor hardware interaction
+  - Data acquisition and processing
+- Gateway runs as a long-lived Python process within a Docker container
+- Controller is managed as a Docker container
+- Architecture supports continuous gateway availability during controller restarts and updates
+
+## Implementation
+
+- Implemented in Python (version 3.12+)
+- Modular code structure separating communication, persistence, and management
+- SQLite used for lightweight local persistence
+- Docker used for controller isolation
+- Static type checking using mypy
+- Documentation generated using Sphinx
+
+# Research impact statement
+
+- The ThingsBoard Edge Gateway has been validated in a real-world scientific deployment within the ICOS Cities framework. It has enabled reliable data collection from a network of environmental sensors in an urban setting @ACROPOLIS2026.
+- Example implementation @ACROPOLIS-edge
+
+
 # Citations
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred citation) then you can do it with the example BibTeX entry below for.
+- ThingsBoard[^1] @ThingsBoard2026 
+- Docker @merkel2014docker
+- Python @Python
+- SQLite @SQLite
+- Mypy @mypy
+- Sphinx @Sphinx
+- Paho MQTT Client @paho
 
-In Text Citation: @IPCC_2021_WGI_SPM
-
-In Bracket Citation: [@IPCC_2021_WGI_SPM]
-
-Footnote[^1]
-
-# Figures
-
-Figures can be included like this:
+[^1]: https://thingsboard.io/
 
 
 # Author contributions
@@ -157,6 +153,6 @@ Figures can be included like this:
 - ICOS Cities framework
 - Funding bodies (to be added)
 
-# References
+# AI usage disclosure
 
-[^1]: https://thingsboard.io/
+Generative AI tools were used to assist with language refinement, formatting, and editorial support during manuscript preparation, and to generate docstrings and aid documentation of the codebase and online materials. All AI-assisted outputs were reviewed and approved by the authors to ensure accuracy, technical correctness, and integrity.
