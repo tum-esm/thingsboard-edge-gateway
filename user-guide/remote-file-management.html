@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Remote File Management &#8212; thingsboard-edge-gateway 0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=f6a572b4" />
+    <script src="../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Remote Software Update" href="remote-software-update.html" />
@@ -18,13 +19,14 @@
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
 
@@ -62,7 +64,7 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
@@ -70,7 +72,7 @@
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
@@ -81,14 +83,14 @@
           <div class="body" role="main">
             
   <section id="remote-file-management">
-<h1>Remote File Management<a class="headerlink" href="#remote-file-management" title="Permalink to this heading">¶</a></h1>
+<h1>Remote File Management<a class="headerlink" href="#remote-file-management" title="Link to this heading">¶</a></h1>
 <p>The Edge Gateway supports remote file management via ThingsBoard shared attributes. This mechanism allows configuration and system files on the gateway to be created, updated, monitored, and synchronized in a controlled and traceable way. The approach is designed to be robust against intermittent connectivity and to support both read-only mirroring and active configuration management.</p>
 <p>The remote file management mechanism follows a <em>server-authoritative</em> model. ThingsBoard shared attributes define the desired state of all managed files. The Edge Gateway never propagates local file changes upstream, except for mirroring file content and reporting synchronization status.</p>
 <section id="shared-attributes">
-<h2>Shared Attributes<a class="headerlink" href="#shared-attributes" title="Permalink to this heading">¶</a></h2>
+<h2>Shared Attributes<a class="headerlink" href="#shared-attributes" title="Link to this heading">¶</a></h2>
 <p>Shared attributes are used to push file metadata and file content from ThingsBoard to the Edge Gateway. The central element is the <code class="docutils literal notranslate"><span class="pre">FILES</span></code> attribute, which defines which files are managed and how they should be handled. Actual file content is transferred separately using dedicated attributes.</p>
 <section id="initialize-the-files-attribute">
-<h3>Initialize the <code class="docutils literal notranslate"><span class="pre">FILES</span></code> Attribute<a class="headerlink" href="#initialize-the-files-attribute" title="Permalink to this heading">¶</a></h3>
+<h3>Initialize the <code class="docutils literal notranslate"><span class="pre">FILES</span></code> Attribute<a class="headerlink" href="#initialize-the-files-attribute" title="Link to this heading">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">FILES</span></code> attribute is a JSON object containing metadata entries for each managed file. Each entry defines the target path on the Edge Gateway, the encoding used for file transfer, and optional behavior flags.</p>
 <p>Supported metadata fields:</p>
 <ul class="simple">
@@ -126,10 +128,10 @@ Boolean flag indicating whether the Edge Gateway controller should be restarted 
 <p>In both cases, the Edge Gateway creates a client attribute named <code class="docutils literal notranslate"><span class="pre">FILE_READ_&lt;file_key&gt;</span></code> containing the latest local file content.</p>
 </section>
 <section id="populate-file-content-file-key-attributes">
-<h3>Populate <code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_&lt;file_key&gt;</span></code> Attributes<a class="headerlink" href="#populate-file-content-file-key-attributes" title="Permalink to this heading">¶</a></h3>
+<h3>Populate <code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_&lt;file_key&gt;</span></code> Attributes<a class="headerlink" href="#populate-file-content-file-key-attributes" title="Link to this heading">¶</a></h3>
 <p>File content is pushed using a dedicated shared attribute named <code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_&lt;file_key&gt;</span></code>. The encoding must match the encoding defined in the corresponding <code class="docutils literal notranslate"><span class="pre">FILES</span></code> entry.</p>
 <section id="use-case-create-or-update-a-controller-configuration-file">
-<h4>Use case: Create or update a controller configuration file<a class="headerlink" href="#use-case-create-or-update-a-controller-configuration-file" title="Permalink to this heading">¶</a></h4>
+<h4>Use case: Create or update a controller configuration file<a class="headerlink" href="#use-case-create-or-update-a-controller-configuration-file" title="Link to this heading">¶</a></h4>
 <p>To manage the controller configuration, a shared attribute <code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_controller_config</span></code> is created and populated with JSON-encoded configuration data.</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;setting1&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;value1&quot;</span><span class="p">,</span>
@@ -140,7 +142,7 @@ Boolean flag indicating whether the Edge Gateway controller should be restarted 
 <p>After applying the update, the Edge Gateway mirrors the current file content into the client attribute <code class="docutils literal notranslate"><span class="pre">FILE_READ_controller_config</span></code>.</p>
 </section>
 <section id="use-case-update-the-system-crontab">
-<h4>Use case: Update the system crontab<a class="headerlink" href="#use-case-update-the-system-crontab" title="Permalink to this heading">¶</a></h4>
+<h4>Use case: Update the system crontab<a class="headerlink" href="#use-case-update-the-system-crontab" title="Link to this heading">¶</a></h4>
 <p>System-level files such as the OS crontab can be managed in the same way. In this case, content is base64-encoded to preserve formatting and special characters. Here a shared attribute <code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_crontab</span></code> is created with the base64-encoded content of the desired crontab file.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>U0hFTEw9L2Jpbi9iYXNoClBBVEg9L3Vzci9sb2NhbC9zYmluOi91c3IvbG9jYWwvYmluOi91c3IvbG9jYWwvYmluOi91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluCkhPTUU9L3Jvb3QKCiMgRG9ja2VyCkBkYWlseSBkb2NrZXIgc3lzdGVtIHBydW5lIC1hIC0tZm9yY2UgLS1maWx0ZXIgInVudGlsPTg3NjBoIgoKIyBEZWxldGUgb2xkIGxvZyBmaWxlcyAob2xkZXIgdGhhbiAxMDAgZGF5cykKQGRhaWx5IC91c3IvYmluL2ZpbmQgL2hvbWUvcGkvY29udHJvbGxlci9sb2dzLyAtdHlwZSBmIC1tdGltZSArMTAwIC1kZWxldGUK
 </pre></div>
@@ -150,7 +152,7 @@ Boolean flag indicating whether the Edge Gateway controller should be restarted 
 </section>
 </section>
 <section id="client-attributes">
-<h2>Client Attributes<a class="headerlink" href="#client-attributes" title="Permalink to this heading">¶</a></h2>
+<h2>Client Attributes<a class="headerlink" href="#client-attributes" title="Link to this heading">¶</a></h2>
 <p>Client attributes are used to report file content back to ThingsBoard and preserve synchronization status.</p>
 <p>For each file defined in the <code class="docutils literal notranslate"><span class="pre">FILES</span></code> attribute:</p>
 <ul class="simple">
@@ -159,7 +161,7 @@ Boolean flag indicating whether the Edge Gateway controller should be restarted 
 </ul>
 </section>
 <section id="file-hashes-and-synchronization">
-<h2>File Hashes and Synchronization<a class="headerlink" href="#file-hashes-and-synchronization" title="Permalink to this heading">¶</a></h2>
+<h2>File Hashes and Synchronization<a class="headerlink" href="#file-hashes-and-synchronization" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code> attribute is used to ensure consistency between ThingsBoard and the Edge Gateway.</p>
 <p>The Edge Gateway periodically computes a hash for each managed local file and compares it against the corresponding entry in <code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code>. Each entry includes both the hash and the associated <code class="docutils literal notranslate"><span class="pre">write_version</span></code>.</p>
 <p>If a mismatch is detected:</p>
@@ -193,11 +195,11 @@ Boolean flag indicating whether the Edge Gateway controller should be restarted 
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2025, Aigner Patrick, Frölich Lars.
+      &#169;2025, Aigner Patrick, Frölich Lars.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="../_sources/user-guide/remote-file-management.rst.txt"

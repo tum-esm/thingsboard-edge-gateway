@@ -1,29 +1,31 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Utilities &#8212; thingsboard-edge-gateway 0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=f6a572b4" />
+    <script src="../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="Local Data Persistence" href="persistence.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
 
@@ -63,7 +65,7 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
@@ -71,7 +73,7 @@
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
@@ -82,11 +84,11 @@
           <div class="body" role="main">
             
   <section id="utilities">
-<h1>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h1>
+<h1>Utilities<a class="headerlink" href="#utilities" title="Link to this heading">¶</a></h1>
 <p>This section documents utility and support modules used across the Edge Gateway.
 These modules provide configuration, logging, and defensive helper functions.</p>
 <section id="module-utils.misc">
-<span id="miscellaneous-helpers"></span><h2>Miscellaneous Helpers<a class="headerlink" href="#module-utils.misc" title="Permalink to this heading">¶</a></h2>
+<span id="miscellaneous-helpers"></span><h2>Miscellaneous Helpers<a class="headerlink" href="#module-utils.misc" title="Link to this heading">¶</a></h2>
 <p>Miscellaneous helper utilities for the Edge Gateway.</p>
 <p>This module provides small, reusable helper functions that are used across
 multiple subsystems of the Edge Gateway. The functions are intentionally simple,
@@ -104,7 +106,7 @@ runtime paths.</p>
 </ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.misc.fatal_error">
-<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">fatal_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#fatal_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.fatal_error" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">fatal_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#fatal_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.fatal_error" title="Link to this definition">¶</a></dt>
 <dd><p>Log a fatal error and terminate the gateway gracefully.</p>
 <p>The function logs the error together with a stack trace, waits briefly to allow
 logs to be flushed, and then triggers a graceful shutdown using SIGINT followed
@@ -121,7 +123,7 @@ by process termination.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.misc.file_exists">
-<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#file_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.file_exists" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">file_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#file_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.file_exists" title="Link to this definition">¶</a></dt>
 <dd><p>Check whether a file exists at the given path.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -138,7 +140,7 @@ by process termination.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.misc.get_instance_maybe">
-<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_instance_maybe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inst_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#get_instance_maybe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.get_instance_maybe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_instance_maybe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inst_type</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#get_instance_maybe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.get_instance_maybe" title="Link to this definition">¶</a></dt>
 <dd><p>Return the first value matching a given type.</p>
 <p>Iterates over the provided values and returns the first element that is an
 instance of the requested type.</p>
@@ -160,7 +162,7 @@ instance of the requested type.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="utils.misc.get_maybe">
-<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_maybe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#get_maybe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.get_maybe" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_maybe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">properties</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/misc.html#get_maybe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.misc.get_maybe" title="Link to this definition">¶</a></dt>
 <dd><p>Safely retrieve a nested value from a dictionary.</p>
 <p>This helper traverses a dictionary using a sequence of keys and returns <code class="docutils literal notranslate"><span class="pre">None</span></code>
 if any intermediate key is missing or if the input is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
@@ -182,7 +184,7 @@ if any intermediate key is missing or if the input is <code class="docutils lite
 
 </section>
 <section id="module-modules.logging">
-<span id="logging"></span><h2>Logging<a class="headerlink" href="#module-modules.logging" title="Permalink to this heading">¶</a></h2>
+<span id="logging"></span><h2>Logging<a class="headerlink" href="#module-modules.logging" title="Link to this heading">¶</a></h2>
 <p>Logging utilities for the Edge Gateway.</p>
 <p>This module provides lightweight logging helpers used throughout the Edge Gateway
 and controller runtime. Log messages are printed to stdout and, when possible,
@@ -191,7 +193,7 @@ published to ThingsBoard via MQTT.</p>
 locally in an SQLite database and can be forwarded later once connectivity is
 restored.</p>
 <section id="design-goals">
-<h3>Design goals<a class="headerlink" href="#design-goals" title="Permalink to this heading">¶</a></h3>
+<h3>Design goals<a class="headerlink" href="#design-goals" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Avoid circular imports by resolving dependencies at runtime.</p></li>
 <li><p>Never block or crash the gateway due to logging failures.</p></li>
@@ -205,25 +207,25 @@ restored.</p>
 </section>
 <dl class="py function">
 <dt class="sig sig-object py" id="modules.logging.debug">
-<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#debug"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.debug" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">debug</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#debug"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.debug" title="Link to this definition">¶</a></dt>
 <dd><p>Log a DEBUG-level message.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="modules.logging.error">
-<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.error" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.error" title="Link to this definition">¶</a></dt>
 <dd><p>Log an ERROR-level message.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="modules.logging.info">
-<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.info" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.info" title="Link to this definition">¶</a></dt>
 <dd><p>Log an INFO-level message.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="modules.logging.log">
-<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.log" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.log" title="Link to this definition">¶</a></dt>
 <dd><p>Log a message and attempt to publish it via MQTT.</p>
 <p>The message is always printed to stdout. If the MQTT publication fails, the log
 entry is stored locally in an SQLite buffer database for later processing.</p>
@@ -239,16 +241,16 @@ entry is stored locally in an SQLite buffer database for later processing.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="modules.logging.warn">
-<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">warn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#warn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.warn" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">modules.logging.</span></span><span class="sig-name descname"><span class="pre">warn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/logging.html#warn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.logging.warn" title="Link to this definition">¶</a></dt>
 <dd><p>Log a WARN-level message.</p>
 </dd></dl>
 
 </section>
 <section id="paths-and-configuration">
-<h2>Paths and Configuration<a class="headerlink" href="#paths-and-configuration" title="Permalink to this heading">¶</a></h2>
+<h2>Paths and Configuration<a class="headerlink" href="#paths-and-configuration" title="Link to this heading">¶</a></h2>
 </section>
 <section id="module-args">
-<span id="args"></span><h2>Args<a class="headerlink" href="#module-args" title="Permalink to this heading">¶</a></h2>
+<span id="args"></span><h2>Args<a class="headerlink" href="#module-args" title="Link to this heading">¶</a></h2>
 <p>Command-line argument parsing for the Edge Gateway.</p>
 <p>This module defines the command-line interface (CLI) arguments supported by the
 ThingsBoard Edge Gateway entry point. Parsed arguments are used to override
@@ -257,7 +259,7 @@ runtime configuration such as the ThingsBoard host and port.</p>
 development, and containerized deployments.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="args.parse_args">
-<span class="sig-prename descclassname"><span class="pre">args.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/args.html#parse_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#args.parse_args" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">args.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/args.html#parse_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#args.parse_args" title="Link to this definition">¶</a></dt>
 <dd><p>Parse command-line arguments for the Edge Gateway.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -280,11 +282,11 @@ development, and containerized deployments.</p>
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2025, Aigner Patrick, Frölich Lars.
+      &#169;2025, Aigner Patrick, Frölich Lars.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="../_sources/api/utilities.rst.txt"

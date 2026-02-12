@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Local Data Persistence &#8212; thingsboard-edge-gateway 0.1 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=6625fa76" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=45b6c4fc" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=e031e9a9"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=f6a572b4" />
+    <script src="../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Utilities" href="utilities.html" />
@@ -18,13 +19,14 @@
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
+
   
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  
 
   </head><body>
   <div class="document">
     
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
 <h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
 
@@ -65,7 +67,7 @@
   </ul></li>
 </ul>
 </div>
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
@@ -73,7 +75,7 @@
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
@@ -84,11 +86,11 @@
           <div class="body" role="main">
             
   <section id="local-data-persistence">
-<h1>Local Data Persistence<a class="headerlink" href="#local-data-persistence" title="Permalink to this heading">¶</a></h1>
+<h1>Local Data Persistence<a class="headerlink" href="#local-data-persistence" title="Link to this heading">¶</a></h1>
 <p>This section documents the local persistence layer used by the Edge Gateway for
 buffering, archiving, and recovery.</p>
 <section id="module-modules.sqlite">
-<span id="sqlite-abstraction"></span><h2>SQLite Abstraction<a class="headerlink" href="#module-modules.sqlite" title="Permalink to this heading">¶</a></h2>
+<span id="sqlite-abstraction"></span><h2>SQLite Abstraction<a class="headerlink" href="#module-modules.sqlite" title="Link to this heading">¶</a></h2>
 <p>SQLite database utilities for the Edge Gateway.</p>
 <p>This module provides a lightweight SQLite wrapper used throughout the Edge Gateway
 for local persistence. It is designed to be robust against transient failures,
@@ -97,7 +99,7 @@ or unavailable database files.</p>
 <p>Typical use cases include buffering telemetry, logs, and controller messages when
 network connectivity is unavailable.</p>
 <section id="design-goals">
-<h3>Design goals<a class="headerlink" href="#design-goals" title="Permalink to this heading">¶</a></h3>
+<h3>Design goals<a class="headerlink" href="#design-goals" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Safe concurrent access using a write lock.</p></li>
 <li><p>Automatic retry and recovery on database errors.</p></li>
@@ -111,7 +113,7 @@ network connectivity is unavailable.</p>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">modules.sqlite.</span></span><span class="sig-name descname"><span class="pre">SqliteConnection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nr_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dont_retry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection" title="Permalink to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">modules.sqlite.</span></span><span class="sig-name descname"><span class="pre">SqliteConnection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nr_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dont_retry</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Thread-safe SQLite connection wrapper with automatic recovery.</p>
 <p>This class wraps a single SQLite connection and provides helper methods for
@@ -121,7 +123,7 @@ resetting the database file if necessary.</p>
 lock to serialize write operations.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.check">
-<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.check" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.check" title="Link to this definition">¶</a></dt>
 <dd><p>Return the list of tables present in the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -132,7 +134,7 @@ lock to serialize write operations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.close">
-<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.close" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.close" title="Link to this definition">¶</a></dt>
 <dd><p>Close the underlying SQLite connection.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -143,13 +145,13 @@ lock to serialize write operations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.do_table_values_exist">
-<span class="sig-name descname"><span class="pre">do_table_values_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.do_table_values_exist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.do_table_values_exist" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">do_table_values_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.do_table_values_exist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.do_table_values_exist" title="Link to this definition">¶</a></dt>
 <dd><p>Check whether a table exists and contains at least one row.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.does_table_exist">
-<span class="sig-name descname"><span class="pre">does_table_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.does_table_exist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.does_table_exist" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">does_table_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.does_table_exist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.does_table_exist" title="Link to this definition">¶</a></dt>
 <dd><p>Check whether a table exists in the database.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -166,7 +168,7 @@ lock to serialize write operations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.execute">
-<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.execute" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.execute" title="Link to this definition">¶</a></dt>
 <dd><p>Execute an SQL query with optional parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -186,7 +188,7 @@ lock to serialize write operations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.is_table_empty">
-<span class="sig-name descname"><span class="pre">is_table_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.is_table_empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.is_table_empty" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">is_table_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.is_table_empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.is_table_empty" title="Link to this definition">¶</a></dt>
 <dd><p>Check whether a table contains any rows.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -203,7 +205,7 @@ lock to serialize write operations.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteConnection.reset_db_conn">
-<span class="sig-name descname"><span class="pre">reset_db_conn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nr_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unknown'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.reset_db_conn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.reset_db_conn" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">reset_db_conn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nr_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unknown'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteConnection.reset_db_conn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteConnection.reset_db_conn" title="Link to this definition">¶</a></dt>
 <dd><p>Reset the SQLite database after an error.</p>
 <p>Deletes the database file and reinitializes the connection.</p>
 <dl class="field-list simple">
@@ -224,38 +226,38 @@ lock to serialize write operations.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteTables">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">modules.sqlite.</span></span><span class="sig-name descname"><span class="pre">SqliteTables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteTables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteTables" title="Permalink to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">modules.sqlite.</span></span><span class="sig-name descname"><span class="pre">SqliteTables</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/sqlite.html#SqliteTables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.sqlite.SqliteTables" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
 <p>Enumeration of SQLite table names used by the Edge Gateway.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteTables.CONTROLLER_MESSAGES">
-<span class="sig-name descname"><span class="pre">CONTROLLER_MESSAGES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'messages'</span></em><a class="headerlink" href="#modules.sqlite.SqliteTables.CONTROLLER_MESSAGES" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">CONTROLLER_MESSAGES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'messages'</span></span><a class="headerlink" href="#modules.sqlite.SqliteTables.CONTROLLER_MESSAGES" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteTables.HEALTH_CHECK">
-<span class="sig-name descname"><span class="pre">HEALTH_CHECK</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'health_check'</span></em><a class="headerlink" href="#modules.sqlite.SqliteTables.HEALTH_CHECK" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">HEALTH_CHECK</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'health_check'</span></span><a class="headerlink" href="#modules.sqlite.SqliteTables.HEALTH_CHECK" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="modules.sqlite.SqliteTables.PENDING_MQTT_MESSAGES">
-<span class="sig-name descname"><span class="pre">PENDING_MQTT_MESSAGES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'pending_mqtt_messages'</span></em><a class="headerlink" href="#modules.sqlite.SqliteTables.PENDING_MQTT_MESSAGES" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">PENDING_MQTT_MESSAGES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'pending_mqtt_messages'</span></span><a class="headerlink" href="#modules.sqlite.SqliteTables.PENDING_MQTT_MESSAGES" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 </section>
 <section id="database-schemas">
-<h2>Database Schemas<a class="headerlink" href="#database-schemas" title="Permalink to this heading">¶</a></h2>
+<h2>Database Schemas<a class="headerlink" href="#database-schemas" title="Link to this heading">¶</a></h2>
 <section id="module-db_schemas.controller_archive_table">
-<span id="controller-archive"></span><h3>Controller Archive<a class="headerlink" href="#module-db_schemas.controller_archive_table" title="Permalink to this heading">¶</a></h3>
+<span id="controller-archive"></span><h3>Controller Archive<a class="headerlink" href="#module-db_schemas.controller_archive_table" title="Link to this heading">¶</a></h3>
 <p>Database schema: controller archive table.</p>
 <p>This module defines the SQL statements used to create and index the SQLite table
 that stores archived controller messages.</p>
 <p>The table is intended for local backups. Messages can later be republished or discarded
 via RPC commands (see the user guide page on Remote Procedure Calls).</p>
 <section id="schema">
-<h4>Schema<a class="headerlink" href="#schema" title="Permalink to this heading">¶</a></h4>
+<h4>Schema<a class="headerlink" href="#schema" title="Link to this heading">¶</a></h4>
 <dl class="simple">
 <dt>Table name:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">controller_archive</span></code></p>
 </dd>
@@ -268,7 +270,7 @@ via RPC commands (see the user guide page on Remote Procedure Calls).</p>
 </dl>
 </section>
 <section id="index">
-<h4>Index<a class="headerlink" href="#index" title="Permalink to this heading">¶</a></h4>
+<h4>Index<a class="headerlink" href="#index" title="Link to this heading">¶</a></h4>
 <p>An index on <code class="docutils literal notranslate"><span class="pre">timestamp_ms</span></code> is created to accelerate time-range queries.</p>
 <p class="rubric">Notes</p>
 <ul class="simple">
@@ -279,14 +281,14 @@ SQLite initialization/migration logic.</p></li>
 </section>
 </section>
 <section id="module-db_schemas.controller_messages_table">
-<span id="controller-messages"></span><h3>Controller Messages<a class="headerlink" href="#module-db_schemas.controller_messages_table" title="Permalink to this heading">¶</a></h3>
+<span id="controller-messages"></span><h3>Controller Messages<a class="headerlink" href="#module-db_schemas.controller_messages_table" title="Link to this heading">¶</a></h3>
 <p>Database schema: controller messages table.</p>
 <p>This module defines the SQL statement used to create the SQLite table that stores
 controller messages before they are processed or forwarded by the Edge Gateway.</p>
 <p>The table acts as a lightweight message buffer and is typically used for short-
 lived persistence of controller-originated messages.</p>
 <section id="id1">
-<h4>Schema<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h4>
+<h4>Schema<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
 <dl class="simple">
 <dt>Table name:</dt><dd><p>Value of <code class="docutils literal notranslate"><span class="pre">sqlite.SqliteTables.CONTROLLER_MESSAGES</span></code></p>
 </dd>
@@ -306,7 +308,7 @@ database initialization logic.</p></li>
 </section>
 </section>
 <section id="module-db_schemas.pending_messages_table">
-<span id="pending-messages"></span><h3>Pending Messages<a class="headerlink" href="#module-db_schemas.pending_messages_table" title="Permalink to this heading">¶</a></h3>
+<span id="pending-messages"></span><h3>Pending Messages<a class="headerlink" href="#module-db_schemas.pending_messages_table" title="Link to this heading">¶</a></h3>
 <p>Database schema: pending MQTT messages table.</p>
 <p>This module defines the SQL statement used to create the SQLite table that stores
 pending MQTT messages managed by the Edge Gateway.</p>
@@ -314,7 +316,7 @@ pending MQTT messages managed by the Edge Gateway.</p>
 that could not yet be delivered, for example due to connectivity issues. Messages
 are removed once they are successfully published.</p>
 <section id="id2">
-<h4>Schema<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h4>
+<h4>Schema<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h4>
 <dl class="simple">
 <dt>Table name:</dt><dd><p>Value of <code class="docutils literal notranslate"><span class="pre">sqlite.SqliteTables.PENDING_MQTT_MESSAGES</span></code></p>
 </dd>
@@ -344,11 +346,11 @@ are removed once they are successfully published.</p>
     <div class="clearer"></div>
   </div>
     <div class="footer">
-      &copy;2025, Aigner Patrick, Frölich Lars.
+      &#169;2025, Aigner Patrick, Frölich Lars.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
       <a href="../_sources/api/persistence.rst.txt"
