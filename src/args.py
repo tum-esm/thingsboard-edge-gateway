@@ -8,6 +8,7 @@ The CLI is intentionally minimal and primarily intended for local testing,
 development, and containerized deployments.
 """
 import argparse
+import os
 
 
 def parse_args() -> argparse.Namespace:
@@ -17,6 +18,6 @@ def parse_args() -> argparse.Namespace:
       Parsed command-line arguments as an :class:`argparse.Namespace`.
     """
     parser = argparse.ArgumentParser(prog='ThingsBoard Edge Gateway', )
-    parser.add_argument('--tb-host', help="ThingsBoard host address (hostname or IP)")
-    parser.add_argument('--tb-port', type=int, help="ThingsBoard server port")
+    parser.add_argument('--tb-host', help="ThingsBoard host address (hostname or IP)", default=os.environ.get("TB_HOST"),)
+    parser.add_argument('--tb-port', type=int, help="ThingsBoard server port", default=os.environ.get("TB_PORT"))
     return parser.parse_args()
