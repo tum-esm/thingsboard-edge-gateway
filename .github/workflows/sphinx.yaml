@@ -28,7 +28,6 @@ jobs:
       uses: ammaraskar/sphinx-action@8.2.3
       with:
         docs-folder: docs/
-        build-command: sphinx-build -b html -E -a . build/html
     - name: Upload artifacts
       uses: actions/upload-artifact@v6.0.0
       with:
