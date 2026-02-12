@@ -12,6 +12,26 @@ robustness, clarity, and long-term maintainability are particularly valued.
 This document describes the **recommended contribution process**.
 
 
+Human-led Contributions and AI Usage
+------------------------------------
+
+This project welcomes contributions from **human contributors** only.
+
+Automated or autonomous AI agents are **not permitted** to independently
+open issues, submit pull requests, or participate in code review or
+architectural discussions.
+
+The use of AI-based tools (e.g. for drafting text, refactoring assistance,
+or code suggestions) is acceptable **when used as a support tool by a human
+contributor**, provided that:
+
+- the contributor fully understands the proposed changes,
+- the contributor takes responsibility for correctness, style, and impact,
+- all contributions are reviewed, validated, and approved by a human.
+
+Submissions that appear to be generated or maintained primarily by
+autonomous agents may be closed without further review.
+
 
 Contribution Workflow
 ---------------------
@@ -30,7 +50,6 @@ Starting with an issue helps:
 - avoid duplicated work,
 - discuss scope and design before implementation,
 - document decisions for future contributors.
-
 
 
 Choosing the Right Issue Type
@@ -77,7 +96,7 @@ Feature requests are evaluated based on:
 
 
 Refactoring and code cleanup
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Use the **Refactoring / Code Cleanup** template for internal improvements that do
 not introduce new user-facing features.
@@ -133,6 +152,7 @@ Pull requests should include:
 - a reference to the related issue,
 - notes on testing or validation,
 - mention of any backward compatibility considerations.
+
 
 
 Code Quality and Review
