@@ -1,0 +1,52 @@
+name: Refactoring / code cleanup
+description: Propose internal refactoring, cleanup, or structural improvements
+title: "[Refactor]: "
+labels: ["refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for **internal changes** that do not introduce new user-facing features.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is refactoring needed? What problem does it address?
+      placeholder: |
+        Examples:
+        - reduce complexity
+        - improve maintainability
+        - remove duplication
+        - clarify architecture
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope of refactoring
+      description: What parts of the codebase would be affected?
+      placeholder: |
+        Files, modules, or components involved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: behavior
+    attributes:
+      label: User-facing impact
+      description: Confirm that behavior remains unchanged, or describe expected changes.
+      placeholder: |
+        - No user-facing changes expected
+        - Minor internal behavior change: ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution_intent
+    attributes:
+      label: Contribution intent
+      options:
+        - label: I would like to implement this refactoring.
+        - label: I am proposing the idea only.
