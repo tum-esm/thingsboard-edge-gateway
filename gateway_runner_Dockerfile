@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-COPY ./gateway_runner.sh ./gateway_runner.sh
-RUN chmod +x ./gateway_runner.sh
+COPY ./setup_and_run_gateway_process.sh ./
+RUN chmod +x ./setup_and_run_gateway_process.sh
 
-ENTRYPOINT ["bash", "./gateway_runner.sh"]
+ENTRYPOINT ["bash", "./setup_and_run_gateway_process.sh"]

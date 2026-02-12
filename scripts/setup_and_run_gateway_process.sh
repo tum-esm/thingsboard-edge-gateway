@@ -9,7 +9,7 @@ chroot /host /bin/bash <<EOT
 cd $TEG_GATEWAY_DIR
 
 echo "Removing old virtual environment and creating a new one"
-rm -rf .venv
+rm -rfv .venv
 python3.12 -m venv --copies .venv
 source .venv/bin/activate
 
