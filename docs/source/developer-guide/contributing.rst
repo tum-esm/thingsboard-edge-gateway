@@ -166,8 +166,8 @@ Contributions should aim to:
 - keep behavior explicit and predictable.
 
 
-Licensing and Attribution
--------------------------
+Licensing and Acknowledgment
+----------------------------
 
 By contributing, you agree that your contributions will be released under the
 project's open-source license.
