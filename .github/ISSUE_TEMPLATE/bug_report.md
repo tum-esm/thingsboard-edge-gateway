@@ -1,27 +1,79 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: "<add title here>"
-labels: needs-triage
-assignees: patrickjaigner
+description: Report a reproducible problem in the gateway
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - patrickjaigner
+  - larsfroelich
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! Please include enough detail to reproduce the issue.
 
----
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+      placeholder: "When ..., the gateway ..."
+    validations:
+      required: true
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, numbered steps.
+      placeholder: |
+        1. Configure ...
+        2. Start ...
+        3. Observe ...
+    validations:
+      required: true
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: Paste relevant logs (redact secrets). Prefer a small excerpt + pointers.
+      render: shell
+    validations:
+      required: false
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+  - type: input
+    id: version
+    attributes:
+      label: Gateway version / commit
+      placeholder: "vX.Y.Z or commit hash"
+    validations:
+      required: false
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+  - type: input
+    id: platform
+    attributes:
+      label: Device / OS
+      placeholder: "Raspberry Pi 4, Debian 12, Python 3.12"
+    validations:
+      required: false
 
-**Additional context**
-Add any other context about the problem here.
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Include only relevant snippets (redact tokens).
+      render: yaml
+    validations:
+      required: false
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - minor (cosmetic / low frequency)
+        - moderate (workaround exists)
+        - major (blocks operation / data loss risk)
+    validations:
+      required: true
