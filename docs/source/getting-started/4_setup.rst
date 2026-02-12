@@ -1,6 +1,8 @@
 Setup
 =====
 
+How to set up the edge gateway on an IoT device once it has been installed.
+
 Docker
 ------
 
@@ -16,6 +18,7 @@ Create a Docker daemon configuration file:
         "log-opts": { "max-size": "100m", "max-file": "3" }
     }
 
+This config sets up DNS servers as well as log rotation.
 
 Add the current user to the Docker group and reboot:
 
@@ -24,6 +27,7 @@ Add the current user to the Docker group and reboot:
     sudo usermod -aG docker $USER
     sudo reboot
 
+This is needed
 
 Environment Variables
 ---------------------
@@ -75,3 +79,13 @@ Prequesites
 (Optional) "THINGSBOARD_DEVICE_NAME"=$(hostname)
 
 
+Device Provisioning
+-------------------
+
+- Initial start of gateway + docker commands or link
+- Device name will match hostname
+
+.. code-block:: bash
+
+    ./run_dockerized_gateway.sh #registers device with ThingsBoard and creates tb_access_token
+    docker logs --tail 50 -f acropolis_edge_gateway
