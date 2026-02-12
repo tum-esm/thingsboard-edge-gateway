@@ -70,21 +70,25 @@ bibliography: paper.bib
 
 # State of the Field
 
+Main difference to others. We integrate the gateway in the edge device. This allows to deploy single devices at different locations without the need of a on location mist/fog gateway.
+
 Open Source:
-- Thingsboard Edge: https://github.com/thingsboard/thingsboard-edge
-- EdgeX Foundry: https://www.edgexfoundry.org/
-- Eclipse Kura: https://www.eclipse.org/kura/
+Local Gateways:
+- Thingsboard Edge (local gateway, on location server): https://github.com/thingsboard/thingsboard-edge
+- Thin Edge (split edge gateway and light on device): https://thin-edge.io/
+
+Similar architectures:
+- (On Device, Java Virtual Machine) Eclipse Kura: https://www.eclipse.org/kura/
 - Ivy: https://joss.theoj.org/papers/10.21105/joss.08862
-- Thin Edge: https://thin-edge.io/
-- IoT Fledge: https://github.com/fledge-iot/fledge
-- Kube Edge: https://kubeedge.io/en/
+- IoT Fledge (north, south stack, no OTA): https://github.com/fledge-iot/fledge
 
 Commercial:
-- AWS IoT Greengrass: https://aws.amazon.com/greengrass/
-- Azure IoT Edge: https://azure.microsoft.com/en-us/services/iot-edge/
+- AWS IoT Greengrass (full stack, closed source): https://aws.amazon.com/greengrass/
+- Azure IoT Edge (gateway mist): https://azure.microsoft.com/en-us/services/iot-edge/
 
 Alternatives to Thingsboard:
-- Belena: https://www.balena.io/
+- Kube Edge (remote sw management): https://kubeedge.io/en/
+- Belena (Device OS + backend stack): https://www.balena.io/
 - Tenta: https://joss.theoj.org/papers/10.21105/joss.07311
 
 
