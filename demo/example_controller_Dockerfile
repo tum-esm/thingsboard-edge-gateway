@@ -1,6 +1,23 @@
-FROM python:3.12.4
+# using base-image containing python3.12.11, setting shell to use bash by default, switching to /root folder
+FROM python:3.12.11 AS build_image
+SHELL ["/bin/bash", "-c"]
+WORKDIR /root
+
+# set up a venv
+RUN python3.12 -m pip install --upgrade pip
+RUN python3.12 -m venv --copies .venv
+RUN source .venv/bin/activate
+
+# install dependencies
+COPY ./example_controller/requirements.txt ./
+RUN pip install -r requirements.txt
+
+FROM python:3.12.11-slim
+
+WORKDIR /root
+COPY --from=build_image /root/.venv /root/.venv
 
 COPY ./example_controller ./
 RUN mkdir ./teg_data
 
-ENTRYPOINT ["python3", "-u", "main.py"]
+ENTRYPOINT ["/root/.venv/bin/python3", "-u", "/root/main.py"]

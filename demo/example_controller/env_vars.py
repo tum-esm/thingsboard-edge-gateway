@@ -1,3 +1,3 @@
 from os import environ
 
-TEG_DATA_PATH = environ.get("TEG_DATA_PATH") or "./root/data"
+TEG_DATA_PATH = environ.get("TEG_DATA_PATH") or "/root/teg_data"
