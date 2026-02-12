@@ -1,3 +1,4 @@
 sphinx>=7.0
 sphinx-autodoc-typehints>=1.25
-furo
+furo==2023.8.17
+accessible-pygments==0.0.4
