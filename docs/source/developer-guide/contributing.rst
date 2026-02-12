@@ -46,6 +46,7 @@ In general:
   issue before code is written.
 
 Starting with an issue helps:
+
 - align expectations early,
 - avoid duplicated work,
 - discuss scope and design before implementation,
@@ -124,6 +125,7 @@ follow these principles:
 - The gateway provides **infrastructure**, not application logic.
 - Sensor- or domain-specific behavior belongs in the **external controller**.
 - Changes should preserve:
+
   - robustness under intermittent connectivity,
   - unattended long-term operation,
   - clear separation of responsibilities.
@@ -148,6 +150,7 @@ Recommended steps:
 5. Open a pull request and link the related issue.
 
 Pull requests should include:
+
 - a short summary of the change,
 - a reference to the related issue,
 - notes on testing or validation,
