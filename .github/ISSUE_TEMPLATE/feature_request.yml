@@ -1,0 +1,113 @@
+name: Feature request
+description: Suggest an idea for this project
+title: "[Feature Request]: "
+labels: ["feature"]
+assignees:
+  - patrickjaigner
+  - larsfroelich
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to propose an improvement.
+
+        Please focus on the **user-facing need** first. Implementation ideas and technical details can be added below if helpful.
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: User story
+      description: |
+        Describe the user-facing need using the following structure:
+
+        As a **[type of user]**, I want **[a capability]**, so that **[a concrete benefit]**.
+      placeholder: |
+        As a **[type of user]**, I want **[a capability]**, so that **[a concrete benefit]**.
+
+        Example:
+        As an operator of a remote sensor node, I want to update controller configuration files remotely, so that devices can be reconfigured without physical access.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (your assessment)
+      options:
+        - nice-to-have
+        - important
+        - urgent / blocking
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution_intent
+    attributes:
+      label: Contribution intent
+      description: Please indicate whether you would like to work on this feature yourself.
+      options:
+        - label: I would like to implement this feature and submit a pull request.
+          required: false
+        - label: I am proposing the idea only and cannot contribute implementation at this time.
+          required: false
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe a possible solution or approach. This does not need to be a final design.
+      placeholder: |
+        Describe the proposed behavior at a technical level.
+
+        This may include (if relevant):
+        - configuration keys
+        - ThingsBoard attributes or RPCs
+        - expected runtime behavior
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+      description: What is in scope, and what is explicitly out of scope?
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Briefly describe alternatives you considered (if any).
+      placeholder: |
+        - Alternative A: ...
+        - Alternative B: ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Backward compatibility and migration
+      description: Does this change configuration, attributes, or runtime behavior? Is a migration needed?
+      placeholder: |
+        - Backward compatible: yes/no
+        - Migration steps (if any): ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Add any other context, screenshots, or mockups.
+      placeholder: |
+        Links, screenshots, logs, or context that helps understand the request.
+    validations:
+      required: false

@@ -7,7 +7,7 @@ points.
 .. toctree::
    :maxdepth: 2
 
+   contributing
    architecture
    data-flow
-   contributing
    controller-repository

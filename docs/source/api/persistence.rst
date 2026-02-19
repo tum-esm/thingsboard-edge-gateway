@@ -11,6 +11,8 @@ SQLite Abstraction
    :members:
    :undoc-members: False
 
+.. _header-database-schemas:
+
 Database Schemas
 ----------------
 
