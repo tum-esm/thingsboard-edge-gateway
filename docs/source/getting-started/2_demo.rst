@@ -25,6 +25,11 @@ Windows/macOS
 ~~~~~~~~~~~~~
 `Docker Desktop <https://docs.docker.com/get-docker/>`_ (includes Docker Compose).
 
+MacOS (via Homebrew)
+~~~~~~~~~~~~~~~~~~~~
+`brew install --cask docker-desktop`
+`brew install docker-compose`
+
 Linux
 ~~~~~
 Docker Engine and the Compose plugin from `https://docs.docker.com/engine/install/ <https://docs.docker.com/engine/install/>`_

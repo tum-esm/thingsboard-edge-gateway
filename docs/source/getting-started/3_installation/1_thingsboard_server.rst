@@ -1,7 +1,7 @@
 ThingsBoard server installation
 ===============================
 
-This guide provides step-by-step instructions to set up a ThingsBoard server for the Acropolis project.
+This guide provides step-by-step instructions to set up a ThingsBoard server for this project.
 
 Prerequisites
 -------------

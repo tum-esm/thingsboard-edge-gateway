@@ -1,6 +1,6 @@
 Thingsboard-edge-gateway Installation
 =====================================
-This guide details installation of the thingsboard-edge-gateway project on an IoT end-device. It assumes a thingsboard
+This guide details installation of the thingsboard-edge-gateway project on an IoT device. It assumes a thingsboard
 server has been set up already and can be connected to via MQTT.
 
 Install Dependencies
