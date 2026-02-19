@@ -14,8 +14,8 @@
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Changelog" href="../changelog.html" />
-    <link rel="prev" title="Contributions" href="contributing.html" />
+    <link rel="next" title="API Reference" href="../api/index.html" />
+    <link rel="prev" title="Data Flows" href="data-flow.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -43,13 +43,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Developer Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data-flow.html">Data Flows</a></li>
-<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributions</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Controller Repository</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
 </ul>
 
@@ -58,8 +57,8 @@
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Developer Guide</a><ul>
-      <li>Previous: <a href="contributing.html" title="previous chapter">Contributions</a></li>
-      <li>Next: <a href="../changelog.html" title="next chapter">Changelog</a></li>
+      <li>Previous: <a href="data-flow.html" title="previous chapter">Data Flows</a></li>
+      <li>Next: <a href="../api/index.html" title="next chapter">API Reference</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -84,7 +83,160 @@
             
   <section id="controller-repository">
 <h1>Controller Repository<a class="headerlink" href="#controller-repository" title="Link to this heading">¶</a></h1>
-<p>describes how the controller repository is structured and how to extend it with new controllers.</p>
+<p>The Controller Repository contains the device-side hardware interface managed by the gateway.
+It is designed as a standalone, versioned component that is built and deployed independently.</p>
+<section id="architecture-overview">
+<h2>Architecture Overview<a class="headerlink" href="#architecture-overview" title="Link to this heading">¶</a></h2>
+<p>The controller repository:</p>
+<ul class="simple">
+<li><p>Is a dedicated Git repository (not part of the gateway).</p></li>
+<li><p>Has its own versioning and release cycle.</p></li>
+<li><p>Is fetched and built by the gateway via the OTA update mechanisms.</p></li>
+<li><p>Is executed inside an isolated Docker container.</p></li>
+<li><p>Communicates with the gateway exclusively via a local SQLite database.</p></li>
+</ul>
+<p>The gateway is responsible for:</p>
+<ul class="simple">
+<li><p>Building the controller Docker image.</p></li>
+<li><p>Starting and supervising the container.</p></li>
+<li><p>Monitoring controller health.</p></li>
+<li><p>Restarting the container in case of failure.</p></li>
+</ul>
+<p>The controller is responsible for:</p>
+<ul class="simple">
+<li><p>Implementing device-specific logic (sensors, actuators, control flows).</p></li>
+<li><p>Writing outbound MQTT messages to the local SQLite message queue (measurements, logs).</p></li>
+<li><p>Maintaining a periodic health check.</p></li>
+</ul>
+</section>
+<section id="repository-structure">
+<h2>Repository Structure<a class="headerlink" href="#repository-structure" title="Link to this heading">¶</a></h2>
+<p>A minimal controller repository must contain:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Dockerfile</span></code> (in repository root)</p></li>
+<li><p>Controller source code</p></li>
+<li><p>SQLite communication implementation</p></li>
+<li><p>Dependency definition (e.g. <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code>)</p></li>
+</ul>
+<p>A typical structure:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>controller-repo/
+├── Dockerfile
+├── requirements.txt
+├── main.py
+├── db.py
+├── config/
+└── modules/
+</pre></div>
+</div>
+<p>The gateway automatically builds the Docker image from the root <code class="docutils literal notranslate"><span class="pre">Dockerfile</span></code>.</p>
+</section>
+<section id="linking-the-controller-repository">
+<h2>Linking the Controller Repository<a class="headerlink" href="#linking-the-controller-repository" title="Link to this heading">¶</a></h2>
+<p>The controller repository is linked to the gateway using the environment variable:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TEG_CONTROLLER_GIT_PATH</span>
+</pre></div>
+</div>
+<p>This variable must point to the controller Git repository.</p>
+<p>Setup details are described in: <a class="reference internal" href="../getting-started/setup.html"><span class="doc">Environment Variables</span></a></p>
+</section>
+<section id="sqlite-communication-interface">
+<h2>SQLite Communication Interface<a class="headerlink" href="#sqlite-communication-interface" title="Link to this heading">¶</a></h2>
+<p>The controller and gateway communicate via a shared SQLite database.</p>
+<p>The controller must:</p>
+<ol class="arabic simple">
+<li><p>Enqueue outbound MQTT messages into the <code class="docutils literal notranslate"><span class="pre">messages</span></code> table.</p></li>
+<li><p>Periodically update the <code class="docutils literal notranslate"><span class="pre">health_check</span></code> table.</p></li>
+</ol>
+<p>Database schema definitions are documented in: <a class="reference internal" href="../api/persistence.html#header-database-schemas"><span class="std std-ref">Database Schemas</span></a></p>
+<p>A reference implementation is available in:</p>
+<p><code class="docutils literal notranslate"><span class="pre">demo/example_controller/db.py</span></code></p>
+<section id="outbound-message-queue">
+<h3>Outbound Message Queue<a class="headerlink" href="#outbound-message-queue" title="Link to this heading">¶</a></h3>
+<p>Messages must be inserted into the <code class="docutils literal notranslate"><span class="pre">messages</span></code> table with:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> (telemetry, attributes, rpc, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">message</span></code> (JSON payload)</p></li>
+</ul>
+<p>The gateway consumes and forwards these messages to ThingsBoard via MQTT.</p>
+</section>
+<section id="health-check-mechanism">
+<h3>Health Check Mechanism<a class="headerlink" href="#health-check-mechanism" title="Link to this heading">¶</a></h3>
+<p>The controller must periodically write a timestamp (milliseconds since epoch) to:</p>
+<p><code class="docutils literal notranslate"><span class="pre">health_check(id=1,</span> <span class="pre">timestamp_ms=&lt;now&gt;)</span></code></p>
+<p>The gateway monitors this timestamp to detect stalled or crashed controllers.</p>
+</section>
+</section>
+<section id="failure-handling">
+<h2>Failure Handling<a class="headerlink" href="#failure-handling" title="Link to this heading">¶</a></h2>
+<p>Controllers must fail fast and exit the main process if an unrecoverable error occurs.</p>
+<p>The gateway will automatically restart the container via a potential backoff.</p>
+<p>Controllers must not:</p>
+<ul class="simple">
+<li><p>Attempt self-restarts</p></li>
+<li><p>Implement their own process supervision</p></li>
+<li><p>Modify the database schema</p></li>
+</ul>
+</section>
+<section id="main-loop-requirements">
+<h2>Main Loop Requirements<a class="headerlink" href="#main-loop-requirements" title="Link to this heading">¶</a></h2>
+<p>A typical controller main loop should:</p>
+<ol class="arabic simple">
+<li><p>Initialize configuration.</p></li>
+<li><p>Connect to the SQLite database.</p></li>
+<li><p>Initialize sensors/actuators.</p></li>
+<li><p>Enter execution loop.</p></li>
+<li><p>Perform periodic tasks.</p></li>
+<li><p>Write health check in every iteration.</p></li>
+</ol>
+<p>Example pattern:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="n">read_sensors</span><span class="p">()</span>
+    <span class="n">process_logic</span><span class="p">()</span>
+    <span class="n">enqueue_messages</span><span class="p">()</span>
+    <span class="n">write_health_check</span><span class="p">()</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="optional-components">
+<h2>Optional Components<a class="headerlink" href="#optional-components" title="Link to this heading">¶</a></h2>
+<section id="base-classes">
+<h3>Base Classes<a class="headerlink" href="#base-classes" title="Link to this heading">¶</a></h3>
+<p>Reusable base classes for sensors and actuators are recommended to:</p>
+<ul class="simple">
+<li><p>Standardize device interfaces</p></li>
+<li><p>Reduce boilerplate</p></li>
+<li><p>Improve testability</p></li>
+</ul>
+<p>Example implementations are provided in:</p>
+<p><code class="docutils literal notranslate"><span class="pre">demo/example_controller/sensor</span></code> and <code class="docutils literal notranslate"><span class="pre">demo/example_controller/actuator</span></code></p>
+</section>
+<section id="remote-configuration">
+<h3>Remote Configuration<a class="headerlink" href="#remote-configuration" title="Link to this heading">¶</a></h3>
+<p>Controllers can use the gateway Remote File Management to receive configuration files (e.g. <code class="docutils literal notranslate"><span class="pre">config.json</span></code>).</p>
+<p>Typical workflow:</p>
+<ul class="simple">
+<li><p>File is managed via ThingsBoard UI.</p></li>
+<li><p>Gateway syncs file to controller container.</p></li>
+<li><p>Controller reads configuration at startup.</p></li>
+<li><p>Configurable: Configuration changes trigger restart.</p></li>
+</ul>
+</section>
+</section>
+<section id="example-controller">
+<h2>Example Controller<a class="headerlink" href="#example-controller" title="Link to this heading">¶</a></h2>
+<p>A minimal working controller is available at:</p>
+<p><code class="docutils literal notranslate"><span class="pre">demo/example_controller/</span></code></p>
+<p>It includes:</p>
+<ul class="simple">
+<li><p>SQLite communication module</p></li>
+<li><p>Example sensor and actuator base classes</p></li>
+<li><p>Minimal main loop</p></li>
+<li><p>Dockerfile</p></li>
+<li><p>Requirements file</p></li>
+</ul>
+<p>You may use this as a starting template for new implementations.</p>
+</section>
 </section>
 
 

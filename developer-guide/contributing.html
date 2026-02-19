@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Contributions &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <title>Contributing &#8212; thingsboard-edge-gateway 0.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=f6a572b4" />
@@ -14,8 +14,8 @@
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Controller Repository" href="controller-repository.html" />
-    <link rel="prev" title="Data Flows" href="data-flow.html" />
+    <link rel="next" title="Architecture" href="architecture.html" />
+    <link rel="prev" title="Developer Guide" href="index.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -43,13 +43,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../getting-started/index.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Developer Guide</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Contributing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="data-flow.html">Data Flows</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Contributions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="controller-repository.html">Controller Repository</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
 </ul>
 
@@ -58,8 +57,8 @@
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="index.html">Developer Guide</a><ul>
-      <li>Previous: <a href="data-flow.html" title="previous chapter">Data Flows</a></li>
-      <li>Next: <a href="controller-repository.html" title="next chapter">Controller Repository</a></li>
+      <li>Previous: <a href="index.html" title="previous chapter">Developer Guide</a></li>
+      <li>Next: <a href="architecture.html" title="next chapter">Architecture</a></li>
   </ul></li>
   </ul></li>
 </ul>
@@ -82,8 +81,171 @@
 
           <div class="body" role="main">
             
-  <section id="contributions">
-<h1>Contributions<a class="headerlink" href="#contributions" title="Link to this heading">¶</a></h1>
+  <section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h1>
+<p>This project is developed as <strong>open-source software</strong> and welcomes
+contributions from the community. Contributions range from documentation
+improvements and bug fixes to architectural refinements and new functionality.</p>
+<p>The project aims to provide a <strong>reliable, reusable on-device gateway
+infrastructure</strong> for sensor networks. Contributions that improve
+robustness, clarity, and long-term maintainability are particularly valued.</p>
+<p>This document describes the <strong>recommended contribution process</strong>.</p>
+<section id="human-led-contributions-and-ai-usage">
+<h2>Human-led Contributions and AI Usage<a class="headerlink" href="#human-led-contributions-and-ai-usage" title="Link to this heading">¶</a></h2>
+<p>This project welcomes contributions from <strong>human contributors</strong> only.</p>
+<p>Automated or autonomous AI agents are <strong>not permitted</strong> to independently
+open issues, submit pull requests, or participate in code review or
+architectural discussions.</p>
+<p>The use of AI-based tools (e.g. for drafting text, refactoring assistance,
+or code suggestions) is acceptable <strong>when used as a support tool by a human
+contributor</strong>, provided that:</p>
+<ul class="simple">
+<li><p>the contributor fully understands the proposed changes,</p></li>
+<li><p>the contributor takes responsibility for correctness, style, and impact,</p></li>
+<li><p>all contributions are reviewed, validated, and approved by a human.</p></li>
+</ul>
+<p>Submissions that appear to be generated or maintained primarily by
+autonomous agents may be closed without further review.</p>
+</section>
+<section id="contribution-workflow">
+<h2>Contribution Workflow<a class="headerlink" href="#contribution-workflow" title="Link to this heading">¶</a></h2>
+<p>To keep development transparent and sustainable, most contributions follow an
+<strong>issue-first workflow</strong>.</p>
+<p>In general:</p>
+<ul class="simple">
+<li><p>Small documentation fixes may be submitted directly as pull requests.</p></li>
+<li><p>Bug fixes, new features, and refactoring efforts should start with a GitHub
+issue before code is written.</p></li>
+</ul>
+<p>Starting with an issue helps:</p>
+<ul class="simple">
+<li><p>align expectations early,</p></li>
+<li><p>avoid duplicated work,</p></li>
+<li><p>discuss scope and design before implementation,</p></li>
+<li><p>document decisions for future contributors.</p></li>
+</ul>
+</section>
+<section id="choosing-the-right-issue-type">
+<h2>Choosing the Right Issue Type<a class="headerlink" href="#choosing-the-right-issue-type" title="Link to this heading">¶</a></h2>
+<p>Please use the appropriate GitHub issue template when opening an issue.</p>
+<section id="bug-reports">
+<h3>Bug reports<a class="headerlink" href="#bug-reports" title="Link to this heading">¶</a></h3>
+<p>Use the <strong>Bug Report</strong> template if you observe incorrect or unexpected behavior.</p>
+<p>Typical examples:</p>
+<ul class="simple">
+<li><p>crashes or unhandled exceptions</p></li>
+<li><p>incorrect file synchronization behavior</p></li>
+<li><p>OTA update failures</p></li>
+<li><p>persistence or restart issues</p></li>
+</ul>
+<p>Bug reports should include:</p>
+<ul class="simple">
+<li><p>steps to reproduce the issue</p></li>
+<li><p>relevant logs or error messages</p></li>
+<li><p>gateway version and device environment, if available</p></li>
+</ul>
+</section>
+<section id="feature-requests">
+<h3>Feature requests<a class="headerlink" href="#feature-requests" title="Link to this heading">¶</a></h3>
+<p>Use the <strong>Feature Request</strong> template for user-facing changes or new capabilities.</p>
+<p>Feature requests should:</p>
+<ul class="simple">
+<li><p>describe the <strong>user-facing need first</strong> (user story),</p></li>
+<li><p>outline a possible solution or approach (optional but helpful),</p></li>
+<li><p>indicate whether you would like to implement the feature yourself.</p></li>
+</ul>
+<p>Feature requests are evaluated based on:</p>
+<ul class="simple">
+<li><p>alignment with project scope,</p></li>
+<li><p>impact on long-term maintainability,</p></li>
+<li><p>backward compatibility,</p></li>
+<li><p>operational robustness.</p></li>
+</ul>
+</section>
+<section id="refactoring-and-code-cleanup">
+<h3>Refactoring and code cleanup<a class="headerlink" href="#refactoring-and-code-cleanup" title="Link to this heading">¶</a></h3>
+<p>Use the <strong>Refactoring / Code Cleanup</strong> template for internal improvements that do
+not introduce new user-facing features.</p>
+<p>Typical refactoring proposals include:</p>
+<ul class="simple">
+<li><p>simplifying complex code paths,</p></li>
+<li><p>reducing duplication,</p></li>
+<li><p>clarifying module responsibilities,</p></li>
+<li><p>improving testability or maintainability.</p></li>
+</ul>
+<p>Refactoring issues should clearly state:</p>
+<ul class="simple">
+<li><p>motivation for the change,</p></li>
+<li><p>affected components,</p></li>
+<li><p>confirmation that user-facing behavior remains unchanged (or describe changes).</p></li>
+</ul>
+</section>
+</section>
+<section id="development-principles">
+<h2>Development Principles<a class="headerlink" href="#development-principles" title="Link to this heading">¶</a></h2>
+<p>To keep the gateway reusable across research domains, contributions should
+follow these principles:</p>
+<ul class="simple">
+<li><p>The gateway provides <strong>infrastructure</strong>, not application logic.</p></li>
+<li><p>Sensor- or domain-specific behavior belongs in the <strong>external controller</strong>.</p></li>
+<li><p>Changes should preserve:</p>
+<ul>
+<li><p>robustness under intermittent connectivity,</p></li>
+<li><p>unattended long-term operation,</p></li>
+<li><p>clear separation of responsibilities.</p></li>
+</ul>
+</li>
+<li><p>Backward compatibility should be maintained whenever feasible.</p></li>
+</ul>
+<p>If a proposed change significantly affects architecture, persistence, or
+external interfaces, please discuss it in an issue first.</p>
+</section>
+<section id="pull-requests">
+<h2>Pull Requests<a class="headerlink" href="#pull-requests" title="Link to this heading">¶</a></h2>
+<p>Once an issue has been discussed and agreed upon, you can proceed with a pull
+request.</p>
+<p>Recommended steps:</p>
+<ol class="arabic simple">
+<li><p>Fork the repository.</p></li>
+<li><p>Create a feature branch from the main branch.</p></li>
+<li><p>Implement the change with clear, focused commits.</p></li>
+<li><p>Update documentation where relevant.</p></li>
+<li><p>Open a pull request and link the related issue.</p></li>
+</ol>
+<p>Pull requests should include:</p>
+<ul class="simple">
+<li><p>a short summary of the change,</p></li>
+<li><p>a reference to the related issue,</p></li>
+<li><p>notes on testing or validation,</p></li>
+<li><p>mention of any backward compatibility considerations.</p></li>
+</ul>
+</section>
+<section id="code-quality-and-review">
+<h2>Code Quality and Review<a class="headerlink" href="#code-quality-and-review" title="Link to this heading">¶</a></h2>
+<p>Contributions should aim to:</p>
+<ul class="simple">
+<li><p>follow the existing code structure and style,</p></li>
+<li><p>passing mypy checks,</p></li>
+<li><p>avoid unnecessary dependencies,</p></li>
+<li><p>keep behavior explicit and predictable.</p></li>
+</ul>
+</section>
+<section id="licensing-and-acknowledgment">
+<h2>Licensing and Acknowledgment<a class="headerlink" href="#licensing-and-acknowledgment" title="Link to this heading">¶</a></h2>
+<p>By contributing, you agree that your contributions will be released under the
+project’s open-source license.</p>
+<p>All contributions are tracked through GitHub issues and acknowledged in the version release notes.</p>
+</section>
+<section id="getting-help">
+<h2>Getting Help<a class="headerlink" href="#getting-help" title="Link to this heading">¶</a></h2>
+<p>If you are unsure whether a contribution fits the project or how to proceed:</p>
+<ul class="simple">
+<li><p>open an issue to discuss ideas or questions,</p></li>
+<li><p>ask for guidance in a draft pull request.</p></li>
+</ul>
+<p>Early discussion is encouraged and helps ensure contributions are effective and
+well-aligned.</p>
+</section>
 </section>
 
 
