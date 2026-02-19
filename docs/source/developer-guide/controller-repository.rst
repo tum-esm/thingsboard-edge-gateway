@@ -54,6 +54,19 @@ A typical structure:
 
 The gateway automatically builds the Docker image from the root ``Dockerfile``.
 
+Linking the Controller Repository
+----------------------------------
+
+The controller repository is linked to the gateway using the environment variable:
+
+::
+
+    TEG_CONTROLLER_GIT_PATH
+
+This variable must point to the controller Git repository.
+
+Setup details are described in: :doc:`Environment Variables </getting-started/setup>`
+
 SQLite Communication Interface
 ------------------------------
 
@@ -125,6 +138,7 @@ Example pattern:
         write_health_check()
         sleep(interval)
 
+
 Optional Components
 -------------------
 
@@ -169,16 +183,3 @@ It includes:
 - Requirements file
 
 You may use this as a starting template for new implementations.
-
-Linking the Controller Repository
-----------------------------------
-
-The controller repository is linked to the gateway using the environment variable:
-
-::
-
-    TEG_CONTROLLER_GIT_PATH
-
-This variable must point to the controller Git repository.
-
-Setup details are described in: :doc:`Environment Variables </getting-started/setup>`
