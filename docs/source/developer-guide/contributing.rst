@@ -1,5 +1,5 @@
-Contributions
-=============
+Contributing
+============
 
 This project is developed as **open-source scientific software** and welcomes
 contributions from the community. Contributions range from documentation
