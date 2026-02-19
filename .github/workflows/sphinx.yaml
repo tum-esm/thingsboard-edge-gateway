@@ -7,35 +7,57 @@ on:
     paths:
       - docs/**
       - .github/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docs/**
+      - .github/**
+  workflow_dispatch:
 
 jobs:
-  build:
+  test-codebase:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    defaults:
+      run:
+        # Set working directory to the top-level folder
+        working-directory: .
     steps:
-    - uses: actions/checkout@v6.0.2
-      with:
-        persist-credentials: false
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v6.2.0
-      with:
-        python-version: "3.12"
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
-    - name: Build HTML
-      uses: ammaraskar/sphinx-action@8.2.3
-      with:
-        docs-folder: docs/
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v6.0.0
-      with:
-        name: html-docs
-        path: docs/build/html/
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v4.0.0
-      if: github.ref == 'refs/heads/main'
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/build/html
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+
+      - name: Remove existing virtual environment (if any)
+        run: rm -rf .venv
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Upgrade pip inside virtual environment
+        run: .venv/bin/python -m pip install --upgrade pip
+
+      - name: Install docs dependencies
+        run: .venv/bin/pip install -r ./docs/requirements.txt
+
+      - name: Install project dependencies
+        run: .venv/bin/pip install -r ./requirements.txt
+
+      - name: Build Sphinx Docs
+        run: .venv/bin/python -m sphinx -a ./docs/source ./docs/build/html
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: html-docs
+          path: docs/build/html/
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build/html
