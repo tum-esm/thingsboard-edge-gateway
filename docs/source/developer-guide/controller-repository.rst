@@ -64,9 +64,7 @@ The controller must:
 1. Enqueue outbound MQTT messages into the ``messages`` table.
 2. Periodically update the ``health_check`` table.
 
-Database schema definitions are documented in:
-
-``docs/api/Local Data Persistence/Database Schemas``
+Database schema definitions are documented in: :ref:`header-database-schemas` 
 
 A reference implementation is available in:
 
@@ -183,6 +181,4 @@ The controller repository is linked to the gateway using the environment variabl
 
 This variable must point to the controller Git repository.
 
-Setup details are described in:
-
-``docs/getting-started/setup``
+Setup details are described in: :doc:`Environment Variables </getting-started/setup>`
