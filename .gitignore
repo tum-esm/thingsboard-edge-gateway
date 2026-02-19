@@ -22,3 +22,5 @@ testfile
 demo/.env
 
 demo/teg_data/
+
+.env
