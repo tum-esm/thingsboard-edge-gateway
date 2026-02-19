@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ThingsBoard server installation &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Thingsboard-edge-gateway Installation" href="2_thingsboard_edge_gateway.html" />
+    <link rel="prev" title="Installation" href="0_index.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../0_index.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../1_system-requirements.html">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../2_demo.html">Demo</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="0_index.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../4_setup.html">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../5_setup-from-image.html">Setup from Image</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../0_index.html">Getting Started</a><ul>
+  <li><a href="0_index.html">Installation</a><ul>
+      <li>Previous: <a href="0_index.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="2_thingsboard_edge_gateway.html" title="next chapter">Thingsboard-edge-gateway Installation</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="thingsboard-server-installation">
+<h1>ThingsBoard server installation<a class="headerlink" href="#thingsboard-server-installation" title="Link to this heading">¶</a></h1>
+<p>This guide provides step-by-step instructions to set up a ThingsBoard server for this project.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>A server running Linux, e.g. Ubuntu 22.04 LTS</p>
+<ul>
+<li><p>using a cloud hosting provider (e.g., DigitalOcean, AWS, Azure, GCP)</p></li>
+<li><p>minimum specifications 1 vCPU (2 recommended), 2GB RAM</p></li>
+</ul>
+</li>
+<li><p>Optional: A domain name pointing to the server’s IP address</p>
+<ul>
+<li><p>e.g., <cite>subdomain.example.com</cite></p></li>
+<li><p>choose from a paid domain name provider (e.g. namecheap.com) or use a subdomain of an existing domain (e.g. from within your institution)</p></li>
+<li><p>point the domain’s DNS A record to the server’s IP address (<cite>A &lt;domain&gt; &lt;IP&gt;</cite>)</p></li>
+<li><p>optional: create a trusted certificate for the domain using Let’s Encrypt (e.g. using <code class="docutils literal notranslate"><span class="pre">certbot</span> <span class="pre">certonly</span> <span class="pre">-d</span> <span class="pre">&lt;domain&gt;</span></code>) and add an automatic renewal cron job (e.g. <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">0</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">*</span> <span class="pre">certbot</span> <span class="pre">renew</span> <span class="pre">--quiet</span></code>)</p></li>
+</ul>
+</li>
+<li><p>Optional: Familiarize yourself with the <a class="reference external" href="https://thingsboard.io/docs/">ThingsBoard documentation</a>.</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<ol class="arabic">
+<li><p>Optional: Update system packages and reboot</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>upgrade<span class="w"> </span>-y
+sudo<span class="w"> </span>apt<span class="w"> </span>auto-remove<span class="w"> </span>-y
+sudo<span class="w"> </span>reboot
+</pre></div>
+</div>
+</li>
+<li><p>Optional: Set up a swapfile if your server has less than 2GB of RAM</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>fallocate<span class="w"> </span>-l<span class="w"> </span>4G<span class="w"> </span>/swapfile
+sudo<span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>/swapfile
+sudo<span class="w"> </span>mkswap<span class="w"> </span>/swapfile
+sudo<span class="w"> </span>swapon<span class="w"> </span>/swapfile
+<span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;/swapfile none swap sw 0 0&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>-a<span class="w"> </span>/etc/fstab
+</pre></div>
+</div>
+</li>
+<li><p>Install dependencies (<code class="docutils literal notranslate"><span class="pre">docker</span></code>, <code class="docutils literal notranslate"><span class="pre">git</span></code>, <code class="docutils literal notranslate"><span class="pre">jq</span></code>, <code class="docutils literal notranslate"><span class="pre">curl</span></code>, <code class="docutils literal notranslate"><span class="pre">ca-certificates</span></code>, <code class="docutils literal notranslate"><span class="pre">nginx-full</span></code>, <code class="docutils literal notranslate"><span class="pre">ufw</span></code>)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>docker.io<span class="w"> </span>git<span class="w"> </span>jq<span class="w"> </span>curl<span class="w"> </span>ca-certificates<span class="w"> </span>nginx-full<span class="w"> </span>ufw
+</pre></div>
+</div>
+</li>
+<li><p>Install <code class="docutils literal notranslate"><span class="pre">docker-compose</span></code> (plugin)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Add Docker&#39;s official GPG key:</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>ca-certificates<span class="w"> </span>curl
+sudo<span class="w"> </span>install<span class="w"> </span>-m<span class="w"> </span><span class="m">0755</span><span class="w"> </span>-d<span class="w"> </span>/etc/apt/keyrings
+sudo<span class="w"> </span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://download.docker.com/linux/ubuntu/gpg<span class="w"> </span>-o<span class="w"> </span>/etc/apt/keyrings/docker.asc
+sudo<span class="w"> </span>chmod<span class="w"> </span>a+r<span class="w"> </span>/etc/apt/keyrings/docker.asc
+<span class="c1"># Add the repository to Apt sources:</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;deb [arch=</span><span class="k">$(</span>dpkg<span class="w"> </span>--print-architecture<span class="k">)</span><span class="s2"> signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu </span><span class="k">$(</span>.<span class="w"> </span>/etc/os-release<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="se">\&quot;</span><span class="nv">$VERSION_CODENAME</span><span class="se">\&quot;</span><span class="k">)</span><span class="s2"> stable&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sudo<span class="w"> </span>tee<span class="w"> </span>/etc/apt/sources.list.d/docker.list<span class="w"> </span>&gt;<span class="w"> </span>/dev/null
+<span class="c1"># Install docker-compose</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>docker-compose-plugin
+</pre></div>
+</div>
+</li>
+<li><p>Add your user to the <code class="docutils literal notranslate"><span class="pre">docker</span></code> group (log out/in afterwards)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>groupadd<span class="w"> </span>docker<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create data folders for ThingsBoard</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>~/data/thingsboard_data/data
+mkdir<span class="w"> </span>-p<span class="w"> </span>~/data/thingsboard_data/logs
+mkdir<span class="w"> </span>-p<span class="w"> </span>~/data/kafka
+sudo<span class="w"> </span>chmod<span class="w"> </span>-R<span class="w"> </span>a+rw<span class="w"> </span>~/data/
+</pre></div>
+</div>
+</li>
+<li><p>Generate a self-signed certificate for ThingsBoard SSL (skip if using a trusted certificate)</p>
+<ul class="simple">
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">gen_certs.sh</span></code> in a temporary directory on your local machine (script available in this repository under <code class="docutils literal notranslate"><span class="pre">setup/ThingsBoard/gen_certs.sh</span></code>).</p></li>
+</ul>
+</li>
+<li><p>Copy files to the server</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code> → <code class="docutils literal notranslate"><span class="pre">~/docker-compose.yml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self_signed_cert.crt</span></code> → <code class="docutils literal notranslate"><span class="pre">/etc/ssl/certs/self_signed_cert.crt</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">self_signed_cert.key</span></code> → <code class="docutils literal notranslate"><span class="pre">/etc/ssl/certs/self_signed_cert.key</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nginx_thingsboard.conf</span></code> → <code class="docutils literal notranslate"><span class="pre">/etc/nginx/sites-available/thingsboard.conf</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nginx.conf</span></code> → <code class="docutils literal notranslate"><span class="pre">/etc/nginx/nginx.conf</span></code> (overwrite existing file)</p></li>
+</ul>
+</li>
+<li><p>Remove default NGINX configuration</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>rm<span class="w"> </span>/etc/nginx/sites-enabled/default
+</pre></div>
+</div>
+</li>
+<li><p>Set up firewall using <code class="docutils literal notranslate"><span class="pre">ufw</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>ufw<span class="w"> </span>default<span class="w"> </span>deny<span class="w"> </span>incoming
+sudo<span class="w"> </span>ufw<span class="w"> </span>default<span class="w"> </span>allow<span class="w"> </span>outgoing
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span>ssh
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span>http
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span>https
+sudo<span class="w"> </span>ufw<span class="w"> </span>allow<span class="w"> </span><span class="m">8843</span>
+sudo<span class="w"> </span>ufw<span class="w"> </span><span class="nb">enable</span>
+</pre></div>
+</div>
+</li>
+<li><p>Reload NGINX and start Docker containers</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>service<span class="w"> </span>nginx<span class="w"> </span>reload
+<span class="nb">cd</span><span class="w"> </span>~
+docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yml<span class="w"> </span>up<span class="w"> </span>-d
+</pre></div>
+</div>
+</li>
+<li><p>Watch live logs of ThingsBoard (initial startup takes several minutes)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>thingsboard
+</pre></div>
+</div>
+<p>Wait until the following message appears:</p>
+<p><code class="docutils literal notranslate"><span class="pre">[main]</span> <span class="pre">INFO</span>&#160; <span class="pre">o.t.s.ThingsboardServerApplication</span> <span class="pre">-</span> <span class="pre">Started</span> <span class="pre">ThingsBoard</span> <span class="pre">in</span> <span class="pre">x</span> <span class="pre">seconds</span></code></p>
+</li>
+<li><p>Open the ThingsBoard web UI and log in with default credentials</p>
+<ul class="simple">
+<li><p>Open <code class="docutils literal notranslate"><span class="pre">&lt;your-domain&gt;</span></code> in a web browser</p></li>
+<li><p>Log in with:
+- username: <code class="docutils literal notranslate"><span class="pre">sysadmin&#64;thingsboard.org</span></code>
+- password: <code class="docutils literal notranslate"><span class="pre">sysadmin</span></code></p></li>
+</ul>
+</li>
+<li><p>Connect MQTT devices to ThingsBoard</p>
+<p>Use the following MQTT broker settings:</p>
+<ul class="simple">
+<li><p>host: <code class="docutils literal notranslate"><span class="pre">&lt;your-domain&gt;</span></code></p></li>
+<li><p>port: <code class="docutils literal notranslate"><span class="pre">8843</span></code> (SSL)</p></li>
+<li><p>username: <code class="docutils literal notranslate"><span class="pre">&lt;access-token&gt;</span></code> (see below)</p></li>
+</ul>
+<p>See the <a class="reference external" href="https://thingsboard.io/docs/reference/mqtt-api/">ThingsBoard MQTT API documentation</a> for details.</p>
+</li>
+</ol>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../../_sources/getting-started/3_installation/1_thingsboard_server.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

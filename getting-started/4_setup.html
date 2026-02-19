@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Setup &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=f6a572b4" />
+    <script src="../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Setup from Image" href="5_setup-from-image.html" />
+    <link rel="prev" title="Thingsboard-edge-gateway Installation" href="3_installation/2_thingsboard_edge_gateway.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="0_index.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1_system-requirements.html">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2_demo.html">Demo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3_installation/0_index.html">Installation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5_setup-from-image.html">Setup from Image</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="0_index.html">Getting Started</a><ul>
+      <li>Previous: <a href="3_installation/2_thingsboard_edge_gateway.html" title="previous chapter">Thingsboard-edge-gateway Installation</a></li>
+      <li>Next: <a href="5_setup-from-image.html" title="next chapter">Setup from Image</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="setup">
+<h1>Setup<a class="headerlink" href="#setup" title="Link to this heading">¶</a></h1>
+<p>How to set up the edge gateway on an IoT device once it has been installed.</p>
+<section id="docker">
+<h2>Docker<a class="headerlink" href="#docker" title="Link to this heading">¶</a></h2>
+<p>Create a Docker daemon configuration file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>nano<span class="w"> </span>/etc/docker/daemon.json
+<span class="c1"># Add:</span>
+<span class="o">{</span>
+<span class="w">    </span><span class="s2">&quot;dns&quot;</span>:<span class="w"> </span><span class="o">[</span><span class="s2">&quot;8.8.8.8&quot;</span>,<span class="w"> </span><span class="s2">&quot;1.1.1.1&quot;</span>,<span class="w"> </span><span class="s2">&quot;8.8.4.4&quot;</span><span class="o">]</span>,
+<span class="w">    </span><span class="s2">&quot;log-driver&quot;</span>:<span class="w"> </span><span class="s2">&quot;json-file&quot;</span>,
+<span class="w">    </span><span class="s2">&quot;log-opts&quot;</span>:<span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="s2">&quot;max-size&quot;</span>:<span class="w"> </span><span class="s2">&quot;100m&quot;</span>,<span class="w"> </span><span class="s2">&quot;max-file&quot;</span>:<span class="w"> </span><span class="s2">&quot;3&quot;</span><span class="w"> </span><span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>This config sets up DNS servers as well as log rotation.</p>
+<p>Add the current user to the Docker group and reboot:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>usermod<span class="w"> </span>-aG<span class="w"> </span>docker<span class="w"> </span><span class="nv">$USER</span>
+sudo<span class="w"> </span>reboot
+</pre></div>
+</div>
+<p>This is needed to avoid permission errors when the gateway tries to run Docker commands.</p>
+</section>
+<section id="environment-variables">
+<h2>Environment variables<a class="headerlink" href="#environment-variables" title="Link to this heading">¶</a></h2>
+<p>Edit the <cite>.env.example</cite> file to configure the application’s basic settings.
+Use the descriptions in <cite>.env.example</cite> for guidance on which environment variables to set and which values to use.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mv<span class="w"> </span>.env.example<span class="w"> </span>.env
+sudo<span class="w"> </span>nano<span class="w"> </span>.env<span class="w">  </span><span class="c1"># edit environment variables as needed</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Note</dt><dd><p>All environment variables are documented in <cite>.env.example</cite>. To avoid duplication and drift,
+this guide intentionally does not repeat them here.</p>
+</dd>
+</dl>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Set up a ThingsBoard Server (see official docs: <a class="reference external" href="https://thingsboard.io/docs/user-guide/install/installation-options/">https://thingsboard.io/docs/user-guide/install/installation-options/</a>)</p></li>
+<li><p>Create appropriate Device Profiles in ThingsBoard: <a class="reference external" href="https://thingsboard.io/docs/user-guide/device-profiles/">https://thingsboard.io/docs/user-guide/device-profiles/</a></p></li>
+<li><p>For the gateway device profile, configure:
+- Name
+- Transport Type: MQTT
+- Provisioning Strategy: Secret Provisioning (enable “Allow to create new devices”)</p></li>
+<li><p>Put the provisioning credentials into your <cite>.env</cite> file (see <cite>.env.example</cite>).</p></li>
+<li><p>Optionally, set the desired hostname in your OS configuration</p></li>
+</ul>
+</section>
+<section id="device-provisioning">
+<h2>Device Provisioning<a class="headerlink" href="#device-provisioning" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>On first start, the gateway will self‑provision if no access token file exists.</p></li>
+<li><p>By default, the device name will match the host OS hostname (unless overridden via environment variable).</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./run_dockerized_gateway.sh<span class="w"> </span><span class="c1">#registers device with ThingsBoard and creates tb_access_token</span>
+docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">50</span><span class="w"> </span>-f<span class="w"> </span>acropolis_edge_gateway
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/getting-started/4_setup.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

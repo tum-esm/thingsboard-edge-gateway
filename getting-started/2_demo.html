@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Demo &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=f6a572b4" />
+    <script src="../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Installation" href="3_installation/0_index.html" />
+    <link rel="prev" title="System Requirements" href="1_system-requirements.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="0_index.html">Getting Started</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="1_system-requirements.html">System Requirements</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Demo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3_installation/0_index.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4_setup.html">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5_setup-from-image.html">Setup from Image</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="0_index.html">Getting Started</a><ul>
+      <li>Previous: <a href="1_system-requirements.html" title="previous chapter">System Requirements</a></li>
+      <li>Next: <a href="3_installation/0_index.html" title="next chapter">Installation</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="demo">
+<h1>Demo<a class="headerlink" href="#demo" title="Link to this heading">¶</a></h1>
+<p>This docker-based demo deployment runs a local ThingsBoard instance together with the edge gateway and a simulated controller.
+It is meant for showcasing the thingsboard-edge-gateway’s features in an easy to set up example environment.</p>
+<section id="what-the-demo-includes">
+<h2>What the demo includes<a class="headerlink" href="#what-the-demo-includes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>ThingsBoard CE + Postgres</p></li>
+<li><p>Edge gateway container built from this repository</p></li>
+<li><p>Example controller that generates simulated sensor data</p></li>
+<li><p>Optional TLS reverse proxy (nginx) with a self-signed certificate</p></li>
+<li><p>Example thingsboard dashboard for visualizing the simulated sensor data</p></li>
+</ul>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Docker</p></li>
+<li><p>Docker Compose</p></li>
+<li><p>Optional: openssl (only if you want to regenerate the self-signed cert)</p></li>
+</ul>
+</section>
+<section id="install-docker">
+<h2>Install Docker<a class="headerlink" href="#install-docker" title="Link to this heading">¶</a></h2>
+<section id="windows-macos">
+<h3>Windows/macOS<a class="headerlink" href="#windows-macos" title="Link to this heading">¶</a></h3>
+<p><a class="reference external" href="https://docs.docker.com/get-docker/">Docker Desktop</a> (includes Docker Compose).</p>
+</section>
+<section id="macos-via-homebrew">
+<h3>MacOS (via Homebrew)<a class="headerlink" href="#macos-via-homebrew" title="Link to this heading">¶</a></h3>
+<p><cite>brew install –cask docker-desktop</cite>
+<cite>brew install docker-compose</cite></p>
+</section>
+<section id="linux">
+<h3>Linux<a class="headerlink" href="#linux" title="Link to this heading">¶</a></h3>
+<p>Docker Engine and the Compose plugin from <a class="reference external" href="https://docs.docker.com/engine/install/">https://docs.docker.com/engine/install/</a>
+and <a class="reference external" href="https://docs.docker.com/compose/install/linux/">https://docs.docker.com/compose/install/linux/</a>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>docker.io<span class="w"> </span>docker-compose-v2
+</pre></div>
+</div>
+</section>
+<section id="optional-tls-tooling">
+<h3>Optional TLS tooling<a class="headerlink" href="#optional-tls-tooling" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>openssl
+</pre></div>
+</div>
+</section>
+</section>
+<section id="verify-requirements">
+<h2>Verify requirements<a class="headerlink" href="#verify-requirements" title="Link to this heading">¶</a></h2>
+<p>Verify that the CLIs are available:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>--version
+docker<span class="w"> </span>compose<span class="w"> </span>version
+</pre></div>
+</div>
+<p>Optional:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openssl<span class="w"> </span>version
+</pre></div>
+</div>
+</section>
+<section id="prepare-the-demo-data-directory">
+<span id="id1"></span><h2>Prepare the demo data directory<a class="headerlink" href="#prepare-the-demo-data-directory" title="Link to this heading">¶</a></h2>
+<p>Create a local data folder and point the demo to it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>demo
+mkdir<span class="w"> </span>-p<span class="w"> </span>data/edge-gateway
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;TEG_DATA_PATH=</span><span class="k">$(</span>realpath<span class="w"> </span>data/edge-gateway<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>.env
+</pre></div>
+</div>
+</section>
+<section id="run-the-full-demo-local-thingsboard">
+<h2>Run the full demo (local ThingsBoard)<a class="headerlink" href="#run-the-full-demo-local-thingsboard" title="Link to this heading">¶</a></h2>
+<p>Initialize ThingsBoard on first run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose-thingsboard.yml<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-e<span class="w"> </span><span class="nv">INSTALL_TB</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span>-e<span class="w"> </span><span class="nv">LOAD_DEMO</span><span class="o">=</span><span class="nb">true</span><span class="w"> </span>thingsboard
+</pre></div>
+</div>
+<p>Output should look similar to:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Starting ThingsBoard Installation...
+Installing database schema for entities...
+...
+Loading system images and resources...
+Loading demo data...
+Installation finished successfully!
+</pre></div>
+</div>
+<p>To run the demo once it has been initialized:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose-thingsboard.yml<span class="w"> </span>up
+</pre></div>
+</div>
+<p>Open ThingsBoard at <a class="reference external" href="http://localhost:8080/">http://localhost:8080/</a> and sign in with:</p>
+<ul class="simple">
+<li><p>user: <cite>tenant&#64;thingsboard.org</cite></p></li>
+<li><p>password: <cite>tenant</cite></p></li>
+</ul>
+</section>
+<section id="enable-device-self-provisioning">
+<h2>Enable device self-provisioning<a class="headerlink" href="#enable-device-self-provisioning" title="Link to this heading">¶</a></h2>
+<p>Assign the self-provisioning credentials to the “thermostat” device profile:</p>
+<ol class="arabic simple">
+<li><p>Open the device profile “thermostat”</p></li>
+<li><p>Device provisioning -&gt; Edit</p></li>
+</ol>
+<img alt="&quot;Thermostat&quot; device profile" src="../_images/scr_thermostat_profile.png" />
+<ol class="arabic simple" start="3">
+<li><p>Provision strategy: “Allow to create new devices”</p></li>
+<li><p>Provision device key: <cite>cl4ozm17lhwpafnz8jau</cite></p></li>
+<li><p>Provision device secret: <cite>7jemz65a0498pb5wzuk8</cite></p></li>
+<li><p>Save the profile (“apply changes”)</p></li>
+</ol>
+<img alt="Self-provisioning credentials" src="../_images/scr_self_provisioning_credentials.png" />
+<p>After this, the demo gateway self-provisions and starts sending simulated data.</p>
+</section>
+<section id="import-the-example-dashboard">
+<h2>Import the example dashboard<a class="headerlink" href="#import-the-example-dashboard" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Go to Dashboards -&gt; “+” -&gt; Import</p></li>
+<li><p>Import <cite>demo/example_dashboard.json</cite></p></li>
+</ol>
+<img alt="Import new example dashboard" src="../_images/scr_import_dashboard.png" />
+<ol class="arabic simple" start="3">
+<li><dl class="simple">
+<dt>Update the dashboard device alias to the new device ID created by self-provisioning</dt><dd><ul class="simple">
+<li><p>“Dashboards” &gt; “Example Sensor” &gt; “Edit mode” &gt; “Aliases” &gt; “Edit Alias”</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+<img alt="Edit dashboard device alias" src="../_images/scr_edit_alias.png" />
+</section>
+<section id="push-and-verify-a-controller-config-file">
+<h2>Push and verify a controller config file<a class="headerlink" href="#push-and-verify-a-controller-config-file" title="Link to this heading">¶</a></h2>
+<p>The demo can mirror controller configuration via device attributes.</p>
+<ol class="arabic simple">
+<li><p>Open the device created by self-provisioning (“Entities” &gt; “Devices” &gt; …)</p></li>
+<li><p>“Device details” -&gt; “Attributes” -&gt; “Shared attributes” -&gt; “Add” (“+”)</p></li>
+<li><p>Create the <cite>FILES</cite> attribute with this JSON:</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;controller_config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$DATA_PATH/config.json&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;json&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;write_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;restart_controller_on_change&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Create the <cite>FILE_CONTENT_controller_config</cite> attribute with this JSON:</p></li>
+</ol>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;controllerType&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;PID&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;setPoint&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">22.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;kp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;ki&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;kd&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.01</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<img alt="Add shared &quot;FILES&quot; attribute to example device" src="../_images/scr_files_attribute.png" />
+<ol class="arabic simple" start="5">
+<li><p>Wait for <cite>config.json</cite> to appear under the data path in your <cite>.env</cite> (see <a class="reference internal" href="#prepare-the-demo-data-directory"><span class="std std-ref">Prepare the demo data directory</span></a> )</p></li>
+<li><p>Modify the local config file and trigger the “Exit” RPC command via the button on the “Example Sensor” dashboard</p></li>
+<li><p>Check the “Client attributes” scope for <cite>FILE_READ_controller_config</cite></p></li>
+</ol>
+</section>
+<section id="connect-the-gateway-to-an-existing-thingsboard-instance">
+<h2>Connect the gateway to an existing ThingsBoard instance<a class="headerlink" href="#connect-the-gateway-to-an-existing-thingsboard-instance" title="Link to this heading">¶</a></h2>
+<p>If you already have ThingsBoard running elsewhere, use the smaller compose file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.yml<span class="w"> </span>up
+</pre></div>
+</div>
+<p>Set the following variables in <cite>.env</cite> before running:</p>
+<ul class="simple">
+<li><p><cite>TEG_DATA_PATH</cite></p></li>
+<li><p><cite>TEG_TB_HOST</cite></p></li>
+<li><p><cite>TEG_TB_PORT</cite></p></li>
+</ul>
+</section>
+<section id="optional-regenerate-the-self-signed-certificate">
+<h2>Optional: regenerate the self-signed certificate<a class="headerlink" href="#optional-regenerate-the-self-signed-certificate" title="Link to this heading">¶</a></h2>
+<p>If you need a new self-signed certificate for the nginx proxy:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openssl<span class="w"> </span>req<span class="w"> </span>-x509<span class="w"> </span>-newkey<span class="w"> </span>rsa:4096<span class="w"> </span>-keyout<span class="w"> </span>server_key.pem<span class="w"> </span>-out<span class="w"> </span>server_cert.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-sha256<span class="w"> </span>-days<span class="w"> </span><span class="m">9650</span><span class="w"> </span>-nodes<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-subj<span class="w"> </span><span class="s2">&quot;/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=nginx&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-addext<span class="w"> </span><span class="s2">&quot;subjectAltName=DNS:thingsboard,DNS:localhost&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/getting-started/2_demo.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,5 +1,7 @@
-Installation
-============
+Thingsboard-edge-gateway Installation
+=====================================
+This guide details installation of the thingsboard-edge-gateway project on an IoT device. It assumes a thingsboard
+server has been set up already and can be connected to via MQTT.
 
 Install Dependencies
 --------------------
@@ -13,18 +15,20 @@ Update the package list and install required dependencies:
         build-essential libssl-dev libbz2-dev \
         libexpat1-dev liblzma-dev zlib1g-dev \
         libffi-dev openssl docker.io git \
-        tldr ncdu minicom pigpio libsqlite3-dev \
-        wget screen udhcpc
-
-Enable **I2C Interface** using:
-
-.. code-block:: bash
-
-    sudo raspi-config
-    # Navigate to: Interface Options → I2C → Enable
+        libsqlite3-dev wget python3.12 python3.12-venv
 
 Python
 ------
+Using uv python version manager:
+"""""""""""""""""""""""""""""""""
+.. code-block:: bash
+
+    wget -qO- https://astral.sh/uv/install.sh | sh
+    source $HOME/.local/bin/env
+    uv python install 3.12
+
+Compiling from source:
+""""""""""""""""""""""
 .. code-block:: bash
 
     wget https://www.python.org/ftp/python/3.12.8/Python-3.12.8.tgz
@@ -35,32 +39,15 @@ Python
     sudo make install
     curl -sSL https://install.python-poetry.org/ | python3.12 -
 
-Download Gateway
-----------------
+Download Thingsboard Edge Gateway
+-----------------------------------
 
 You can download the latest release of ThingsBoard Edge Gateway from the GitHub repository:
 
 .. code-block:: bash
 
-    cd /home/pi/
-    mkdir gateway
-    cd gateway
-    git init
+    cd $HOME
     git clone https://github.com/tum-esm/thingsboard-edge-gateway.git
 
-Folder structure:
-- ".env.template": Template for environment variable configuration - rename to ".env" and edit as needed
-
-
-Download Controller
--------------------
-
-.. code-block:: bash
-
-    cd /home/pi/
-    mkdir controller
-    cd controller
-    git init
-    git clone <...>
 
 
