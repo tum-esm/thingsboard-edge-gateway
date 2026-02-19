@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>modules.docker_client &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for modules.docker_client</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Docker runtime management for the Edge Gateway controller.</span>
+
+<span class="sd">This module provides the :class:`~modules.docker_client.GatewayDockerClient`, a thin</span>
+<span class="sd">wrapper around the Docker Engine API used by the Edge Gateway to manage the</span>
+<span class="sd">*controller* container.</span>
+
+<span class="sd">Responsibilities</span>
+<span class="sd">----------------</span>
+<span class="sd">- Detect whether the controller container is running and determine its version.</span>
+<span class="sd">- Start/stop the controller container in a controlled way.</span>
+<span class="sd">- Build controller images from a Git tag or commit hash if the image is not available.</span>
+<span class="sd">- Publish ThingsBoard OTA-related software state updates via MQTT (``sw_state``).</span>
+
+<span class="sd">The controller is deployed as a Docker container (``teg_controller``) with images</span>
+<span class="sd">tagged as ``teg-controller-&lt;version&gt;:latest``. Versions may be Git tags (e.g. ``v1.2.3``)</span>
+<span class="sd">or full commit hashes.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- This client is implemented as a process-level singleton to avoid repeated Docker</span>
+<span class="sd">  client initialization.</span>
+<span class="sd">- The implementation assumes host networking and a privileged container, as required</span>
+<span class="sd">  for the deployed Raspberry Pi environment.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">docker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">docker</span><span class="w"> </span><span class="kn">import</span> <span class="n">DockerClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">docker.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogConfig</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.git_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayGitClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">warn</span><span class="p">,</span> <span class="n">error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.mqtt</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayMqttClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">CONTROLLER_GIT_PATH</span><span class="p">,</span> <span class="n">GATEWAY_DATA_PATH</span><span class="p">,</span> <span class="n">CONTROLLER_LOGS_PATH</span><span class="p">,</span> <span class="n">CONTROLLER_DATA_PATH</span><span class="p">,</span> \
+    <span class="n">CONTROLLER_DOCKERCONTEXT_PATH</span><span class="p">,</span> <span class="n">CONTROLLER_DOCKERFILE_PATH</span>
+
+<span class="n">CONTROLLER_CONTAINER_NAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;teg_controller&quot;</span>
+<span class="n">CONTROLLER_IMAGE_PREFIX</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;teg-controller-&quot;</span>
+
+<span class="n">singleton_instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GatewayDockerClient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="GatewayDockerClient">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GatewayDockerClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manage the controller Docker container for an Edge Gateway device.</span>
+
+<span class="sd">    The gateway and controller are intentionally separated: the Edge Gateway remains</span>
+<span class="sd">    stable while controller versions can be updated independently (e.g. via OTA</span>
+<span class="sd">    packages in ThingsBoard).</span>
+
+<span class="sd">    This class wraps Docker operations (list, stop, run, build) and integrates with</span>
+<span class="sd">    the gateway’s Git and MQTT clients to support automated controller updates.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    last_launched_version:</span>
+<span class="sd">      Cached version string of the last successfully launched controller.</span>
+<span class="sd">    docker_client:</span>
+<span class="sd">      Docker SDK client instance created via :func:`docker.from_env`, or ``None`` if</span>
+<span class="sd">      Docker is unavailable.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">last_launched_version</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">docker_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DockerClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">global</span> <span class="n">singleton_instance</span>
+        <span class="k">if</span> <span class="n">singleton_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Initializing GatewayDockerClient&quot;</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+            <span class="n">singleton_instance</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="o">=</span> <span class="n">docker</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Failed to initialize GatewayDockerClient: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Singleton pattern</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">global</span> <span class="n">singleton_instance</span>
+        <span class="k">if</span> <span class="n">singleton_instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">singleton_instance</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GatewayDockerClient</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GatewayDockerClient.get_last_launched_controller_version">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.get_last_launched_controller_version">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_last_launched_controller_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the last launched controller version.</span>
+
+<span class="sd">        The value is cached in-memory and persisted in</span>
+<span class="sd">        ``$GATEWAY_DATA_PATH/last_launched_controller_version.txt``. If the file is not</span>
+<span class="sd">        available, the environment variable ``TEG_DEFAULT_CONTROLLER_VERSION`` is used</span>
+<span class="sd">        as a fallback.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          The version tag/commit hash, or ``None`` if unknown.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_launched_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_launched_version</span>
+        <span class="c1"># read controller version from file</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GATEWAY_DATA_PATH</span><span class="p">,</span> <span class="s2">&quot;last_launched_controller_version.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">last_launched_controller_version</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">last_launched_version</span> <span class="o">=</span> <span class="n">last_launched_controller_version</span>
+                <span class="k">return</span> <span class="n">last_launched_controller_version</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">default_version</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;TEG_DEFAULT_CONTROLLER_VERSION&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">default_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">default_version</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.set_last_launched_controller_version">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.set_last_launched_controller_version">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_last_launched_controller_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last_launched_controller_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist the last launched controller version.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          last_launched_controller_version: Git tag or commit hash to store.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_launched_version</span> <span class="o">=</span> <span class="n">last_launched_controller_version</span>
+        <span class="c1"># write to file</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">GATEWAY_DATA_PATH</span><span class="p">,</span> <span class="s2">&quot;last_launched_controller_version.txt&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">last_launched_controller_version</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Failed to write last launched controller version: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.is_controller_running">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.is_controller_running">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_controller_running</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the controller container is running.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the container exists and is running, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] is_controller_running: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">containers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">containers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">container</span> <span class="ow">in</span> <span class="n">containers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">container</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">CONTROLLER_CONTAINER_NAME</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">container</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;State&quot;</span><span class="p">][</span><span class="s2">&quot;Running&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.is_image_available">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.is_image_available">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_image_available</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether a Docker image tag exists locally.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          image_tag: Full Docker image tag to look up (e.g. ``teg-controller-v1.0.0:latest``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the image tag exists locally, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] is_image_available: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">list</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">image_tag</span> <span class="ow">in</span> <span class="n">image</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.get_controller_version">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.get_controller_version">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_controller_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the controller version inferred from the running container image.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          The Git tag/commit hash parsed from the image name, or ``None`` if the</span>
+<span class="sd">          controller is not running or the version cannot be determined.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] get_controller_version: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_controller_running</span><span class="p">():</span>
+            <span class="n">containers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">containers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">container</span> <span class="ow">in</span> <span class="n">containers</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">container</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">CONTROLLER_CONTAINER_NAME</span><span class="p">:</span>
+                    <span class="n">version</span> <span class="o">=</span> <span class="n">container</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;Config&quot;</span><span class="p">][</span><span class="s2">&quot;Image&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;v&quot;</span>
+                                                  <span class="ow">or</span> <span class="n">version</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span> <span class="o">==</span> <span class="mi">40</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;:latest&quot;</span><span class="p">):</span>
+                            <span class="n">version</span> <span class="o">=</span> <span class="n">version</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span>
+                        <span class="k">return</span> <span class="n">version</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.get_edge_startup_timestamp_ms">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.get_edge_startup_timestamp_ms">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_edge_startup_timestamp_ms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the controller container start time as Unix milliseconds.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          Start timestamp in milliseconds (UTC) if the controller is running, else ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] get_edge_startup_timestamp_ms: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_controller_running</span><span class="p">():</span>
+            <span class="n">containers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">containers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">container</span> <span class="ow">in</span> <span class="n">containers</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">container</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">CONTROLLER_CONTAINER_NAME</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">container</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;State&quot;</span><span class="p">][</span><span class="s2">&quot;StartedAt&quot;</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">],</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S.</span><span class="si">%f</span><span class="s2">&quot;</span> <span class="p">)</span>
+                        <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+                        <span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.stop_controller">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.stop_controller">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop the running controller container (if any).</span>
+
+<span class="sd">        This stores the currently running controller version as the last-launched</span>
+<span class="sd">        version before stopping the container.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] stop_controller: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_controller_running</span><span class="p">():</span>
+            <span class="n">containers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">containers</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">container</span> <span class="ow">in</span> <span class="n">containers</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">container</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">CONTROLLER_CONTAINER_NAME</span><span class="p">:</span>
+                    <span class="n">running_controller_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_controller_version</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">running_controller_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">set_last_launched_controller_version</span><span class="p">(</span><span class="n">running_controller_version</span><span class="p">)</span>
+                    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Stopping controller container...&quot;</span><span class="p">)</span>
+                    <span class="n">container</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+                    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Stopped controller container&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Controller container is not running&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.prune_containers">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.prune_containers">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prune_containers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove stopped containers to keep the Docker environment clean.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] prune_containers: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">containers</span><span class="o">.</span><span class="n">prune</span><span class="p">()</span>
+        <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Pruned containers&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GatewayDockerClient.start_controller_safely">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.start_controller_safely">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_controller_safely</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_to_launch</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start the controller and suppress unexpected exceptions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          version_to_launch: Git tag or commit hash to run.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_controller</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Failed to start controller: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+            
+<div class="viewcode-block" id="GatewayDockerClient.start_controller">
+<a class="viewcode-back" href="../../api/ota.html#modules.docker_client.GatewayDockerClient.start_controller">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start_controller</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version_to_launch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start the controller container for a given version.</span>
+
+<span class="sd">        If the requested version is already running, the method is a no-op. If the</span>
+<span class="sd">        required image is not available locally, the controller repository is fetched,</span>
+<span class="sd">        reset to the referenced commit, and a Docker image is built from the local</span>
+<span class="sd">        Docker context.</span>
+
+<span class="sd">        During the update lifecycle, the method publishes OTA-related states via MQTT</span>
+<span class="sd">        (e.g. ``DOWNLOADING``, ``DOWNLOADED``, ``UPDATING``, ``UPDATED``).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          version_to_launch: Git tag (e.g. ``v1.0.0``) or full commit hash.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] start_controller: Docker client not initialized&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_controller_running</span><span class="p">():</span>
+            <span class="n">running_controller_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_controller_version</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">running_controller_version</span> <span class="o">!=</span> <span class="n">version_to_launch</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stop_controller</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">start_controller</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Software already running with version &quot;</span> <span class="o">+</span> <span class="n">version_to_launch</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_last_launched_controller_version</span><span class="p">(</span><span class="n">running_controller_version</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">image_tag</span> <span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONTROLLER_IMAGE_PREFIX</span> <span class="o">+</span> <span class="n">version_to_launch</span> <span class="o">+</span> <span class="s2">&quot;:latest&quot;</span>
+
+        <span class="c1"># edge container is not running</span>
+        <span class="c1"># check if the image is available already, if not build it</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_available</span><span class="p">(</span><span class="n">image_tag</span><span class="p">):</span>
+            <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Image &#39;&quot;</span> <span class="o">+</span> <span class="n">image_tag</span> <span class="o">+</span> <span class="s2">&quot;&#39; not available&quot;</span><span class="p">)</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Building image for version &#39;&quot;</span> <span class="o">+</span> <span class="n">version_to_launch</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+            <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_sw_state</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">,</span> <span class="s2">&quot;DOWNLOADING&quot;</span><span class="p">)</span>
+            <span class="n">GatewayGitClient</span><span class="p">()</span><span class="o">.</span><span class="n">execute_fetch</span><span class="p">()</span>
+            <span class="n">commit_hash</span> <span class="o">=</span> <span class="n">GatewayGitClient</span><span class="p">()</span><span class="o">.</span><span class="n">get_commit_from_hash_or_tag</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">commit_hash</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Unable to get commit hash for version &#39;&quot;</span> <span class="o">+</span> <span class="n">version_to_launch</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Building image for commit &quot;</span> <span class="o">+</span> <span class="n">commit_hash</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">GatewayGitClient</span><span class="p">()</span><span class="o">.</span><span class="n">execute_reset_to_commit</span><span class="p">(</span><span class="n">commit_hash</span><span class="p">)</span> \
+                <span class="ow">and</span> <span class="n">GatewayGitClient</span><span class="p">()</span><span class="o">.</span><span class="n">get_current_commit</span><span class="p">()</span> <span class="o">==</span> <span class="n">commit_hash</span><span class="p">:</span>
+                <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Successfully reset to commit &quot;</span> <span class="o">+</span> <span class="n">commit_hash</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">error</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Unable to reset to commit &quot;</span> <span class="o">+</span> <span class="n">commit_hash</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_sw_state</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">,</span> <span class="s2">&quot;DOWNLOADED&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">CONTROLLER_DOCKERCONTEXT_PATH</span><span class="p">,</span>
+                <span class="n">dockerfile</span><span class="o">=</span><span class="n">CONTROLLER_DOCKERFILE_PATH</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">CONTROLLER_IMAGE_PREFIX</span> <span class="o">+</span> <span class="n">version_to_launch</span> <span class="o">+</span> <span class="s2">&quot;:latest&quot;</span>
+            <span class="p">)</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Built image for commit &quot;</span> <span class="o">+</span> <span class="n">commit_hash</span> <span class="o">+</span> <span class="s2">&quot; with tag &quot;</span> <span class="o">+</span> <span class="n">CONTROLLER_IMAGE_PREFIX</span> <span class="o">+</span> <span class="n">version_to_launch</span><span class="p">)</span>
+
+        <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_sw_state</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">,</span> <span class="s2">&quot;UPDATING&quot;</span><span class="p">)</span>
+        <span class="c1"># remove old containers and start the new one</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prune_containers</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">docker_client</span><span class="o">.</span><span class="n">containers</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">image_tag</span><span class="p">,</span>
+            <span class="n">detach</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">CONTROLLER_CONTAINER_NAME</span><span class="p">,</span>
+            <span class="n">restart_policy</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;MaximumRetryCount&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                <span class="s2">&quot;Name&quot;</span><span class="p">:</span> <span class="s2">&quot;on-failure&quot;</span>
+            <span class="p">},</span>
+            <span class="n">log_config</span><span class="o">=</span><span class="n">LogConfig</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">LogConfig</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">JSON</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;max-size&quot;</span><span class="p">:</span> <span class="s2">&quot;10m&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;max-file&quot;</span><span class="p">:</span> <span class="s2">&quot;5&quot;</span>
+            <span class="p">}),</span>
+            <span class="n">privileged</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">network_mode</span><span class="o">=</span><span class="s2">&quot;host&quot;</span><span class="p">,</span>
+            <span class="n">volumes</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;/bin/vcgencmd&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="s2">&quot;/bin/vcgencmd&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;ro&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;/bin/uptime&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="s2">&quot;/bin/uptime&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;ro&quot;</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;/bin/pigs&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="s2">&quot;/bin/pigs&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;ro&quot;</span>
+                <span class="p">},</span>
+                <span class="n">CONTROLLER_DATA_PATH</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="s2">&quot;/root/data&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;rw&quot;</span>
+                <span class="p">},</span>
+                <span class="n">CONTROLLER_LOGS_PATH</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;bind&quot;</span><span class="p">:</span> <span class="s2">&quot;/root/logs&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="s2">&quot;rw&quot;</span>
+                <span class="p">},</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_last_launched_controller_version</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">)</span>
+
+        <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_sw_state</span><span class="p">(</span><span class="n">version_to_launch</span><span class="p">,</span> <span class="s2">&quot;UPDATED&quot;</span><span class="p">)</span>
+        <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[DOCKER-CLIENT] Started container with version &#39;&quot;</span> <span class="o">+</span> <span class="n">version_to_launch</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

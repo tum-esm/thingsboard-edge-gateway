@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>on_mqtt_msg.check_for_file_content_update &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for on_mqtt_msg.check_for_file_content_update</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Handle remote file content updates received via MQTT.</span>
+
+<span class="sd">This module processes ThingsBoard shared attribute updates of the form</span>
+<span class="sd">``FILE_CONTENT_&lt;file_key&gt;`` and applies the corresponding file changes on the</span>
+<span class="sd">Edge Gateway filesystem.</span>
+
+<span class="sd">It implements the *apply* side of the Remote File Management workflow:</span>
+<span class="sd">- Decode incoming file content according to its declared encoding.</span>
+<span class="sd">- Write updated file contents to disk.</span>
+<span class="sd">- Recalculate and publish file hashes (``FILE_HASHES``).</span>
+<span class="sd">- Mirror updated file contents back via ``FILE_READ_&lt;file_key&gt;`` attributes.</span>
+<span class="sd">- Optionally trigger a controller restart if required by the file definition.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- File metadata (paths, encodings, flags) is defined in the ``FILES`` shared attribute.</span>
+<span class="sd">- Hash synchronization logic is coordinated with</span>
+<span class="sd">  ``on_mqtt_msg.check_for_file_hashes_update``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.docker_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayDockerClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.file_writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayFileWriter</span><span class="p">,</span> <span class="n">write_file_content_to_client_attribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">info</span><span class="p">,</span> <span class="n">error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.mqtt</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayMqttClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">on_mqtt_msg.check_for_file_hashes_update</span><span class="w"> </span><span class="kn">import</span> <span class="n">FILE_HASHES_TB_KEY</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">file_exists</span><span class="p">,</span> <span class="n">get_maybe</span>
+
+<span class="sd">&quot;&quot;&quot;Prefix used to identify file content updates in shared attributes.&quot;&quot;&quot;</span>
+<span class="n">FILE_CONTENT_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;FILE_CONTENT_&quot;</span>
+
+<div class="viewcode-block" id="on_msg_check_for_file_content_update">
+<a class="viewcode-back" href="../../api/remote_file_management.html#on_mqtt_msg.check_for_file_content_update.on_msg_check_for_file_content_update">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_msg_check_for_file_content_update</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process an incoming file content update message.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      msg_payload: MQTT message payload containing shared attributes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      ``True`` if the message was handled (even if no update was applied),</span>
+<span class="sd">      ``False`` if the message is not related to file content updates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">msg_payload</span>
+    <span class="n">file_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Identify the first FILE_CONTENT_&lt;file_key&gt; entry in the payload</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">payload</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">FILE_CONTENT_PREFIX</span><span class="p">):</span>
+            <span class="n">file_id</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">FILE_CONTENT_PREFIX</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="k">if</span> <span class="n">file_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">files_definitions</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">get_files</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">file_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">files_definitions</span><span class="p">:</span>
+        <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File definition for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">file_definition</span> <span class="o">=</span> <span class="n">files_definitions</span><span class="p">[</span><span class="n">file_id</span><span class="p">]</span>
+
+    <span class="n">input_file_content</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">FILE_CONTENT_PREFIX</span> <span class="o">+</span> <span class="n">file_id</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">input_file_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid file content update received&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Decode incoming file content according to the declared encoding</span>
+    <span class="n">file_encoding</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_definition</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;text&quot;</span>
+    <span class="k">if</span> <span class="n">file_encoding</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_file_content</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">file_content_bytes</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">input_file_content</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid file content for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">, expected JSON object&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">elif</span> <span class="n">file_encoding</span> <span class="o">==</span> <span class="s2">&quot;base64&quot;</span><span class="p">:</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_file_content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">file_content_bytes</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">input_file_content</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to decode base64 content for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid file content for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">, expected base64 string&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">elif</span> <span class="n">file_encoding</span> <span class="o">==</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">input_file_content</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># encode as utf-8 bytes</span>
+            <span class="n">file_content_bytes</span> <span class="o">=</span> <span class="n">input_file_content</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid file content for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">, expected text string&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown content encoding for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">file_encoding</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    
+
+    <span class="n">file_write_version</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_definition</span><span class="p">,</span> <span class="s2">&quot;write_version&quot;</span><span class="p">)</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">expand_file_path</span><span class="p">(</span><span class="n">get_maybe</span><span class="p">(</span><span class="n">file_definition</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">))</span>
+    <span class="n">create_if_not_exist</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_definition</span><span class="p">,</span> <span class="s2">&quot;create_if_not_exist&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">]</span>
+    <span class="n">restart_controller_on_change</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_definition</span><span class="p">,</span> <span class="s2">&quot;restart_controller_on_change&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File definition for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> has no path, unable to write file content update&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="c1"># check if file already exists, if not, check if it should be created</span>
+    <span class="k">if</span> <span class="n">file_exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="ow">or</span> <span class="n">create_if_not_exist</span><span class="p">:</span>
+        <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Writing file </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> at path: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># write content to file</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">file_content_bytes</span><span class="p">)</span>
+            <span class="c1"># calculate new file hash and update it to ThingsBoard</span>
+            <span class="n">file_content_hash</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">calc_file_hash</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+            <span class="n">file_hashes</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">get_tb_file_hashes</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">file_hashes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File hashes are not available, cannot update hash for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">old_hash</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+                <span class="n">file_hashes</span><span class="p">[</span><span class="n">file_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;hash&quot;</span><span class="p">:</span> <span class="n">file_content_hash</span><span class="p">}</span>
+                <span class="k">if</span> <span class="n">file_write_version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+                    <span class="n">file_hashes</span><span class="p">[</span><span class="n">file_id</span><span class="p">][</span><span class="s2">&quot;write_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_write_version</span>
+                <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+                    <span class="n">FILE_HASHES_TB_KEY</span><span class="p">:</span> <span class="n">file_hashes</span>
+                <span class="p">}))</span>
+                <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">set_tb_hashes</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">)</span>
+
+                <span class="c1"># update file content READ attribute</span>
+                <span class="k">if</span> <span class="n">old_hash</span> <span class="o">!=</span> <span class="n">file_content_hash</span><span class="p">:</span>
+                    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> content updated, updating attribute&quot;</span><span class="p">)</span>
+                    <span class="n">write_file_content_to_client_attribute</span><span class="p">(</span><span class="n">file_id</span><span class="p">,</span> <span class="n">input_file_content</span><span class="p">)</span>
+                    <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">did_file_change</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="c1"># update internal state</span>
+                    <span class="k">if</span> <span class="n">restart_controller_on_change</span><span class="p">:</span>
+                        <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Restarting controller due to file content change&quot;</span><span class="p">)</span>
+                        <span class="n">GatewayDockerClient</span><span class="p">()</span><span class="o">.</span><span class="n">stop_controller</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> content unchanged, not updating attribute&quot;</span><span class="p">)</span>
+
+            <span class="c1"># request file definitions again to verify everything is correct</span>
+            <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;FILES&quot;</span><span class="p">})</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to create file </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> at path </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> does not exist at path: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> and &#39;create_if_not_exist&#39; is set to false&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

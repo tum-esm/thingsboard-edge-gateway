@@ -246,8 +246,36 @@ entry is stored locally in an SQLite buffer database for later processing.</p>
 </dd></dl>
 
 </section>
-<section id="paths-and-configuration">
-<h2>Paths and Configuration<a class="headerlink" href="#paths-and-configuration" title="Link to this heading">¶</a></h2>
+<section id="module-utils.paths">
+<span id="paths-and-configuration"></span><h2>Paths and Configuration<a class="headerlink" href="#module-utils.paths" title="Link to this heading">¶</a></h2>
+<p>Filesystem path configuration for the Edge Gateway.</p>
+<p>This module centralizes all filesystem paths used by the Edge Gateway and the
+controller runtime. Paths are resolved at import time based on environment
+variables, with sensible defaults derived from the project directory.</p>
+<p>The primary purpose of this module is to provide a single, consistent source of
+truth for:
+- Gateway and controller data directories
+- Controller Git repository and Docker build context paths
+- SQLite database locations used for buffering and archiving
+- Log storage paths</p>
+<section id="environment-variables">
+<h3>Environment variables<a class="headerlink" href="#environment-variables" title="Link to this heading">¶</a></h3>
+<p>The following environment variables can be used to override default paths:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TEG_DATA_PATH</span></code>: Base data directory for the Edge Gateway.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TEG_CONTROLLER_DATA_PATH</span></code>: Base data directory for the controller.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TEG_CONTROLLER_LOGS_PATH</span></code>: Directory for controller log files.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TEG_CONTROLLER_GIT_PATH</span></code>: Path to the controller Git repository.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TEG_CONTROLLER_DOCKERCONTEXT_PATH</span></code>: Docker build context for the controller.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TEG_CONTROLLER_DOCKERFILE_PATH</span></code>: Path to the controller Dockerfile.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Path resolution is performed eagerly at import time.</p></li>
+<li><p>Missing critical configuration (e.g. controller Git path) is treated as a fatal
+configuration error and logged immediately.</p></li>
+</ul>
+</section>
 </section>
 <section id="module-args">
 <span id="args"></span><h2>Args<a class="headerlink" href="#module-args" title="Link to this heading">¶</a></h2>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>modules.mqtt &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for modules.mqtt</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;MQTT client for ThingsBoard communication.</span>
+
+<span class="sd">This module implements :class:`~modules.mqtt.GatewayMqttClient`, a thin wrapper</span>
+<span class="sd">around the Paho MQTT client used by the Edge Gateway to communicate with</span>
+<span class="sd">ThingsBoard.</span>
+
+<span class="sd">The client is responsible for:</span>
+<span class="sd">- Establishing a TLS-secured MQTT connection using a ThingsBoard access token.</span>
+<span class="sd">- Subscribing to RPC, attribute, and OTA update topics.</span>
+<span class="sd">- Publishing telemetry and attributes (including OTA software state ``sw_state``).</span>
+<span class="sd">- Providing a thread-safe inbound message queue for the gateway main loop.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- The client follows a singleton pattern to avoid multiple concurrent MQTT clients</span>
+<span class="sd">  in the gateway process.</span>
+<span class="sd">- The ``init()`` method configures callbacks and resets internal state; it is not</span>
+<span class="sd">  the same as object construction.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ssl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">queue</span><span class="w"> </span><span class="kn">import</span> <span class="n">Queue</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">paho.mqtt.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">Client</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">info</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">debug</span><span class="p">,</span> <span class="n">warn</span>
+
+<span class="n">singleton_instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GatewayMqttClient&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="GatewayMqttClient">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GatewayMqttClient</span><span class="p">(</span><span class="n">Client</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MQTT client used by the Edge Gateway to communicate with ThingsBoard.</span>
+
+<span class="sd">    The client subscribes to RPC requests, shared/client attributes, and OTA update</span>
+<span class="sd">    topics and exposes helper methods to publish telemetry, attributes, and software</span>
+<span class="sd">    update state.</span>
+
+<span class="sd">    Incoming MQTT messages are placed into :attr:`message_queue` as dictionaries with</span>
+<span class="sd">    ``topic`` and parsed JSON ``payload`` fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">attribute_request_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">initialized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">connected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">message_queue</span><span class="p">:</span> <span class="n">Queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">global</span> <span class="n">singleton_instance</span>
+        <span class="k">if</span> <span class="n">singleton_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[MQTT] Initializing GatewayMqttClient&quot;</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+            <span class="n">singleton_instance</span> <span class="o">=</span> <span class="bp">self</span>
+
+    <span class="c1"># Singleton pattern</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;GatewayMqttClient&quot;</span><span class="p">:</span>
+        <span class="k">global</span> <span class="n">singleton_instance</span>
+        <span class="k">if</span> <span class="n">singleton_instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">singleton_instance</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GatewayMqttClient</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GatewayMqttClient.init">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.init">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">access_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Configure the MQTT client for ThingsBoard access.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          access_token: ThingsBoard device access token.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          The configured client instance (self).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># set up the client</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;THINGSBOARD_CA_CERT&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using custom CA cert&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tls_set</span><span class="p">(</span><span class="n">cert_reqs</span><span class="o">=</span><span class="n">ssl</span><span class="o">.</span><span class="n">CERT_REQUIRED</span><span class="p">,</span> <span class="n">ca_certs</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;THINGSBOARD_CA_CERT&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tls_set</span><span class="p">(</span><span class="n">cert_reqs</span><span class="o">=</span><span class="n">ssl</span><span class="o">.</span><span class="n">CERT_REQUIRED</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username_pw_set</span><span class="p">(</span><span class="n">access_token</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># set up the callbacks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_connect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_connect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_disconnect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_disconnect</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_request_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="GatewayMqttClient.graceful_exit">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.graceful_exit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">graceful_exit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Disconnect and stop the MQTT network loop.&quot;&quot;&quot;</span>
+        <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[MQTT] Exiting MQTT-client gracefully...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loop_stop</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__on_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_client</span><span class="p">,</span> <span class="n">_userdata</span><span class="p">,</span> <span class="n">_flags</span><span class="p">,</span> <span class="n">_result_code</span><span class="p">,</span> <span class="o">*</span><span class="n">_extra_params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_result_code</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[MQTT] Failed to connect to ThingsBoard with result code: </span><span class="si">{</span><span class="n">_result_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graceful_exit</span><span class="p">()</span>
+            <span class="k">return</span>
+
+        <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Successfully connected to ThingsBoard!&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/rpc/request/+&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes/response/+&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;v2/fw/response/+&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="s2">&quot;sw_title,sw_url,sw_version,FILES&quot;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_sys_info_attribute</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__on_disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_client</span><span class="p">,</span> <span class="n">_userdata</span><span class="p">,</span> <span class="n">result_code</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[MQTT] Disconnected from ThingsBoard with result code: </span><span class="si">{</span><span class="n">result_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graceful_exit</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_client</span><span class="p">,</span> <span class="n">_userdata</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">put</span><span class="p">({</span>
+            <span class="s2">&quot;topic&quot;</span><span class="p">:</span> <span class="n">msg</span><span class="o">.</span><span class="n">topic</span><span class="p">,</span>
+            <span class="s2">&quot;payload&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span>
+        <span class="p">})</span>
+
+<div class="viewcode-block" id="GatewayMqttClient.publish_sw_state">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.publish_sw_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish_sw_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">msg</span> <span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Publish ThingsBoard OTA software state telemetry.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          version: Controller version tag/commit hash reported as current software.</span>
+<span class="sd">          state: OTA state string (e.g. ``DOWNLOADING``, ``UPDATED``).</span>
+<span class="sd">          msg: Optional error message (published as ``sw_error``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">publish_telemetry</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+            <span class="s2">&quot;current_sw_title&quot;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;current_sw_version&quot;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;sw_state&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span>
+            <span class="s2">&quot;sw_error&quot;</span><span class="p">:</span> <span class="n">msg</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="p">}))</span></div>
+
+
+<div class="viewcode-block" id="GatewayMqttClient.publish_telemetry">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.publish_telemetry">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish_telemetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Publish a telemetry payload to ThingsBoard.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          message: JSON-encoded telemetry payload.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the publish succeeded, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/telemetry&quot;</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GatewayMqttClient.publish_message_raw">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.publish_message_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish_message_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Publish a raw MQTT message to a topic.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          topic: MQTT topic.</span>
+<span class="sd">          message: JSON-encoded payload string.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the publish succeeded, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[MQTT] MQTT client is not connected/initialized, cannot publish message &quot;</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s1">&quot; to topic &quot;</span><span class="si">{</span><span class="n">topic</span><span class="si">}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[MQTT] Publishing message: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">topic</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">wait_for_publish</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[MQTT] Failed to publish message &quot;</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s1">&quot; to topic &quot;</span><span class="si">{</span><span class="n">topic</span><span class="si">}</span><span class="s1">&quot;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="GatewayMqttClient.request_attributes">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.request_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">request_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Request shared/client attributes from ThingsBoard.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          request_dict: Request payload as defined by ThingsBoard attributes API.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the request was published successfully, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attribute_request_id</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;v1/devices/me/attributes/request/</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attribute_request_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">request_dict</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="GatewayMqttClient.publish_log">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.publish_log">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">publish_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_level</span><span class="p">,</span> <span class="n">log_message</span><span class="p">,</span> <span class="n">timestamp_ms</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Publish a log record as telemetry.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          log_level: Severity string.</span>
+<span class="sd">          log_message: Log message text. The gateway prefixes the message with</span>
+<span class="sd">            ``GATEWAY -`` followed by a space before publishing.</span>
+<span class="sd">          timestamp_ms: Optional Unix timestamp in milliseconds. If not provided, a</span>
+<span class="sd">            timestamp is generated locally.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the publish succeeded, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">1000</span><span class="p">)</span> <span class="c1"># sleep for 1ms to avoid duplicate timestamps</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">publish_telemetry</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+            <span class="s2">&quot;ts&quot;</span><span class="p">:</span> <span class="n">timestamp_ms</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1000_000</span><span class="p">),</span>
+            <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="n">log_level</span><span class="p">,</span>
+                <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;GATEWAY - &quot;</span> <span class="o">+</span> <span class="n">log_message</span>
+            <span class="p">}</span>
+        <span class="p">}))</span></div>
+
+
+<div class="viewcode-block" id="GatewayMqttClient.update_sys_info_attribute">
+<a class="viewcode-back" href="../../api/communication.html#modules.mqtt.GatewayMqttClient.update_sys_info_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_sys_info_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Publish basic system information as a client attribute.</span>
+
+<span class="sd">        Reads ``/proc/stat`` and publishes its parsed content under the ``sys_info``</span>
+<span class="sd">        attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sys_info_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/proc/stat&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                    <span class="n">sys_info_data</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to read /proc/stat: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+            <span class="s2">&quot;sys_info&quot;</span><span class="p">:</span> <span class="n">sys_info_data</span>
+        <span class="p">}))</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

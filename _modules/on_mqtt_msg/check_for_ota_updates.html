@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>on_mqtt_msg.check_for_ota_updates &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for on_mqtt_msg.check_for_ota_updates</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Handle OTA software update notifications received via MQTT.</span>
+
+<span class="sd">This module processes ThingsBoard OTA-related attribute updates (``sw_title``,</span>
+<span class="sd">``sw_version`` and legacy ``sf_*`` keys) and triggers controller software updates</span>
+<span class="sd">on the Edge Gateway when a new version is available.</span>
+
+<span class="sd">It represents the *decision and orchestration* stage of the OTA workflow:</span>
+<span class="sd">- Detect whether a software update is available.</span>
+<span class="sd">- Compare the requested version against the currently running controller.</span>
+<span class="sd">- Trigger a safe controller restart/update via the Docker client.</span>
+<span class="sd">- Record the last successfully launched controller version.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- The actual Docker image build and container lifecycle are handled by</span>
+<span class="sd">  :class:`modules.docker_client.GatewayDockerClient`.</span>
+<span class="sd">- OTA state reporting (``sw_state``) is published by the Docker client during the</span>
+<span class="sd">  update lifecycle.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">docker_client</span> <span class="k">as</span> <span class="n">dockerc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_maybe</span>
+
+
+<div class="viewcode-block" id="on_msg_check_for_ota_update">
+<a class="viewcode-back" href="../../api/ota.html#on_mqtt_msg.check_for_ota_updates.on_msg_check_for_ota_update">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_msg_check_for_ota_update</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process an incoming OTA update notification.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      msg_payload: MQTT message payload containing OTA-related attributes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      ``True`` if the message was handled as an OTA update notification,</span>
+<span class="sd">      ``False`` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Extract software title and version (supports legacy sf_* keys)</span>
+    <span class="n">sw_title</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;sw_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span> <span class="s2">&quot;sw_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;sf_title&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span> <span class="s2">&quot;sf_title&quot;</span><span class="p">)</span>
+    <span class="n">sw_version</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;sw_version&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span> <span class="s2">&quot;sw_version&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;sf_version&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;shared&quot;</span><span class="p">,</span> <span class="s2">&quot;sf_version&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sw_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">docker_client</span> <span class="o">=</span> <span class="n">dockerc</span><span class="o">.</span><span class="n">GatewayDockerClient</span><span class="p">()</span>
+    <span class="c1"># Compare requested version against the currently running controller</span>
+    <span class="k">if</span> <span class="n">docker_client</span><span class="o">.</span><span class="n">is_controller_running</span><span class="p">():</span>
+        <span class="n">current_version</span> <span class="o">=</span> <span class="n">docker_client</span><span class="o">.</span><span class="n">get_controller_version</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">current_version</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">current_version</span> <span class="o">!=</span> <span class="n">sw_version</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Software update available: &quot;</span> <span class="o">+</span> <span class="p">(</span><span class="n">sw_title</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; from &quot;</span> <span class="o">+</span> <span class="p">(</span>
+                        <span class="n">current_version</span> <span class="ow">or</span> <span class="s2">&quot;UNKNOWN&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; to &quot;</span> <span class="o">+</span> <span class="n">sw_version</span><span class="p">)</span>
+            <span class="c1"># Trigger controller update or launch via Docker client</span>
+            <span class="n">docker_client</span><span class="o">.</span><span class="n">start_controller_safely</span><span class="p">(</span><span class="n">sw_version</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Software is up to date (version &#39;&quot;</span> <span class="o">+</span> <span class="n">current_version</span> <span class="o">+</span> <span class="s2">&quot;&#39;)&quot;</span><span class="p">)</span>
+            <span class="n">docker_client</span><span class="o">.</span><span class="n">set_last_launched_controller_version</span><span class="p">(</span><span class="n">current_version</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Launching latest edge-software: &quot;</span> <span class="o">+</span> <span class="n">sw_version</span> <span class="o">+</span> <span class="s2">&quot; (&quot;</span> <span class="o">+</span> <span class="p">(</span><span class="n">sw_title</span> <span class="ow">or</span> <span class="s2">&quot;?&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span><span class="p">)</span>
+        <span class="c1"># Trigger controller update or launch via Docker client</span>
+        <span class="n">docker_client</span><span class="o">.</span><span class="n">start_controller_safely</span><span class="p">(</span><span class="n">sw_version</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

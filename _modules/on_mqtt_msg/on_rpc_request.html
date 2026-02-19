@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>on_mqtt_msg.on_rpc_request &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for on_mqtt_msg.on_rpc_request</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Handle ThingsBoard RPC requests for the Edge Gateway.</span>
+
+<span class="sd">This module implements the Edge Gateway&#39;s server-side handling of ThingsBoard</span>
+<span class="sd">Remote Procedure Calls (RPC). Incoming RPC requests are dispatched to a curated</span>
+<span class="sd">set of supported methods and a response is sent back on the corresponding</span>
+<span class="sd">ThingsBoard RPC response topic.</span>
+
+<span class="sd">The RPC interface is intended for operational control, diagnostics, and</span>
+<span class="sd">maintenance tasks, such as rebooting the device, restarting the controller,</span>
+<span class="sd">initializing remote file management attributes, or republishing archived</span>
+<span class="sd">telemetry.</span>
+
+<span class="sd">Security notes</span>
+<span class="sd">--------------</span>
+<span class="sd">Some RPC methods (notably ``run_command``) can execute arbitrary commands on the</span>
+<span class="sd">host system. Access to such methods must be restricted using ThingsBoard</span>
+<span class="sd">permissions and dashboard access control.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">queue</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">signal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">sleep</span><span class="p">,</span> <span class="n">monotonic</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">utils.paths</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules</span><span class="w"> </span><span class="kn">import</span> <span class="n">sqlite</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.docker_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayDockerClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.file_writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayFileWriter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.mqtt</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayMqttClient</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">info</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">debug</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">on_mqtt_msg.check_for_file_hashes_update</span><span class="w"> </span><span class="kn">import</span> <span class="n">FILE_HASHES_TB_KEY</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">utils.controller_restart</span>
+
+<div class="viewcode-block" id="rpc_reboot">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_reboot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_reboot</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reboot the Edge Gateway host system.</span>
+
+<span class="sd">    Sends an RPC response immediately and triggers a system reboot shortly after.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[RPC] Rebooting...&quot;</span><span class="p">)</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;OK - Rebooting&quot;</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;reboot&quot;</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rpc_shutdown">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_shutdown">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_shutdown</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shut down (power off) the Edge Gateway host system.&quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[RPC] Shutting down...&quot;</span><span class="p">)</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;OK - Shutting down&quot;</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;shutdown now&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rpc_exit">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_exit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_exit</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Terminate the gateway process to trigger a supervised restart.&quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[RPC] Exiting...&quot;</span><span class="p">)</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;OK - Exiting&quot;</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">raise_signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGTERM</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rpc_restart_controller">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_restart_controller">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_restart_controller</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Restart the controller container without rebooting the host.&quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[RPC] Restarting controller...&quot;</span><span class="p">)</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;OK - Restarting Controller&quot;</span><span class="p">)</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">GatewayDockerClient</span><span class="p">()</span><span class="o">.</span><span class="n">stop_controller</span><span class="p">()</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">controller_restart</span><span class="o">.</span><span class="n">last_container_restart_ts</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># restart the container immediately</span></div>
+
+
+<div class="viewcode-block" id="rpc_ping">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_ping">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_ping</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Health check RPC that returns a static &#39;Pong&#39; response.&quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[RPC] Pong&quot;</span><span class="p">)</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Pong&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rpc_init_files">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_init_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_init_files</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize client attributes required for remote file management.</span>
+
+<span class="sd">    This creates an empty ``FILE_HASHES`` client attribute and requests the</span>
+<span class="sd">    ``FILES`` shared attribute to re-run definition validation and synchronization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;[RPC] Init files&quot;</span><span class="p">)</span>
+
+    <span class="c1"># setup file hashes client attribute</span>
+    <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+        <span class="n">FILE_HASHES_TB_KEY</span><span class="p">:</span> <span class="p">{}</span>
+    <span class="p">}))</span>
+    <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">set_tb_hashes</span><span class="p">({})</span>
+
+    <span class="c1"># request file definitions again to verify everything is correct</span>
+    <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;FILES&quot;</span><span class="p">})</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Files client attributes initialized&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rpc_run_command">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_run_command">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_run_command</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a command on the Edge Gateway host.</span>
+
+<span class="sd">    This method executes an arbitrary command and returns its combined stdout/stderr</span>
+<span class="sd">    output. The command is killed if it exceeds the provided timeout.</span>
+
+<span class="sd">    Parameters are validated strictly. This method is powerful and must be</span>
+<span class="sd">    protected via ThingsBoard access control.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Read command parameters</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Running command failed: params is not a dictionary&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;command&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Running command failed: missing &#39;command&#39; in params&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;command&quot;</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">str</span> <span class="k">for</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;command&quot;</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Running command failed: &#39;command&#39; must be a list of strings&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;timeout_s&quot;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;timeout_s&quot;</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Running command failed: &#39;timeout_s&#39; must be an integer&quot;</span><span class="p">)</span>
+    <span class="n">timeout_s</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;timeout_s&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;timeout_s&quot;</span> <span class="ow">in</span> <span class="n">params</span> <span class="k">else</span> <span class="mi">30</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;command&quot;</span><span class="p">]</span>
+
+    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[RPC] Running command: [&#39;</span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">&#39;]&quot;</span><span class="p">)</span>
+    <span class="c1"># Helpers to stream subprocess output without blocking the gateway loop</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_stream_to_queue</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">out_q</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Continuously read lines from `stream` and put them on a queue.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">stream</span><span class="p">:</span>  <span class="c1"># closes the pipe on exit</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">stream</span><span class="o">.</span><span class="n">readline</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>   <span class="c1"># &#39;&#39; ⇒ EOF in text mode</span>
+                <span class="n">out_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_lines_from_queue</span><span class="p">(</span><span class="n">line_queue</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">collected_lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+             <span class="k">try</span><span class="p">:</span>
+                 <span class="n">line</span> <span class="o">=</span> <span class="n">line_queue</span><span class="o">.</span><span class="n">get_nowait</span><span class="p">()</span>
+             <span class="k">except</span> <span class="n">queue</span><span class="o">.</span><span class="n">Empty</span><span class="p">:</span>
+                 <span class="k">break</span>
+             <span class="n">collected_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">collected_lines</span>
+
+    <span class="c1"># Spawn subprocess and capture combined stdout/stderr as text</span>
+    <span class="n">start_timestamp</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+    <span class="n">sub_process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+        <span class="n">command</span><span class="p">,</span>
+        <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+        <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">,</span>  <span class="c1"># merge stderr → stdout</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># get str, not bytes</span>
+        <span class="n">bufsize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># line‑buffered</span>
+        <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf‑8&#39;</span><span class="p">,</span> <span class="c1"># decode stdout to string via utf-8</span>
+        <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;replace&#39;</span> <span class="c1"># replace invalid characters with placeholder char during utf-8 decoding</span>
+    <span class="p">)</span>
+
+    <span class="n">stdout_line_queue</span><span class="p">:</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+    <span class="n">pipe_reading_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">read_stream_to_queue</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">sub_process</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">stdout_line_queue</span><span class="p">),</span>
+                                           <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pipe_reading_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="n">output_lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">sub_process</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Drain any lines that are already waiting</span>
+            <span class="n">output_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">read_lines_from_queue</span><span class="p">(</span><span class="n">stdout_line_queue</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_timestamp</span> <span class="o">&gt;=</span> <span class="n">timeout_s</span><span class="p">:</span>
+                <span class="n">sub_process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+                <span class="n">sub_process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>  <span class="c1"># ensure process has ended</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Error running command &#39;</span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">&#39;: Timeout after </span><span class="si">{</span><span class="n">timeout_s</span><span class="si">}</span><span class="s2"> seconds. Output: </span><span class="si">{</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_lines</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+            <span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>  <span class="c1"># small sleep: reduce CPU without blocking</span>
+        <span class="n">sub_process</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c1"># If we exit early (timeout or exception) make sure the reader thread ends</span>
+        <span class="n">pipe_reading_thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># read any remaining lines from the queue</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">stdout_line_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+        <span class="n">output_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">read_lines_from_queue</span><span class="p">(</span><span class="n">stdout_line_queue</span><span class="p">))</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Command &#39;</span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">&#39; exited with code </span><span class="si">{</span><span class="n">sub_process</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">. Output: </span><span class="si">{</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_lines</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;OK - Command executed - </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="verify_start_end_timestamp_params">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.verify_start_end_timestamp_params">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_start_end_timestamp_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate timestamp range parameters for archive operations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      params: RPC params dictionary expected to contain ``start_timestamp_ms`` and</span>
+<span class="sd">        ``end_timestamp_ms`` as integers.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      An error string if invalid, otherwise ``None``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;params is not a dictionary&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;start_timestamp_ms&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">or</span> <span class="s2">&quot;end_timestamp_ms&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;missing &#39;start_timestamp_ms&#39; or &#39;end_timestamp_ms&#39; in params&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;start_timestamp_ms&quot;</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;end_timestamp_ms&quot;</span><span class="p">])</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&#39;start_timestamp_ms&#39; and &#39;end_timestamp_ms&#39; must be integers&quot;</span>
+    <span class="n">start_timestamp_ms</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;start_timestamp_ms&quot;</span><span class="p">]</span>
+    <span class="n">end_timestamp_ms</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;end_timestamp_ms&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">start_timestamp_ms</span> <span class="o">&gt;=</span> <span class="n">end_timestamp_ms</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&#39;start_timestamp_ms&#39; must be less than &#39;end_timestamp_ms&#39;&quot;</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="rpc_archive_republish_messages">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_archive_republish_messages">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_archive_republish_messages</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Republish archived telemetry messages within a time range.&quot;&quot;&quot;</span>
+    <span class="n">params_verify_err</span> <span class="o">=</span> <span class="n">verify_start_end_timestamp_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">params_verify_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Republishing archived messages failed: </span><span class="si">{</span><span class="n">params_verify_err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">start_timestamp_ms</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;start_timestamp_ms&quot;</span><span class="p">]</span>
+    <span class="n">end_timestamp_ms</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;end_timestamp_ms&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">start_timestamp_ms</span> <span class="o">&lt;=</span> <span class="mi">1735719469_000</span> <span class="ow">or</span> <span class="n">end_timestamp_ms</span> <span class="o">&gt;=</span> <span class="mi">2524637869_000</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Republishing archived messages failed: &#39;start_timestamp_ms&#39; and &#39;end_timestamp_ms&#39; must be within the range of 1735719469_000 and 2524637869_000&quot;</span><span class="p">)</span>
+
+    <span class="n">archive_sqlite_db</span> <span class="o">=</span> <span class="n">sqlite</span><span class="o">.</span><span class="n">SqliteConnection</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">GATEWAY_ARCHIVE_DB_PATH</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">archive_sqlite_db</span><span class="o">.</span><span class="n">db_unavailable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Republishing archived messages failed: archive database unavailable&quot;</span><span class="p">)</span>
+
+    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[RPC] Republishing messages - </span><span class="si">{</span><span class="n">start_timestamp_ms</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">end_timestamp_ms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">message_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">start_timestamp_ms</span> <span class="o">&lt;</span> <span class="n">end_timestamp_ms</span><span class="p">:</span>
+        <span class="n">messages</span> <span class="o">=</span> <span class="n">archive_sqlite_db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT id, timestamp_ms, message </span>
+<span class="s2">            FROM controller_archive </span>
+<span class="s2">            WHERE timestamp_ms &gt; ? AND timestamp_ms &lt; ? </span>
+<span class="s2">            ORDER BY timestamp_ms ASC LIMIT 200&quot;&quot;&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">start_timestamp_ms</span><span class="p">,</span> <span class="n">end_timestamp_ms</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+            <span class="n">message_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Republishing message with timestamp </span><span class="si">{</span><span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_telemetry</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;ts&quot;</span><span class="p">:</span> <span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="mi">2</span><span class="p">])}))</span>
+            <span class="n">start_timestamp_ms</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="n">archive_sqlite_db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;OK - </span><span class="si">{</span><span class="n">message_count</span><span class="si">}</span><span class="s2"> messages republished - </span><span class="si">{</span><span class="n">start_timestamp_ms</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">end_timestamp_ms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="rpc_archive_discard_messages">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_archive_discard_messages">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rpc_archive_discard_messages</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">_method</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Discard (delete) archived telemetry messages within a time range.&quot;&quot;&quot;</span>
+    <span class="n">params_verify_err</span> <span class="o">=</span> <span class="n">verify_start_end_timestamp_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">params_verify_err</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Discarding archived messages failed: </span><span class="si">{</span><span class="n">params_verify_err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">start_timestamp_ms</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;start_timestamp_ms&quot;</span><span class="p">]</span>
+    <span class="n">end_timestamp_ms</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;end_timestamp_ms&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">end_timestamp_ms</span> <span class="o">&gt;=</span> <span class="mi">2524637869_000</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Discarding archived messages failed: &#39;end_timestamp_ms&#39; must be &lt; 2524637869_000&quot;</span><span class="p">)</span>
+
+    <span class="n">archive_sqlite_db</span> <span class="o">=</span> <span class="n">sqlite</span><span class="o">.</span><span class="n">SqliteConnection</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">paths</span><span class="o">.</span><span class="n">GATEWAY_ARCHIVE_DB_PATH</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">archive_sqlite_db</span><span class="o">.</span><span class="n">db_unavailable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="s2">&quot;Discarding archived messages failed: archive database unavailable&quot;</span><span class="p">)</span>
+
+    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[RPC] Discarding archived messages - </span><span class="si">{</span><span class="n">start_timestamp_ms</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">end_timestamp_ms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">message_count</span> <span class="o">=</span> <span class="n">archive_sqlite_db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM controller_archive WHERE timestamp_ms &gt; ? AND timestamp_ms &lt; ?&quot;</span><span class="p">,</span>
+                                              <span class="p">(</span><span class="n">start_timestamp_ms</span><span class="p">,</span> <span class="n">end_timestamp_ms</span><span class="p">))</span>
+    <span class="n">archive_sqlite_db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;OK - </span><span class="si">{</span><span class="n">message_count</span><span class="si">}</span><span class="s2"> messages discarded - </span><span class="si">{</span><span class="n">start_timestamp_ms</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">end_timestamp_ms</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<span class="c1"># Registry of supported RPC methods. Used by the ``list`` command and dispatcher.</span>
+<span class="n">RPC_METHODS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;reboot&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Reboot the device&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_reboot</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;shutdown&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Shutdown the device&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_shutdown</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;exit&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Exits the gateway process (triggers gateway restart)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_exit</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;ping&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Ping the device (returns &#39;pong&#39; reply)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_ping</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;init_files&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Initialize file-related client attributes (FILE_HASHES, FILE_READ_*)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_init_files</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;restart_controller&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Restart the controller docker container&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_restart_controller</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;run_command&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Run arbitrary command ({command: list [str], timeout_s: int [default 30s]}) - use with caution!&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_run_command</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;archive_republish_messages&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Republish messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_archive_republish_messages</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;archive_discard_messages&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Discard messages from archive ({start_timestamp_ms: int, end_timestamp_ms: int})&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec&quot;</span><span class="p">:</span> <span class="n">rpc_archive_discard_messages</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="on_rpc_request">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.on_rpc_request">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_rpc_request</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dispatch an incoming RPC request.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      rpc_msg_id: ThingsBoard RPC request identifier.</span>
+<span class="sd">      method: RPC method name.</span>
+<span class="sd">      params: RPC params payload (type depends on method).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RPC request: </span><span class="si">{</span><span class="n">rpc_msg_id</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">params</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">RPC_METHODS</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">RPC_METHODS</span><span class="p">[</span><span class="n">method</span><span class="p">][</span><span class="s2">&quot;exec&quot;</span><span class="p">](</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="c1"># type: ignore[operator]</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error executing RPC method &#39;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_log</span><span class="p">(</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Error executing RPC method &#39;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Error executing RPC method &#39;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;list&quot;</span><span class="p">:</span>
+        <span class="n">help_text</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Available RPC methods:&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">method_name</span><span class="p">,</span> <span class="n">method_data</span> <span class="ow">in</span> <span class="n">RPC_METHODS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">help_text</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">method_data</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="n">help_text</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown RPC method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_log</span><span class="p">(</span><span class="s2">&quot;ERROR&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unknown RPC method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unknown RPC method: &#39;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&#39; - use command &#39;list&#39; to get a list of available methods&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="send_rpc_response">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.send_rpc_response">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Send an RPC response&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span>
+        <span class="s2">&quot;v1/devices/me/rpc/response/&quot;</span> <span class="o">+</span> <span class="n">rpc_msg_id</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="n">response</span><span class="p">})</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="send_rpc_method_error">
+<a class="viewcode-back" href="../../api/rpc.html#on_mqtt_msg.on_rpc_request.send_rpc_method_error">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">send_rpc_method_error</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">msg</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Send a standardized error response for an RPC method.&quot;&quot;&quot;</span>
+    <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[RPC] </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">send_rpc_response</span><span class="p">(</span><span class="n">rpc_msg_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Error - </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

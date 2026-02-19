@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>on_mqtt_msg.check_for_file_hashes_update &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for on_mqtt_msg.check_for_file_hashes_update</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Handle remote file hash synchronization updates received via MQTT.</span>
+
+<span class="sd">This module processes ThingsBoard client attribute updates for ``FILE_HASHES`` and</span>
+<span class="sd">implements the *synchronization* side of the Remote File Management workflow.</span>
+
+<span class="sd">Responsibilities</span>
+<span class="sd">----------------</span>
+<span class="sd">- Compare local file hashes with hashes reported by ThingsBoard.</span>
+<span class="sd">- Detect missing, modified, or outdated files on the Edge Gateway.</span>
+<span class="sd">- Request file content updates via ``FILE_CONTENT_&lt;file_key&gt;`` when required.</span>
+<span class="sd">- Mirror local file state back to ThingsBoard using ``FILE_READ_&lt;file_key&gt;``.</span>
+<span class="sd">- Publish updated ``FILE_HASHES`` client attributes after reconciliation.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- File metadata (paths, encodings, write versions) is defined via the ``FILES``</span>
+<span class="sd">  shared attribute.</span>
+<span class="sd">- This module complements</span>
+<span class="sd">  ``on_mqtt_msg.check_for_file_content_update``, which applies incoming file</span>
+<span class="sd">  content updates.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">info</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">warn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.file_writer</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayFileWriter</span><span class="p">,</span> <span class="n">write_file_content_to_client_attribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">utils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.mqtt</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayMqttClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_maybe</span>
+
+<span class="sd">&quot;&quot;&quot;Client attribute key used to exchange file hash metadata with ThingsBoard.&quot;&quot;&quot;</span>
+<span class="n">FILE_HASHES_TB_KEY</span> <span class="o">=</span> <span class="s2">&quot;FILE_HASHES&quot;</span>
+<div class="viewcode-block" id="on_msg_check_for_file_hashes_update">
+<a class="viewcode-back" href="../../api/remote_file_management.html#on_mqtt_msg.check_for_file_hashes_update.on_msg_check_for_file_hashes_update">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_msg_check_for_file_hashes_update</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Process an incoming file hash synchronization message.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      msg_payload: MQTT message payload containing client attributes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      ``True`` if the message was handled as a file hash update,</span>
+<span class="sd">      ``False`` otherwise.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Extract FILE_HASHES client attribute from the incoming payload</span>
+    <span class="n">file_hashes</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">get_maybe</span><span class="p">(</span><span class="n">msg_payload</span><span class="p">,</span> <span class="s2">&quot;client&quot;</span><span class="p">,</span> <span class="n">FILE_HASHES_TB_KEY</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">file_hashes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">error</span><span class="p">(</span><span class="s2">&quot;Invalid file hashes update received&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">info</span><span class="p">(</span><span class="s2">&quot;File hashes definitions received.&quot;</span><span class="p">)</span>
+
+    <span class="n">file_defs</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">get_files</span><span class="p">()</span>
+    <span class="n">new_hashes</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Remove hashes for files that are no longer defined</span>
+    <span class="k">for</span> <span class="n">file_id</span> <span class="ow">in</span> <span class="n">file_hashes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">file_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_defs</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> is no longer defined, removing from client attributes&quot;</span><span class="p">)</span>
+            <span class="n">write_file_content_to_client_attribute</span><span class="p">(</span><span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Reconcile local files against reported hashes and write versions</span>
+    <span class="k">for</span> <span class="n">file_id</span> <span class="ow">in</span> <span class="n">file_defs</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">expand_file_path</span><span class="p">(</span><span class="n">get_maybe</span><span class="p">(</span><span class="n">file_defs</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File definition for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2"> has no path, skipping&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">file_encoding</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_defs</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;encoding&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;text&quot;</span>
+        <span class="n">previous_file_hash</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;hash&quot;</span><span class="p">)</span>
+        <span class="n">current_file_hash</span> <span class="o">=</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">calc_file_hash</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="n">new_hashes</span><span class="p">[</span><span class="n">file_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;hash&quot;</span><span class="p">:</span> <span class="n">current_file_hash</span><span class="p">,</span>
+            <span class="s2">&quot;write_version&quot;</span><span class="p">:</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_defs</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;write_version&quot;</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># check if the file exists and if it doesn&#39;t, if it should be created</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_defs</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;create_if_not_exist&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">]:</span>
+                <span class="c1"># if the file does not exist and should be created, request its content</span>
+                <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> does not exist, requesting content update for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;FILE_CONTENT_&quot;</span> <span class="o">+</span> <span class="n">file_id</span><span class="p">})</span>
+            <span class="k">if</span> <span class="n">current_file_hash</span> <span class="o">!=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;hash&quot;</span><span class="p">):</span>
+                <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> no longer exists. Updating attributes for id &#39;</span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+                <span class="n">write_file_content_to_client_attribute</span><span class="p">(</span><span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;E_NOFILE&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if the file exists, check its hash</span>
+            <span class="k">if</span> <span class="n">previous_file_hash</span> <span class="o">!=</span> <span class="n">current_file_hash</span><span class="p">:</span>
+                <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> has changed, updating id &#39;</span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+                <span class="n">write_file_content_to_client_attribute</span><span class="p">(</span><span class="n">file_id</span><span class="p">,</span> <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">file_encoding</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;E_EMPTYFILE&quot;</span><span class="p">)</span>
+
+                <span class="c1"># request which (if) content should be written to it</span>
+                <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Requesting file content update for &#39;</span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+                <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;FILE_CONTENT_&quot;</span> <span class="o">+</span> <span class="n">file_id</span><span class="p">})</span>
+            <span class="k">elif</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_defs</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;write_version&quot;</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]:</span>
+                <span class="c1"># hash unchanged - check if write version has changed</span>
+                <span class="n">write_version_changed</span> <span class="o">=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_defs</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;write_version&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">get_maybe</span><span class="p">(</span><span class="n">file_hashes</span><span class="p">,</span> <span class="n">file_id</span><span class="p">,</span> <span class="s2">&quot;write_version&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">write_version_changed</span><span class="p">:</span>
+                    <span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2"> write version changed, requesting content update for </span><span class="si">{</span><span class="n">file_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;FILE_CONTENT_&quot;</span> <span class="o">+</span> <span class="n">file_id</span><span class="p">})</span>
+
+    <span class="c1"># Publish updated file hash state back to ThingsBoard</span>
+    <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span>
+        <span class="n">FILE_HASHES_TB_KEY</span><span class="p">:</span> <span class="n">new_hashes</span>
+    <span class="p">}))</span>
+    <span class="n">GatewayFileWriter</span><span class="p">()</span><span class="o">.</span><span class="n">set_tb_hashes</span><span class="p">(</span><span class="n">new_hashes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

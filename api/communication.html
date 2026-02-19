@@ -89,8 +89,189 @@
 <h1>MQTT Communication<a class="headerlink" href="#mqtt-communication" title="Link to this heading">¶</a></h1>
 <p>This section covers all communication with ThingsBoard via MQTT, including
 telemetry, attributes, and inbound message routing.</p>
-<section id="mqtt-client">
-<h2>MQTT Client<a class="headerlink" href="#mqtt-client" title="Link to this heading">¶</a></h2>
+<section id="module-modules.mqtt">
+<span id="mqtt-client"></span><h2>MQTT Client<a class="headerlink" href="#module-modules.mqtt" title="Link to this heading">¶</a></h2>
+<p>MQTT client for ThingsBoard communication.</p>
+<p>This module implements <a class="reference internal" href="#modules.mqtt.GatewayMqttClient" title="modules.mqtt.GatewayMqttClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">GatewayMqttClient</span></code></a>, a thin wrapper
+around the Paho MQTT client used by the Edge Gateway to communicate with
+ThingsBoard.</p>
+<p>The client is responsible for:
+- Establishing a TLS-secured MQTT connection using a ThingsBoard access token.
+- Subscribing to RPC, attribute, and OTA update topics.
+- Publishing telemetry and attributes (including OTA software state <code class="docutils literal notranslate"><span class="pre">sw_state</span></code>).
+- Providing a thread-safe inbound message queue for the gateway main loop.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The client follows a singleton pattern to avoid multiple concurrent MQTT clients
+in the gateway process.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">init()</span></code> method configures callbacks and resets internal state; it is not
+the same as object construction.</p></li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">modules.mqtt.</span></span><span class="sig-name descname"><span class="pre">GatewayMqttClient</span></span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></p>
+<p>MQTT client used by the Edge Gateway to communicate with ThingsBoard.</p>
+<p>The client subscribes to RPC requests, shared/client attributes, and OTA update
+topics and exposes helper methods to publish telemetry, attributes, and software
+update state.</p>
+<p>Incoming MQTT messages are placed into <a class="reference internal" href="#modules.mqtt.GatewayMqttClient.message_queue" title="modules.mqtt.GatewayMqttClient.message_queue"><code class="xref py py-attr docutils literal notranslate"><span class="pre">message_queue</span></code></a> as dictionaries with
+<code class="docutils literal notranslate"><span class="pre">topic</span></code> and parsed JSON <code class="docutils literal notranslate"><span class="pre">payload</span></code> fields.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.attribute_request_id">
+<span class="sig-name descname"><span class="pre">attribute_request_id</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.attribute_request_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.connected">
+<span class="sig-name descname"><span class="pre">connected</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.connected" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.graceful_exit">
+<span class="sig-name descname"><span class="pre">graceful_exit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.graceful_exit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.graceful_exit" title="Link to this definition">¶</a></dt>
+<dd><p>Disconnect and stop the MQTT network loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">access_token</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.init" title="Link to this definition">¶</a></dt>
+<dd><p>Configure the MQTT client for ThingsBoard access.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>access_token</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – ThingsBoard device access token.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The configured client instance (self).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.initialized">
+<span class="sig-name descname"><span class="pre">initialized</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></span><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.initialized" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.message_queue">
+<span class="sig-name descname"><span class="pre">message_queue</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Queue</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;queue.Queue</span> <span class="pre">object&gt;</span></span><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.message_queue" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.publish_log">
+<span class="sig-name descname"><span class="pre">publish_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp_ms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.publish_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.publish_log" title="Link to this definition">¶</a></dt>
+<dd><p>Publish a log record as telemetry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_level</strong> – Severity string.</p></li>
+<li><p><strong>log_message</strong> – Log message text. The gateway prefixes the message with
+<code class="docutils literal notranslate"><span class="pre">GATEWAY</span> <span class="pre">-</span></code> followed by a space before publishing.</p></li>
+<li><p><strong>timestamp_ms</strong> – Optional Unix timestamp in milliseconds. If not provided, a
+timestamp is generated locally.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the publish succeeded, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.publish_message_raw">
+<span class="sig-name descname"><span class="pre">publish_message_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.publish_message_raw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.publish_message_raw" title="Link to this definition">¶</a></dt>
+<dd><p>Publish a raw MQTT message to a topic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topic</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – MQTT topic.</p></li>
+<li><p><strong>message</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – JSON-encoded payload string.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the publish succeeded, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.publish_sw_state">
+<span class="sig-name descname"><span class="pre">publish_sw_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.publish_sw_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.publish_sw_state" title="Link to this definition">¶</a></dt>
+<dd><p>Publish ThingsBoard OTA software state telemetry.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>version</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Controller version tag/commit hash reported as current software.</p></li>
+<li><p><strong>state</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – OTA state string (e.g. <code class="docutils literal notranslate"><span class="pre">DOWNLOADING</span></code>, <code class="docutils literal notranslate"><span class="pre">UPDATED</span></code>).</p></li>
+<li><p><strong>msg</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span>) – Optional error message (published as <code class="docutils literal notranslate"><span class="pre">sw_error</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.publish_telemetry">
+<span class="sig-name descname"><span class="pre">publish_telemetry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.publish_telemetry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.publish_telemetry" title="Link to this definition">¶</a></dt>
+<dd><p>Publish a telemetry payload to ThingsBoard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>message</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – JSON-encoded telemetry payload.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the publish succeeded, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.request_attributes">
+<span class="sig-name descname"><span class="pre">request_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.request_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.request_attributes" title="Link to this definition">¶</a></dt>
+<dd><p>Request shared/client attributes from ThingsBoard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request_dict</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span>) – Request payload as defined by ThingsBoard attributes API.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the request was published successfully, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.mqtt.GatewayMqttClient.update_sys_info_attribute">
+<span class="sig-name descname"><span class="pre">update_sys_info_attribute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/mqtt.html#GatewayMqttClient.update_sys_info_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.mqtt.GatewayMqttClient.update_sys_info_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Publish basic system information as a client attribute.</p>
+<p>Reads <code class="docutils literal notranslate"><span class="pre">/proc/stat</span></code> and publishes its parsed content under the <code class="docutils literal notranslate"><span class="pre">sys_info</span></code>
+attribute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="message-handlers">
 <h2>Message Handlers<a class="headerlink" href="#message-handlers" title="Link to this heading">¶</a></h2>
@@ -98,15 +279,161 @@ telemetry, attributes, and inbound message routing.</p>
 appropriate subsystems.</p>
 <section id="file-definition-update">
 <h3>File Definition Update<a class="headerlink" href="#file-definition-update" title="Link to this heading">¶</a></h3>
+<p>Handle remote file definition updates received via MQTT.</p>
+<p>This module processes ThingsBoard shared attribute updates of the <code class="docutils literal notranslate"><span class="pre">FILES</span></code> object
+and validates the remote file definitions used by the Edge Gateway for <em>Remote
+File Management</em>.</p>
+<section id="responsibilities">
+<h4>Responsibilities<a class="headerlink" href="#responsibilities" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Parse and validate incoming <code class="docutils literal notranslate"><span class="pre">FILES</span></code> definitions.</p></li>
+<li><p>Verify required properties such as file paths and encodings.</p></li>
+<li><p>Reject invalid or unsupported file definitions early.</p></li>
+<li><p>Update the active file definitions in <code class="xref py py-class docutils literal notranslate"><span class="pre">GatewayFileWriter</span></code>.</p></li>
+<li><p>Trigger a file hash synchronization request (<code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code>).</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>File content updates and hash reconciliation are handled by
+<code class="docutils literal notranslate"><span class="pre">check_for_file_content_update</span></code> and
+<code class="docutils literal notranslate"><span class="pre">check_for_file_hashes_update</span></code> respectively.</p></li>
+<li><p>This module performs validation only; it does not apply file contents.</p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.check_for_files_definition_update.</span></span><span class="sig-name descname"><span class="pre">on_msg_check_for_files_definition_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg_payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/check_for_files_definition_update.html#on_msg_check_for_files_definition_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Process an incoming file definition update message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg_payload</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – MQTT message payload containing shared attributes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the message was handled as a file definition update,
+<code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="file-hashes-update">
 <h3>File Hashes Update<a class="headerlink" href="#file-hashes-update" title="Link to this heading">¶</a></h3>
+<p>Handle remote file hash synchronization updates received via MQTT.</p>
+<p>This module processes ThingsBoard client attribute updates for <code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code> and
+implements the <em>synchronization</em> side of the Remote File Management workflow.</p>
+<section id="id1">
+<h4>Responsibilities<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p>Compare local file hashes with hashes reported by ThingsBoard.</p></li>
+<li><p>Detect missing, modified, or outdated files on the Edge Gateway.</p></li>
+<li><p>Request file content updates via <code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_&lt;file_key&gt;</span></code> when required.</p></li>
+<li><p>Mirror local file state back to ThingsBoard using <code class="docutils literal notranslate"><span class="pre">FILE_READ_&lt;file_key&gt;</span></code>.</p></li>
+<li><p>Publish updated <code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code> client attributes after reconciliation.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>File metadata (paths, encodings, write versions) is defined via the <code class="docutils literal notranslate"><span class="pre">FILES</span></code>
+shared attribute.</p></li>
+<li><p>This module complements
+<code class="docutils literal notranslate"><span class="pre">on_mqtt_msg.check_for_file_content_update</span></code>, which applies incoming file
+content updates.</p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.check_for_file_hashes_update.</span></span><span class="sig-name descname"><span class="pre">on_msg_check_for_file_hashes_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg_payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/check_for_file_hashes_update.html#on_msg_check_for_file_hashes_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Process an incoming file hash synchronization message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg_payload</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – MQTT message payload containing client attributes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the message was handled as a file hash update,
+<code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="file-content-update">
 <h3>File Content Update<a class="headerlink" href="#file-content-update" title="Link to this heading">¶</a></h3>
+<p>Handle remote file content updates received via MQTT.</p>
+<p>This module processes ThingsBoard shared attribute updates of the form
+<code class="docutils literal notranslate"><span class="pre">FILE_CONTENT_&lt;file_key&gt;</span></code> and applies the corresponding file changes on the
+Edge Gateway filesystem.</p>
+<p>It implements the <em>apply</em> side of the Remote File Management workflow:
+- Decode incoming file content according to its declared encoding.
+- Write updated file contents to disk.
+- Recalculate and publish file hashes (<code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code>).
+- Mirror updated file contents back via <code class="docutils literal notranslate"><span class="pre">FILE_READ_&lt;file_key&gt;</span></code> attributes.
+- Optionally trigger a controller restart if required by the file definition.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>File metadata (paths, encodings, flags) is defined in the <code class="docutils literal notranslate"><span class="pre">FILES</span></code> shared attribute.</p></li>
+<li><p>Hash synchronization logic is coordinated with
+<code class="docutils literal notranslate"><span class="pre">on_mqtt_msg.check_for_file_hashes_update</span></code>.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.check_for_file_content_update.</span></span><span class="sig-name descname"><span class="pre">on_msg_check_for_file_content_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg_payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/check_for_file_content_update.html#on_msg_check_for_file_content_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Process an incoming file content update message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg_payload</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – MQTT message payload containing shared attributes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the message was handled (even if no update was applied),
+<code class="docutils literal notranslate"><span class="pre">False</span></code> if the message is not related to file content updates.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="ota-update-check">
 <h3>OTA Update Check<a class="headerlink" href="#ota-update-check" title="Link to this heading">¶</a></h3>
+<p>Handle OTA software update notifications received via MQTT.</p>
+<p>This module processes ThingsBoard OTA-related attribute updates (<code class="docutils literal notranslate"><span class="pre">sw_title</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sw_version</span></code> and legacy <code class="docutils literal notranslate"><span class="pre">sf_*</span></code> keys) and triggers controller software updates
+on the Edge Gateway when a new version is available.</p>
+<p>It represents the <em>decision and orchestration</em> stage of the OTA workflow:
+- Detect whether a software update is available.
+- Compare the requested version against the currently running controller.
+- Trigger a safe controller restart/update via the Docker client.
+- Record the last successfully launched controller version.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The actual Docker image build and container lifecycle are handled by
+<code class="xref py py-class docutils literal notranslate"><span class="pre">modules.docker_client.GatewayDockerClient</span></code>.</p></li>
+<li><p>OTA state reporting (<code class="docutils literal notranslate"><span class="pre">sw_state</span></code>) is published by the Docker client during the
+update lifecycle.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.check_for_ota_updates.</span></span><span class="sig-name descname"><span class="pre">on_msg_check_for_ota_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg_payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/check_for_ota_updates.html#on_msg_check_for_ota_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Process an incoming OTA update notification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg_payload</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span>) – MQTT message payload containing OTA-related attributes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the message was handled as an OTA update notification,
+<code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 </section>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>modules.file_writer &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for modules.file_writer</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Remote file read/write utilities for the Edge Gateway.</span>
+
+<span class="sd">This module implements the client-side logic required for the *Remote File</span>
+<span class="sd">Management* feature. It is responsible for reading local files, computing file</span>
+<span class="sd">hashes, detecting changes, and synchronizing file contents and metadata with</span>
+<span class="sd">ThingsBoard via client attributes.</span>
+
+<span class="sd">The :class:`GatewayFileWriter` acts as a singleton and maintains in-memory state</span>
+<span class="sd">about managed files and their last known hashes to enable efficient change</span>
+<span class="sd">detection.</span>
+
+<span class="sd">Responsibilities</span>
+<span class="sd">----------------</span>
+<span class="sd">- Read local files in binary or encoded form (text, JSON, base64).</span>
+<span class="sd">- Compute and track file hashes for change detection.</span>
+<span class="sd">- Mirror file contents back to ThingsBoard using ``FILE_READ_&lt;file_key&gt;`` attributes.</span>
+<span class="sd">- Support path expansion using gateway environment variables (e.g. ``$DATA_PATH``).</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- File definitions and expected encodings are provided via shared attributes</span>
+<span class="sd">  (see the *Remote File Management* user guide).</span>
+<span class="sd">- This module does not apply file updates itself; it only handles reading,</span>
+<span class="sd">  hashing, and reporting.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hashlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">md5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.mqtt</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayMqttClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">debug</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">CONTROLLER_DATA_PATH</span>
+
+<span class="n">singleton_instance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;GatewayFileWriter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="write_file_content_to_client_attribute">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.write_file_content_to_client_attribute">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_file_content_to_client_attribute</span><span class="p">(</span><span class="n">file_identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_content</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Publish file contents to a ThingsBoard client attribute.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">      file_identifier: Logical file key as defined in the ``FILES`` attribute.</span>
+<span class="sd">      file_content: File content encoded according to the file definition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_message_raw</span><span class="p">(</span><span class="s2">&quot;v1/devices/me/attributes&quot;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({(</span><span class="s2">&quot;FILE_READ_&quot;</span> <span class="o">+</span> <span class="n">file_identifier</span><span class="p">):</span> <span class="n">file_content</span><span class="p">}))</span></div>
+
+
+
+<div class="viewcode-block" id="GatewayFileWriter">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GatewayFileWriter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle local file reading and hash tracking for remote file management.</span>
+
+<span class="sd">    This class maintains the current file definitions, the last known file hashes,</span>
+<span class="sd">    and provides helper methods to read files and detect changes. It is implemented</span>
+<span class="sd">    as a singleton to ensure consistent state across the gateway process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">files</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">tb_hashes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">global</span> <span class="n">singleton_instance</span>
+        <span class="k">if</span> <span class="n">singleton_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">debug</span><span class="p">(</span><span class="s2">&quot;[FILE-WRITER] Initializing GatewayFileWriter&quot;</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+            <span class="n">singleton_instance</span> <span class="o">=</span> <span class="bp">self</span>
+
+    <span class="c1"># Singleton pattern</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">global</span> <span class="n">singleton_instance</span>
+        <span class="k">if</span> <span class="n">singleton_instance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">singleton_instance</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">GatewayFileWriter</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GatewayFileWriter.expand_file_path">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.expand_file_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expand_file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand environment variables in a file path.</span>
+
+<span class="sd">        Replaces occurrences of ``$DATA_PATH`` and legacy placeholders with the resolved</span>
+<span class="sd">        controller data path.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          file_path: Raw file path from the FILES definition.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          Expanded absolute file path, or ``None`` if input is ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="p">((</span><span class="n">file_path</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;%DATA_PATH%&quot;</span><span class="p">,</span> <span class="n">CONTROLLER_DATA_PATH</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$DATA_PATH$&quot;</span><span class="p">,</span> <span class="n">CONTROLLER_DATA_PATH</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$DATA_PATH&quot;</span><span class="p">,</span> <span class="n">CONTROLLER_DATA_PATH</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="GatewayFileWriter.set_files">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.set_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the current file definitions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          files: Dictionary defining managed files as provided by the ``FILES`` attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">files</span></div>
+
+
+<div class="viewcode-block" id="GatewayFileWriter.set_tb_hashes">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.set_tb_hashes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_tb_hashes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hashes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the file hashes received from ThingsBoard.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          hashes: Hash dictionary from the ``FILE_HASHES`` client attribute.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tb_hashes</span> <span class="o">=</span> <span class="n">hashes</span></div>
+
+
+    <span class="c1"># Read raw file contents into bytes array</span>
+<div class="viewcode-block" id="GatewayFileWriter.read_file_raw">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.read_file_raw">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_file_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read a file from disk as raw bytes and update its cached hash.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          file_path: Absolute path to the file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          File contents as bytes, or ``None`` if the file does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">file_content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">file_hash</span> <span class="o">=</span> <span class="n">md5</span><span class="p">(</span><span class="n">file_content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">file_path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">[</span><span class="n">file_path</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_hash</span>
+                <span class="k">return</span> <span class="n">file_content</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="c1"># Read file contents into string</span>
+<div class="viewcode-block" id="GatewayFileWriter.read_file">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.read_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_encoding</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read a file and return its contents encoded as a string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          file_path: Absolute path to the file.</span>
+<span class="sd">          file_encoding: Encoding type (``text``, ``json``, or ``base64``).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          Encoded file content as a string, or ``None`` if the file does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">file_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_file_raw</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">file_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">file_encoding</span> <span class="o">==</span> <span class="s2">&quot;text&quot;</span> <span class="ow">or</span> <span class="n">file_encoding</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">file_content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">file_encoding</span> <span class="o">==</span> <span class="s2">&quot;base64&quot;</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+            <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">file_content</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown file encoding: </span><span class="si">{</span><span class="n">file_encoding</span><span class="si">}</span><span class="s2">, defaulting to text&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">file_content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GatewayFileWriter.calc_file_hash">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.calc_file_hash">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_file_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the MD5 hash of a file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          path: Absolute path to the file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          MD5 hash string, or ``E_NOFILE`` if the file does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">file_content</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_file_raw</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">file_content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;E_NOFILE&quot;</span>
+        <span class="k">return</span> <span class="n">md5</span><span class="p">(</span><span class="n">file_content</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GatewayFileWriter.did_file_change">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.did_file_change">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">did_file_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether a file has changed since the last read.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">          path: Absolute path to the file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          ``True`` if the file content has changed, otherwise ``False``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">file_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_file_hash</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_hash</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">file_hash</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hashes</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_hash</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="GatewayFileWriter.get_files">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.get_files">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the current file definitions.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          Dictionary of managed file definitions.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">          Exception: If file definitions have not been initialized.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Files definition is not available&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span></div>
+
+
+<div class="viewcode-block" id="GatewayFileWriter.get_tb_file_hashes">
+<a class="viewcode-back" href="../../api/remote_file_management.html#modules.file_writer.GatewayFileWriter.get_tb_file_hashes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tb_file_hashes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the file hashes received from ThingsBoard.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">          Hash dictionary or ``None`` if not available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tb_hashes</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>utils.controller_restart &#8212; thingsboard-edge-gateway 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=f6a572b4" />
+    <script src="../../_static/documentation_options.js?v=2709fde1"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">thingsboard-edge-gateway</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting-started/index.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user-guide/index.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../developer-guide/index.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for utils.controller_restart</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Controller restart watchdog for the Edge Gateway.</span>
+
+<span class="sd">This module implements a lightweight watchdog that ensures the controller Docker</span>
+<span class="sd">container is running. If the controller is not running, it attempts to restart it</span>
+<span class="sd">using the last successfully launched controller version.</span>
+
+<span class="sd">To avoid rapid restart loops, restarts are rate-limited and use an exponential</span>
+<span class="sd">backoff strategy. If no previous version is known, the watchdog requests OTA</span>
+<span class="sd">version information from ThingsBoard and reports a FAILED software state.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">- Controller lifecycle operations are executed via :class:`modules.docker_client.GatewayDockerClient`.</span>
+<span class="sd">- OTA software state reporting is published via :class:`modules.mqtt.GatewayMqttClient`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time_ns</span><span class="p">,</span> <span class="n">sleep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.docker_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayDockerClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">info</span><span class="p">,</span> <span class="n">error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">modules.mqtt</span><span class="w"> </span><span class="kn">import</span> <span class="n">GatewayMqttClient</span>
+
+<span class="n">DEFAULT_CONTAINER_RESTART_DELAY_MS</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">600_000</span>
+<span class="n">CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.6</span>
+<span class="n">container_restart_delay_ms</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">DEFAULT_CONTAINER_RESTART_DELAY_MS</span>
+<span class="n">last_container_restart_ts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="restart_controller_if_needed">
+<a class="viewcode-back" href="../../api/ota.html#utils.controller_restart.restart_controller_if_needed">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">restart_controller_if_needed</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Restart the controller container if it is not running.</span>
+
+<span class="sd">    The watchdog checks whether the controller container is running. If it is not,</span>
+<span class="sd">    it waits briefly and attempts to restart it using the last launched version.</span>
+<span class="sd">    Restart attempts are rate-limited and use exponential backoff to avoid repeated</span>
+<span class="sd">    rapid restarts.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">      ``True`` if the watchdog performed an action that should delay or influence</span>
+<span class="sd">      the main loop (restart attempt, OTA request), otherwise ``False``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">container_restart_delay_ms</span><span class="p">,</span> <span class="n">last_container_restart_ts</span>
+
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1_000_000</span><span class="p">)</span> <span class="o">-</span> <span class="n">last_container_restart_ts</span> <span class="o">&gt;</span> <span class="n">container_restart_delay_ms</span><span class="p">:</span>
+        <span class="n">last_container_restart_ts</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">/</span> <span class="mi">1_000_000</span><span class="p">)</span>
+        <span class="n">docker_client</span> <span class="o">=</span> <span class="n">GatewayDockerClient</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">docker_client</span><span class="o">.</span><span class="n">is_controller_running</span><span class="p">():</span>
+            <span class="n">container_restart_delay_ms</span> <span class="o">*=</span> <span class="n">CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;Controller is not running, starting new container in 10s...&quot;</span><span class="p">)</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;New controller restart exponential backoff: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">container_restart_delay_ms</span><span class="o">/</span><span class="mf">1000.0</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+            <span class="n">last_launched_version</span> <span class="o">=</span> <span class="n">docker_client</span><span class="o">.</span><span class="n">get_last_launched_controller_version</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">last_launched_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">docker_client</span><span class="o">.</span><span class="n">start_controller_safely</span><span class="p">(</span><span class="n">last_launched_version</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to determine last launched controller version, unable to start new container...&quot;</span><span class="p">)</span>
+                <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">request_attributes</span><span class="p">({</span><span class="s2">&quot;sharedKeys&quot;</span><span class="p">:</span> <span class="s2">&quot;sw_title,sw_url,sw_version&quot;</span><span class="p">})</span>
+                <span class="n">GatewayMqttClient</span><span class="p">()</span><span class="o">.</span><span class="n">publish_sw_state</span><span class="p">(</span><span class="s2">&quot;UNKNOWN&quot;</span><span class="p">,</span> <span class="s2">&quot;FAILED&quot;</span><span class="p">,</span>
+                                                     <span class="s2">&quot;No previous version known to launch from, requested version info from ThingsBoard&quot;</span><span class="p">)</span>
+                <span class="n">error</span><span class="p">(</span><span class="s2">&quot;Requested controller version from Thingsboard. Delaying main loop by 20s...&quot;</span><span class="p">)</span>
+                <span class="n">sleep</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>  <span class="c1"># it is unlikely that the version to build will be available immediately</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">container_restart_delay_ms</span> <span class="o">&gt;</span> <span class="n">DEFAULT_CONTAINER_RESTART_DELAY_MS</span><span class="p">:</span>
+            <span class="n">info</span><span class="p">(</span><span class="s2">&quot;New controller restart exponential backoff: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">container_restart_delay_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;s&quot;</span><span class="p">)</span>
+            <span class="n">container_restart_delay_ms</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">DEFAULT_CONTAINER_RESTART_DELAY_MS</span><span class="p">,</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">container_restart_delay_ms</span> <span class="o">/</span> <span class="n">CONTAINER_RESTART_EXPONENTIAL_BACKOFF_FACTOR</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;2025, Aigner Patrick, Frölich Lars.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 9.1.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -90,30 +90,30 @@ It is organized by functional subsystem rather than by source directory.</p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="core.html">Gateway Runtime</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="core.html#main-loop">Main Loop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core.html#module-main">Main Loop</a></li>
 <li class="toctree-l2"><a class="reference internal" href="core.html#self-provisioning">Self-Provisioning</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="communication.html">MQTT Communication</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="communication.html#mqtt-client">MQTT Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="communication.html#module-modules.mqtt">MQTT Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="communication.html#message-handlers">Message Handlers</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="remote_file_management.html">Remote File Management</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="remote_file_management.html#file-writer">File Writer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote_file_management.html#module-modules.file_writer">File Writer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="remote_file_management.html#definition-and-synchronization">Definition and Synchronization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="remote_file_management.html#content-application">Content Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remote_file_management.html#module-on_mqtt_msg.check_for_file_content_update">Content Application</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="ota.html">Over-the-Air Updates</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="ota.html#docker-client">Docker Client</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ota.html#git-client">Git Client</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ota.html#ota-message-handling">OTA Message Handling</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ota.html#controller-supervision">Controller Supervision</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ota.html#module-modules.git_client">Git Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ota.html#module-on_mqtt_msg.check_for_ota_updates">OTA Message Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ota.html#module-utils.controller_restart">Controller Supervision</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rpc.html">Remote Procedure Calls</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="rpc.html#rpc-handler">RPC Handler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rpc.html#module-on_mqtt_msg.on_rpc_request">RPC Handler</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="persistence.html">Local Data Persistence</a><ul>
@@ -124,7 +124,7 @@ It is organized by functional subsystem rather than by source directory.</p>
 <li class="toctree-l1"><a class="reference internal" href="utilities.html">Utilities</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="utilities.html#module-utils.misc">Miscellaneous Helpers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utilities.html#module-modules.logging">Logging</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html#paths-and-configuration">Paths and Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html#module-utils.paths">Paths and Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utilities.html#module-args">Args</a></li>
 </ul>
 </li>

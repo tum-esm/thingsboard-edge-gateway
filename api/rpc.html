@@ -89,8 +89,187 @@
 <h1>Remote Procedure Calls<a class="headerlink" href="#remote-procedure-calls" title="Link to this heading">¶</a></h1>
 <p>This section documents the RPC interface exposed by the Edge Gateway for
 operational control, diagnostics, and maintenance tasks.</p>
-<section id="rpc-handler">
-<h2>RPC Handler<a class="headerlink" href="#rpc-handler" title="Link to this heading">¶</a></h2>
+<section id="module-on_mqtt_msg.on_rpc_request">
+<span id="rpc-handler"></span><h2>RPC Handler<a class="headerlink" href="#module-on_mqtt_msg.on_rpc_request" title="Link to this heading">¶</a></h2>
+<p>Handle ThingsBoard RPC requests for the Edge Gateway.</p>
+<p>This module implements the Edge Gateway’s server-side handling of ThingsBoard
+Remote Procedure Calls (RPC). Incoming RPC requests are dispatched to a curated
+set of supported methods and a response is sent back on the corresponding
+ThingsBoard RPC response topic.</p>
+<p>The RPC interface is intended for operational control, diagnostics, and
+maintenance tasks, such as rebooting the device, restarting the controller,
+initializing remote file management attributes, or republishing archived
+telemetry.</p>
+<section id="security-notes">
+<h3>Security notes<a class="headerlink" href="#security-notes" title="Link to this heading">¶</a></h3>
+<p>Some RPC methods (notably <code class="docutils literal notranslate"><span class="pre">run_command</span></code>) can execute arbitrary commands on the
+host system. Access to such methods must be restricted using ThingsBoard
+permissions and dashboard access control.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.on_rpc_request">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">on_rpc_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#on_rpc_request"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.on_rpc_request" title="Link to this definition">¶</a></dt>
+<dd><p>Dispatch an incoming RPC request.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rpc_msg_id</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – ThingsBoard RPC request identifier.</p></li>
+<li><p><strong>method</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – RPC method name.</p></li>
+<li><p><strong>params</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – RPC params payload (type depends on method).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_archive_discard_messages">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_archive_discard_messages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_archive_discard_messages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_archive_discard_messages" title="Link to this definition">¶</a></dt>
+<dd><p>Discard (delete) archived telemetry messages within a time range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_archive_republish_messages">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_archive_republish_messages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_archive_republish_messages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_archive_republish_messages" title="Link to this definition">¶</a></dt>
+<dd><p>Republish archived telemetry messages within a time range.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_exit">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_exit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_exit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_exit" title="Link to this definition">¶</a></dt>
+<dd><p>Terminate the gateway process to trigger a supervised restart.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_init_files">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_init_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_init_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_init_files" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize client attributes required for remote file management.</p>
+<p>This creates an empty <code class="docutils literal notranslate"><span class="pre">FILE_HASHES</span></code> client attribute and requests the
+<code class="docutils literal notranslate"><span class="pre">FILES</span></code> shared attribute to re-run definition validation and synchronization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_ping">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_ping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_ping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_ping" title="Link to this definition">¶</a></dt>
+<dd><p>Health check RPC that returns a static ‘Pong’ response.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_reboot">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_reboot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_reboot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_reboot" title="Link to this definition">¶</a></dt>
+<dd><p>Reboot the Edge Gateway host system.</p>
+<p>Sends an RPC response immediately and triggers a system reboot shortly after.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_restart_controller">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_restart_controller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_restart_controller"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_restart_controller" title="Link to this definition">¶</a></dt>
+<dd><p>Restart the controller container without rebooting the host.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_run_command">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_run_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_run_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_run_command" title="Link to this definition">¶</a></dt>
+<dd><p>Execute a command on the Edge Gateway host.</p>
+<p>This method executes an arbitrary command and returns its combined stdout/stderr
+output. The command is killed if it exceeds the provided timeout.</p>
+<p>Parameters are validated strictly. This method is powerful and must be
+protected via ThingsBoard access control.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.rpc_shutdown">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">rpc_shutdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#rpc_shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.rpc_shutdown" title="Link to this definition">¶</a></dt>
+<dd><p>Shut down (power off) the Edge Gateway host system.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.send_rpc_method_error">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">send_rpc_method_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#send_rpc_method_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.send_rpc_method_error" title="Link to this definition">¶</a></dt>
+<dd><p>Send a standardized error response for an RPC method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.send_rpc_response">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">send_rpc_response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rpc_msg_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">response</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#send_rpc_response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.send_rpc_response" title="Link to this definition">¶</a></dt>
+<dd><p>Send an RPC response</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.on_rpc_request.verify_start_end_timestamp_params">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.on_rpc_request.</span></span><span class="sig-name descname"><span class="pre">verify_start_end_timestamp_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/on_rpc_request.html#verify_start_end_timestamp_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.on_rpc_request.verify_start_end_timestamp_params" title="Link to this definition">¶</a></dt>
+<dd><p>Validate timestamp range parameters for archive operations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>params</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – RPC params dictionary expected to contain <code class="docutils literal notranslate"><span class="pre">start_timestamp_ms</span></code> and
+<code class="docutils literal notranslate"><span class="pre">end_timestamp_ms</span></code> as integers.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An error string if invalid, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 

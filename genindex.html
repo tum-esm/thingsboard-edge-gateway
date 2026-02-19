@@ -83,10 +83,13 @@
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
 </div>
@@ -101,16 +104,24 @@
 </li>
       </ul></li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.attribute_request_id">attribute_request_id (modules.mqtt.GatewayMqttClient attribute)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.calc_file_hash">calc_file_hash() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
       <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.check">check() (modules.sqlite.SqliteConnection method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.close">close() (modules.sqlite.SqliteConnection method)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.connected">connected (modules.mqtt.GatewayMqttClient attribute)</a>
 </li>
       <li><a href="api/persistence.html#modules.sqlite.SqliteTables.CONTROLLER_MESSAGES">CONTROLLER_MESSAGES (modules.sqlite.SqliteTables attribute)</a>
 </li>
@@ -134,8 +145,6 @@
         <li><a href="api/persistence.html#module-db_schemas.controller_messages_table">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     db_schemas.pending_messages_table
 
@@ -143,7 +152,11 @@
         <li><a href="api/persistence.html#module-db_schemas.pending_messages_table">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utilities.html#modules.logging.debug">debug() (in module modules.logging)</a>
+</li>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.did_file_change">did_file_change() (modules.file_writer.GatewayFileWriter method)</a>
 </li>
       <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.do_table_values_exist">do_table_values_exist() (modules.sqlite.SqliteConnection method)</a>
 </li>
@@ -157,9 +170,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utilities.html#modules.logging.error">error() (in module modules.logging)</a>
 </li>
+      <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.execute">execute() (modules.sqlite.SqliteConnection method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.execute">execute() (modules.sqlite.SqliteConnection method)</a>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient.execute_fetch">execute_fetch() (modules.git_client.GatewayGitClient method)</a>
+</li>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient.execute_reset_to_commit">execute_reset_to_commit() (modules.git_client.GatewayGitClient method)</a>
+</li>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.expand_file_path">expand_file_path() (modules.file_writer.GatewayFileWriter method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -169,9 +188,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utilities.html#utils.misc.fatal_error">fatal_error() (in module utils.misc)</a>
 </li>
+      <li><a href="api/utilities.html#utils.misc.file_exists">file_exists() (in module utils.misc)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/utilities.html#utils.misc.file_exists">file_exists() (in module utils.misc)</a>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.files">files (modules.file_writer.GatewayFileWriter attribute)</a>
+</li>
+      <li><a href="api/core.html#main.forced_shutdown_handler">forced_shutdown_handler() (in module main)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -179,17 +202,43 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/utilities.html#utils.misc.get_instance_maybe">get_instance_maybe() (in module utils.misc)</a>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter">GatewayFileWriter (class in modules.file_writer)</a>
+</li>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient">GatewayGitClient (class in modules.git_client)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient">GatewayMqttClient (class in modules.mqtt)</a>
+</li>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient.get_commit_for_tag">get_commit_for_tag() (modules.git_client.GatewayGitClient method)</a>
+</li>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient.get_commit_from_hash_or_tag">get_commit_from_hash_or_tag() (modules.git_client.GatewayGitClient method)</a>
+</li>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient.get_current_commit">get_current_commit() (modules.git_client.GatewayGitClient method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/core.html#self_provisioning.get_device_name">get_device_name() (in module self_provisioning)</a>
+</li>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.get_files">get_files() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
+      <li><a href="api/utilities.html#utils.misc.get_instance_maybe">get_instance_maybe() (in module utils.misc)</a>
+</li>
+      <li><a href="api/core.html#main.get_last_controller_health_check_ts">get_last_controller_health_check_ts() (in module main)</a>
+</li>
       <li><a href="api/utilities.html#utils.misc.get_maybe">get_maybe() (in module utils.misc)</a>
+</li>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.get_tb_file_hashes">get_tb_file_hashes() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.graceful_exit">graceful_exit() (modules.mqtt.GatewayMqttClient method)</a>
 </li>
   </ul></td>
 </tr></table>
 
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.hashes">hashes (modules.file_writer.GatewayFileWriter attribute)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/persistence.html#modules.sqlite.SqliteTables.HEALTH_CHECK">HEALTH_CHECK (modules.sqlite.SqliteTables attribute)</a>
 </li>
@@ -201,8 +250,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utilities.html#modules.logging.info">info() (in module modules.logging)</a>
 </li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.init">init() (modules.mqtt.GatewayMqttClient method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.initialized">initialized (modules.mqtt.GatewayMqttClient attribute)</a>
+</li>
       <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.is_table_empty">is_table_empty() (modules.sqlite.SqliteConnection method)</a>
 </li>
   </ul></td>
@@ -220,6 +273,15 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
+    main
+
+      <ul>
+        <li><a href="api/core.html#module-main">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.message_queue">message_queue (modules.mqtt.GatewayMqttClient attribute)</a>
+</li>
+      <li>
     module
 
       <ul>
@@ -231,20 +293,65 @@
 </li>
         <li><a href="api/persistence.html#module-db_schemas.pending_messages_table">db_schemas.pending_messages_table</a>
 </li>
+        <li><a href="api/core.html#module-main">main</a>
+</li>
+        <li><a href="api/remote_file_management.html#module-modules.file_writer">modules.file_writer</a>
+</li>
+        <li><a href="api/ota.html#module-modules.git_client">modules.git_client</a>
+</li>
         <li><a href="api/utilities.html#module-modules.logging">modules.logging</a>
+</li>
+        <li><a href="api/communication.html#module-modules.mqtt">modules.mqtt</a>
 </li>
         <li><a href="api/persistence.html#module-modules.sqlite">modules.sqlite</a>
 </li>
+        <li><a href="api/remote_file_management.html#module-on_mqtt_msg.check_for_file_content_update">on_mqtt_msg.check_for_file_content_update</a>
+</li>
+        <li><a href="api/remote_file_management.html#module-on_mqtt_msg.check_for_file_hashes_update">on_mqtt_msg.check_for_file_hashes_update</a>
+</li>
+        <li><a href="api/remote_file_management.html#module-on_mqtt_msg.check_for_files_definition_update">on_mqtt_msg.check_for_files_definition_update</a>
+</li>
+        <li><a href="api/ota.html#module-on_mqtt_msg.check_for_ota_updates">on_mqtt_msg.check_for_ota_updates</a>
+</li>
+        <li><a href="api/rpc.html#module-on_mqtt_msg.on_rpc_request">on_mqtt_msg.on_rpc_request</a>
+</li>
+        <li><a href="api/core.html#module-self_provisioning">self_provisioning</a>
+</li>
+        <li><a href="api/ota.html#module-utils.controller_restart">utils.controller_restart</a>
+</li>
         <li><a href="api/utilities.html#module-utils.misc">utils.misc</a>
+</li>
+        <li><a href="api/utilities.html#module-utils.paths">utils.paths</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
+    modules.file_writer
+
+      <ul>
+        <li><a href="api/remote_file_management.html#module-modules.file_writer">module</a>
+</li>
+      </ul></li>
+      <li>
+    modules.git_client
+
+      <ul>
+        <li><a href="api/ota.html#module-modules.git_client">module</a>
+</li>
+      </ul></li>
+      <li>
     modules.logging
 
       <ul>
         <li><a href="api/utilities.html#module-modules.logging">module</a>
+</li>
+      </ul></li>
+      <li>
+    modules.mqtt
+
+      <ul>
+        <li><a href="api/communication.html#module-modules.mqtt">module</a>
 </li>
       </ul></li>
       <li>
@@ -257,14 +364,75 @@
   </ul></td>
 </tr></table>
 
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    on_mqtt_msg.check_for_file_content_update
+
+      <ul>
+        <li><a href="api/remote_file_management.html#module-on_mqtt_msg.check_for_file_content_update">module</a>
+</li>
+      </ul></li>
+      <li>
+    on_mqtt_msg.check_for_file_hashes_update
+
+      <ul>
+        <li><a href="api/remote_file_management.html#module-on_mqtt_msg.check_for_file_hashes_update">module</a>
+</li>
+      </ul></li>
+      <li>
+    on_mqtt_msg.check_for_files_definition_update
+
+      <ul>
+        <li><a href="api/remote_file_management.html#module-on_mqtt_msg.check_for_files_definition_update">module</a>
+</li>
+      </ul></li>
+      <li>
+    on_mqtt_msg.check_for_ota_updates
+
+      <ul>
+        <li><a href="api/ota.html#module-on_mqtt_msg.check_for_ota_updates">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    on_mqtt_msg.on_rpc_request
+
+      <ul>
+        <li><a href="api/rpc.html#module-on_mqtt_msg.on_rpc_request">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/remote_file_management.html#on_mqtt_msg.check_for_file_content_update.on_msg_check_for_file_content_update">on_msg_check_for_file_content_update() (in module on_mqtt_msg.check_for_file_content_update)</a>
+</li>
+      <li><a href="api/remote_file_management.html#on_mqtt_msg.check_for_file_hashes_update.on_msg_check_for_file_hashes_update">on_msg_check_for_file_hashes_update() (in module on_mqtt_msg.check_for_file_hashes_update)</a>
+</li>
+      <li><a href="api/remote_file_management.html#on_mqtt_msg.check_for_files_definition_update.on_msg_check_for_files_definition_update">on_msg_check_for_files_definition_update() (in module on_mqtt_msg.check_for_files_definition_update)</a>
+</li>
+      <li><a href="api/ota.html#on_mqtt_msg.check_for_ota_updates.on_msg_check_for_ota_update">on_msg_check_for_ota_update() (in module on_mqtt_msg.check_for_ota_updates)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.on_rpc_request">on_rpc_request() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utilities.html#args.parse_args">parse_args() (in module args)</a>
 </li>
+      <li><a href="api/persistence.html#modules.sqlite.SqliteTables.PENDING_MQTT_MESSAGES">PENDING_MQTT_MESSAGES (modules.sqlite.SqliteTables attribute)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.publish_log">publish_log() (modules.mqtt.GatewayMqttClient method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/persistence.html#modules.sqlite.SqliteTables.PENDING_MQTT_MESSAGES">PENDING_MQTT_MESSAGES (modules.sqlite.SqliteTables attribute)</a>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.publish_message_raw">publish_message_raw() (modules.mqtt.GatewayMqttClient method)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.publish_sw_state">publish_sw_state() (modules.mqtt.GatewayMqttClient method)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.publish_telemetry">publish_telemetry() (modules.mqtt.GatewayMqttClient method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -272,7 +440,35 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.read_file">read_file() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.read_file_raw">read_file_raw() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.request_attributes">request_attributes() (modules.mqtt.GatewayMqttClient method)</a>
+</li>
       <li><a href="api/persistence.html#modules.sqlite.SqliteConnection.reset_db_conn">reset_db_conn() (modules.sqlite.SqliteConnection method)</a>
+</li>
+      <li><a href="api/ota.html#utils.controller_restart.restart_controller_if_needed">restart_controller_if_needed() (in module utils.controller_restart)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_archive_discard_messages">rpc_archive_discard_messages() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_archive_republish_messages">rpc_archive_republish_messages() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_exit">rpc_exit() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_init_files">rpc_init_files() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_ping">rpc_ping() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_reboot">rpc_reboot() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_restart_controller">rpc_restart_controller() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_run_command">rpc_run_command() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.rpc_shutdown">rpc_shutdown() (in module on_mqtt_msg.on_rpc_request)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -280,17 +476,55 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/persistence.html#modules.sqlite.SqliteConnection">SqliteConnection (class in modules.sqlite)</a>
+      <li>
+    self_provisioning
+
+      <ul>
+        <li><a href="api/core.html#module-self_provisioning">module</a>
+</li>
+      </ul></li>
+      <li><a href="api/core.html#self_provisioning.self_provisioning_get_access_token">self_provisioning_get_access_token() (in module self_provisioning)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.send_rpc_method_error">send_rpc_method_error() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.send_rpc_response">send_rpc_response() (in module on_mqtt_msg.on_rpc_request)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.set_files">set_files() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.set_tb_hashes">set_tb_hashes() (modules.file_writer.GatewayFileWriter method)</a>
+</li>
+      <li><a href="api/core.html#main.shutdown_handler">shutdown_handler() (in module main)</a>
+</li>
+      <li><a href="api/persistence.html#modules.sqlite.SqliteConnection">SqliteConnection (class in modules.sqlite)</a>
+</li>
       <li><a href="api/persistence.html#modules.sqlite.SqliteTables">SqliteTables (class in modules.sqlite)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/remote_file_management.html#modules.file_writer.GatewayFileWriter.tb_hashes">tb_hashes (modules.file_writer.GatewayFileWriter attribute)</a>
 </li>
   </ul></td>
 </tr></table>
 
 <h2 id="U">U</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/communication.html#modules.mqtt.GatewayMqttClient.update_sys_info_attribute">update_sys_info_attribute() (modules.mqtt.GatewayMqttClient method)</a>
+</li>
+      <li>
+    utils.controller_restart
+
+      <ul>
+        <li><a href="api/ota.html#module-utils.controller_restart">module</a>
+</li>
+      </ul></li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     utils.misc
@@ -299,6 +533,25 @@
         <li><a href="api/utilities.html#module-utils.misc">module</a>
 </li>
       </ul></li>
+      <li>
+    utils.paths
+
+      <ul>
+        <li><a href="api/utilities.html#module-utils.paths">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/ota.html#modules.git_client.GatewayGitClient.verify_commit_hash_or_tag_exists">verify_commit_hash_or_tag_exists() (modules.git_client.GatewayGitClient method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/rpc.html#on_mqtt_msg.on_rpc_request.verify_start_end_timestamp_params">verify_start_end_timestamp_params() (in module on_mqtt_msg.on_rpc_request)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -306,6 +559,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/utilities.html#modules.logging.warn">warn() (in module modules.logging)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/remote_file_management.html#modules.file_writer.write_file_content_to_client_attribute">write_file_content_to_client_attribute() (in module modules.file_writer)</a>
 </li>
   </ul></td>
 </tr></table>

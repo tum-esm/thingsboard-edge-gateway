@@ -90,14 +90,142 @@
 <p>This section documents the core runtime components of the ThingsBoard Edge Gateway.
 These modules define the application entry point, startup sequence, and initial
 device provisioning.</p>
-<section id="main-loop">
-<h2>Main Loop<a class="headerlink" href="#main-loop" title="Link to this heading">¶</a></h2>
+<section id="module-main">
+<span id="main-loop"></span><h2>Main Loop<a class="headerlink" href="#module-main" title="Link to this heading">¶</a></h2>
+<p>Main entry point for the ThingsBoard Edge Gateway.</p>
+<p>This module implements the primary runtime loop of the Edge Gateway. It is
+responsible for initializing all subsystems, establishing communication with
+ThingsBoard, and coordinating message flow between the controller, local
+persistence layers, and remote services.</p>
+<section id="responsibilities">
+<h3>Responsibilities<a class="headerlink" href="#responsibilities" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Parse command-line arguments and perform self-provisioning if required.</p></li>
+<li><p>Initialize local SQLite databases used for buffering and archiving.</p></li>
+<li><p>Start and supervise the MQTT client connection to ThingsBoard.</p></li>
+<li><p>Dispatch incoming MQTT messages to RPC, OTA, and remote file management handlers.</p></li>
+<li><p>Persist and forward controller telemetry and log messages.</p></li>
+<li><p>Supervise the controller container and trigger restarts if required.</p></li>
+<li><p>Publish auxiliary health and timing telemetry.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The main loop is intentionally single-threaded for deterministic behavior.</p></li>
+<li><p>Background daemon threads are used only for MQTT I/O and file change detection.</p></li>
+<li><p>Fatal errors result in a graceful shutdown followed by forced termination if
+necessary.</p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="main.forced_shutdown_handler">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">forced_shutdown_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_sig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/main.html#forced_shutdown_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.forced_shutdown_handler" title="Link to this definition">¶</a></dt>
+<dd><p>Handle forced shutdown if graceful shutdown fails.</p>
+<p>This handler is triggered by a SIGALRM when the graceful shutdown timeout is
+exceeded and terminates the process immediately.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.get_last_controller_health_check_ts">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">get_last_controller_health_check_ts</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/main.html#get_last_controller_health_check_ts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.get_last_controller_health_check_ts" title="Link to this definition">¶</a></dt>
+<dd><p>Return the timestamp of the last controller health check.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Unix timestamp in milliseconds of the last recorded health check, or <code class="docutils literal notranslate"><span class="pre">0</span></code>
+if no health check has been recorded.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.shutdown_handler">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">shutdown_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_frame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/main.html#shutdown_handler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.shutdown_handler" title="Link to this definition">¶</a></dt>
+<dd><p>Handle graceful shutdown of the Edge Gateway.</p>
+<p>This handler is invoked on SIGINT and SIGTERM. It attempts to shut down all
+subsystems cleanly, including MQTT connections and SQLite databases, before
+terminating the process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sig</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – Received signal number.</p></li>
+<li><p><strong>_frame</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></span>) – Current stack frame (unused).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="self-provisioning">
 <h2>Self-Provisioning<a class="headerlink" href="#self-provisioning" title="Link to this heading">¶</a></h2>
 <p>This module implements the initial device self-provisioning workflow used to
 obtain credentials and establish a trusted connection to ThingsBoard on first
 startup.</p>
+<p id="module-self_provisioning">Self-provisioning logic for the Edge Gateway.</p>
+<p>This module implements MQTT-based self-provisioning against ThingsBoard to obtain
+an access token for the Edge Gateway at first startup.</p>
+<p>If an access token already exists locally, self-provisioning is skipped. Otherwise,
+the gateway connects using the ThingsBoard provisioning credentials and requests
+a new device access token, which is persisted locally for future use.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Provisioning uses the ThingsBoard MQTT provisioning API.</p></li>
+<li><p>TLS is always enabled; a custom CA certificate can be supplied via environment
+variables.</p></li>
+<li><p>Provisioning is a blocking operation and is expected to run only during startup.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="self_provisioning.get_device_name">
+<span class="sig-prename descclassname"><span class="pre">self_provisioning.</span></span><span class="sig-name descname"><span class="pre">get_device_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/self_provisioning.html#get_device_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#self_provisioning.get_device_name" title="Link to this definition">¶</a></dt>
+<dd><p>Determine the ThingsBoard device name for this gateway.</p>
+<p>The device name is resolved in the following order:
+1. Explicit <code class="docutils literal notranslate"><span class="pre">--device-name</span></code> CLI argument (if present)
+2. <code class="docutils literal notranslate"><span class="pre">THINGSBOARD_DEVICE_NAME</span></code> environment variable
+3. Local hostname
+4. Randomly generated fallback name</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Namespace</span></code></span>) – Parsed command-line arguments.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Resolved device name string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="self_provisioning.self_provisioning_get_access_token">
+<span class="sig-prename descclassname"><span class="pre">self_provisioning.</span></span><span class="sig-name descname"><span class="pre">self_provisioning_get_access_token</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/self_provisioning.html#self_provisioning_get_access_token"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#self_provisioning.self_provisioning_get_access_token" title="Link to this definition">¶</a></dt>
+<dd><p>Obtain a ThingsBoard access token via self-provisioning if required.</p>
+<p>The function first checks whether an access token already exists locally. If so,
+it returns the existing token. Otherwise, it performs MQTT-based self-provisioning
+to request a new access token from ThingsBoard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>args</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Namespace</span></code></span>) – Parsed command-line arguments containing ThingsBoard connection details.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple <code class="docutils literal notranslate"><span class="pre">(created,</span> <span class="pre">access_token)</span></code>, where <code class="docutils literal notranslate"><span class="pre">created</span></code> indicates whether a new
+token was generated during this call.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 

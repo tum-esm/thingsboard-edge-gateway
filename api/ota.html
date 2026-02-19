@@ -91,15 +91,421 @@
 controller software independently of the Edge Gateway runtime.</p>
 <section id="docker-client">
 <h2>Docker Client<a class="headerlink" href="#docker-client" title="Link to this heading">¶</a></h2>
+<p>Docker runtime management for the Edge Gateway controller.</p>
+<p>This module provides the <code class="xref py py-class docutils literal notranslate"><span class="pre">GatewayDockerClient</span></code>, a thin
+wrapper around the Docker Engine API used by the Edge Gateway to manage the
+<em>controller</em> container.</p>
+<section id="responsibilities">
+<h3>Responsibilities<a class="headerlink" href="#responsibilities" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Detect whether the controller container is running and determine its version.</p></li>
+<li><p>Start/stop the controller container in a controlled way.</p></li>
+<li><p>Build controller images from a Git tag or commit hash if the image is not available.</p></li>
+<li><p>Publish ThingsBoard OTA-related software state updates via MQTT (<code class="docutils literal notranslate"><span class="pre">sw_state</span></code>).</p></li>
+</ul>
+<p>The controller is deployed as a Docker container (<code class="docutils literal notranslate"><span class="pre">teg_controller</span></code>) with images
+tagged as <code class="docutils literal notranslate"><span class="pre">teg-controller-&lt;version&gt;:latest</span></code>. Versions may be Git tags (e.g. <code class="docutils literal notranslate"><span class="pre">v1.2.3</span></code>)
+or full commit hashes.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This client is implemented as a process-level singleton to avoid repeated Docker
+client initialization.</p></li>
+<li><p>The implementation assumes host networking and a privileged container, as required
+for the deployed Raspberry Pi environment.</p></li>
+</ul>
 </section>
-<section id="git-client">
-<h2>Git Client<a class="headerlink" href="#git-client" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">modules.docker_client.</span></span><span class="sig-name descname"><span class="pre">GatewayDockerClient</span></span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Manage the controller Docker container for an Edge Gateway device.</p>
+<p>The gateway and controller are intentionally separated: the Edge Gateway remains
+stable while controller versions can be updated independently (e.g. via OTA
+packages in ThingsBoard).</p>
+<p>This class wraps Docker operations (list, stop, run, build) and integrates with
+the gateway’s Git and MQTT clients to support automated controller updates.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">last_launched_version</span></span></dt>
+<dd><p>Cached version string of the last successfully launched controller.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">docker_client</span></span></dt>
+<dd><p>Docker SDK client instance created via <code class="xref py py-func docutils literal notranslate"><span class="pre">docker.from_env()</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if
+Docker is unavailable.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">docker_client</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">DockerClient</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_controller_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.get_controller_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Return the controller version inferred from the running container image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Git tag/commit hash parsed from the image name, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the
+controller is not running or the version cannot be determined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_edge_startup_timestamp_ms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.get_edge_startup_timestamp_ms"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Return the controller container start time as Unix milliseconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Start timestamp in milliseconds (UTC) if the controller is running, else <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_last_launched_controller_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.get_last_launched_controller_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Return the last launched controller version.</p>
+<p>The value is cached in-memory and persisted in
+<code class="docutils literal notranslate"><span class="pre">$GATEWAY_DATA_PATH/last_launched_controller_version.txt</span></code>. If the file is not
+available, the environment variable <code class="docutils literal notranslate"><span class="pre">TEG_DEFAULT_CONTROLLER_VERSION</span></code> is used
+as a fallback.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The version tag/commit hash, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unknown.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">is_controller_running</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.is_controller_running"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Check whether the controller container is running.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the container exists and is running, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">is_image_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.is_image_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Check whether a Docker image tag exists locally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_tag</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Full Docker image tag to look up (e.g. <code class="docutils literal notranslate"><span class="pre">teg-controller-v1.0.0:latest</span></code>).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the image tag exists locally, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">last_launched_version</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">prune_containers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.prune_containers"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Remove stopped containers to keep the Docker environment clean.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">set_last_launched_controller_version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_launched_controller_version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.set_last_launched_controller_version"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Persist the last launched controller version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>last_launched_controller_version</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Git tag or commit hash to store.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">start_controller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_to_launch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.start_controller"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Start the controller container for a given version.</p>
+<p>If the requested version is already running, the method is a no-op. If the
+required image is not available locally, the controller repository is fetched,
+reset to the referenced commit, and a Docker image is built from the local
+Docker context.</p>
+<p>During the update lifecycle, the method publishes OTA-related states via MQTT
+(e.g. <code class="docutils literal notranslate"><span class="pre">DOWNLOADING</span></code>, <code class="docutils literal notranslate"><span class="pre">DOWNLOADED</span></code>, <code class="docutils literal notranslate"><span class="pre">UPDATING</span></code>, <code class="docutils literal notranslate"><span class="pre">UPDATED</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>version_to_launch</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Git tag (e.g. <code class="docutils literal notranslate"><span class="pre">v1.0.0</span></code>) or full commit hash.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">start_controller_safely</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version_to_launch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.start_controller_safely"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Start the controller and suppress unexpected exceptions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>version_to_launch</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Git tag or commit hash to run.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">stop_controller</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/docker_client.html#GatewayDockerClient.stop_controller"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Stop the running controller container (if any).</p>
+<p>This stores the currently running controller version as the last-launched
+version before stopping the container.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
-<section id="ota-message-handling">
-<h2>OTA Message Handling<a class="headerlink" href="#ota-message-handling" title="Link to this heading">¶</a></h2>
+<section id="module-modules.git_client">
+<span id="git-client"></span><h2>Git Client<a class="headerlink" href="#module-modules.git_client" title="Link to this heading">¶</a></h2>
+<p>Git repository access utilities for the Edge Gateway controller.</p>
+<p>This module provides the <a class="reference internal" href="#modules.git_client.GatewayGitClient" title="modules.git_client.GatewayGitClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">GatewayGitClient</span></code></a>, a lightweight wrapper around
+the local Git repository of the Edge Gateway controller.</p>
+<p>It is primarily used during controller software updates (e.g. OTA updates) to
+resolve version identifiers, fetch updates from the remote repository, and reset
+the working tree to a specific Git tag or commit hash.</p>
+<section id="id1">
+<h3>Responsibilities<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Resolve Git tags to commit hashes.</p></li>
+<li><p>Verify the existence of commit hashes or tags.</p></li>
+<li><p>Query the currently checked-out commit.</p></li>
+<li><p>Fetch updates from the remote repository.</p></li>
+<li><p>Reset the controller repository to a specific commit in a reproducible way.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>All Git commands are executed via subprocess calls.</p></li>
+<li><p>The client operates on the controller repository path defined by
+<code class="docutils literal notranslate"><span class="pre">CONTROLLER_GIT_PATH</span></code>.</p></li>
+<li><p>The class is implemented as a singleton to avoid repeated initialization.</p></li>
+</ul>
 </section>
-<section id="controller-supervision">
-<h2>Controller Supervision<a class="headerlink" href="#controller-supervision" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">modules.git_client.</span></span><span class="sig-name descname"><span class="pre">GatewayGitClient</span></span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Access and manage the local controller Git repository.</p>
+<p>This class encapsulates all Git interactions required by the Edge Gateway to
+manage controller versions during updates. It provides helper methods to resolve
+tags, validate commit hashes, and safely reset the repository state.</p>
+<p>The class follows a singleton pattern to ensure that Git operations are
+coordinated across the gateway process.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient.execute_fetch">
+<span class="sig-name descname"><span class="pre">execute_fetch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient.execute_fetch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient.execute_fetch" title="Link to this definition">¶</a></dt>
+<dd><p>Fetch updates from the remote Git repository.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the fetch operation succeeded, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient.execute_reset_to_commit">
+<span class="sig-name descname"><span class="pre">execute_reset_to_commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">commit_hash</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient.execute_reset_to_commit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient.execute_reset_to_commit" title="Link to this definition">¶</a></dt>
+<dd><p>Reset the controller repository to a specific commit.</p>
+<p>This performs a forced checkout, hard reset, and clean to ensure a reproducible
+repository state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>commit_hash</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Commit hash to reset to.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the reset succeeded, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient.get_commit_for_tag">
+<span class="sig-name descname"><span class="pre">get_commit_for_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient.get_commit_for_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient.get_commit_for_tag" title="Link to this definition">¶</a></dt>
+<dd><p>Return the commit hash associated with a Git tag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tag</strong> – Git tag name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Commit hash for the tag, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if the tag does not exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient.get_commit_from_hash_or_tag">
+<span class="sig-name descname"><span class="pre">get_commit_from_hash_or_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hash_or_tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient.get_commit_from_hash_or_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient.get_commit_from_hash_or_tag" title="Link to this definition">¶</a></dt>
+<dd><p>Resolve a Git tag or commit hash to a commit hash.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>hash_or_tag</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Git tag name or commit hash.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Commit hash if resolvable, otherwise <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient.get_current_commit">
+<span class="sig-name descname"><span class="pre">get_current_commit</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient.get_current_commit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient.get_current_commit" title="Link to this definition">¶</a></dt>
+<dd><p>Return the currently checked-out Git commit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Commit hash string, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if it cannot be determined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="modules.git_client.GatewayGitClient.verify_commit_hash_or_tag_exists">
+<span class="sig-name descname"><span class="pre">verify_commit_hash_or_tag_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">commit_hash</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/modules/git_client.html#GatewayGitClient.verify_commit_hash_or_tag_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#modules.git_client.GatewayGitClient.verify_commit_hash_or_tag_exists" title="Link to this definition">¶</a></dt>
+<dd><p>Verify that a commit hash or tag exists in the repository.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>commit_hash</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>) – Commit hash or tag to verify.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the reference exists and points to a commit, otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-on_mqtt_msg.check_for_ota_updates">
+<span id="ota-message-handling"></span><h2>OTA Message Handling<a class="headerlink" href="#module-on_mqtt_msg.check_for_ota_updates" title="Link to this heading">¶</a></h2>
+<p>Handle OTA software update notifications received via MQTT.</p>
+<p>This module processes ThingsBoard OTA-related attribute updates (<code class="docutils literal notranslate"><span class="pre">sw_title</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sw_version</span></code> and legacy <code class="docutils literal notranslate"><span class="pre">sf_*</span></code> keys) and triggers controller software updates
+on the Edge Gateway when a new version is available.</p>
+<p>It represents the <em>decision and orchestration</em> stage of the OTA workflow:
+- Detect whether a software update is available.
+- Compare the requested version against the currently running controller.
+- Trigger a safe controller restart/update via the Docker client.
+- Record the last successfully launched controller version.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The actual Docker image build and container lifecycle are handled by
+<code class="xref py py-class docutils literal notranslate"><span class="pre">modules.docker_client.GatewayDockerClient</span></code>.</p></li>
+<li><p>OTA state reporting (<code class="docutils literal notranslate"><span class="pre">sw_state</span></code>) is published by the Docker client during the
+update lifecycle.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="on_mqtt_msg.check_for_ota_updates.on_msg_check_for_ota_update">
+<span class="sig-prename descclassname"><span class="pre">on_mqtt_msg.check_for_ota_updates.</span></span><span class="sig-name descname"><span class="pre">on_msg_check_for_ota_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg_payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/on_mqtt_msg/check_for_ota_updates.html#on_msg_check_for_ota_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#on_mqtt_msg.check_for_ota_updates.on_msg_check_for_ota_update" title="Link to this definition">¶</a></dt>
+<dd><p>Process an incoming OTA update notification.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg_payload</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]</span>) – MQTT message payload containing OTA-related attributes.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the message was handled as an OTA update notification,
+<code class="docutils literal notranslate"><span class="pre">False</span></code> otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-utils.controller_restart">
+<span id="controller-supervision"></span><h2>Controller Supervision<a class="headerlink" href="#module-utils.controller_restart" title="Link to this heading">¶</a></h2>
+<p>Controller restart watchdog for the Edge Gateway.</p>
+<p>This module implements a lightweight watchdog that ensures the controller Docker
+container is running. If the controller is not running, it attempts to restart it
+using the last successfully launched controller version.</p>
+<p>To avoid rapid restart loops, restarts are rate-limited and use an exponential
+backoff strategy. If no previous version is known, the watchdog requests OTA
+version information from ThingsBoard and reports a FAILED software state.</p>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Controller lifecycle operations are executed via <code class="xref py py-class docutils literal notranslate"><span class="pre">modules.docker_client.GatewayDockerClient</span></code>.</p></li>
+<li><p>OTA software state reporting is published via <a class="reference internal" href="communication.html#modules.mqtt.GatewayMqttClient" title="modules.mqtt.GatewayMqttClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">modules.mqtt.GatewayMqttClient</span></code></a>.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="utils.controller_restart.restart_controller_if_needed">
+<span class="sig-prename descclassname"><span class="pre">utils.controller_restart.</span></span><span class="sig-name descname"><span class="pre">restart_controller_if_needed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/utils/controller_restart.html#restart_controller_if_needed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#utils.controller_restart.restart_controller_if_needed" title="Link to this definition">¶</a></dt>
+<dd><p>Restart the controller container if it is not running.</p>
+<p>The watchdog checks whether the controller container is running. If it is not,
+it waits briefly and attempts to restart it using the last launched version.
+Restart attempts are rate-limited and use exponential backoff to avoid repeated
+rapid restarts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if the watchdog performed an action that should delay or influence
+the main loop (restart attempt, OTA request), otherwise <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
