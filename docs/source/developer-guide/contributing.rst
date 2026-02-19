@@ -1,12 +1,12 @@
 Contributing
 ============
 
-This project is developed as **open-source scientific software** and welcomes
+This project is developed as **open-source software** and welcomes
 contributions from the community. Contributions range from documentation
 improvements and bug fixes to architectural refinements and new functionality.
 
 The project aims to provide a **reliable, reusable on-device gateway
-infrastructure** for scientific sensor networks. Contributions that improve
+infrastructure** for sensor networks. Contributions that improve
 robustness, clarity, and long-term maintainability are particularly valued.
 
 This document describes the **recommended contribution process**.
