@@ -23,6 +23,5 @@ documentation for details.
    getting-started/index
    user-guide/index
    developer-guide/index
-   changelog
    api/index
 
