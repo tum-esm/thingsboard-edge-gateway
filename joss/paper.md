@@ -144,7 +144,7 @@ RPCs (1) enable users to invoke one of several predefined commands on TEGAT, e.g
 sensor device. This mechanism is primarily intended for operational control and diagnostics that must be executed 
 on demand without direct access to the device.
 The OTA update feature (2) enables users to remotely deploy new versions of the Controller Software to the device, for
-example to fix bugs or add new features. By the same mechanism, users can also easily downgrade the Controller Software
+example to fix bugs or add new features. By the same mechanism, users can also easily downgrade the Controller Software.
 This feature leverages the Git [@git] version control system to manage the software
 version history: Users can specify a specific commit hash or tag. TEGAT then builds a Docker image based on the 
 corresponding source code.
