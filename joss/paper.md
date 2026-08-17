@@ -173,7 +173,7 @@ LF and PA designed the software architecture, implemented the software, wrote do
 
 # Acknowledgements and funding
 
-This work has been funded by: PAUL, Pilot Applications in Urban Landscapes – Towards integrated 
+This work has been funded by PAUL, Pilot Applications in Urban Landscapes – Towards integrated 
 city observatories for greenhouse gases (ICOS Cities), a project under the European Union's Horizon 2020 Research and Innovation 
 Programme (grant agreement no. 101037319). Furthermore, the work is partly supported by the Horizon Europe European Research 
 Council (ERC) Consolidator Grant CoSense4Climate (grant no. 101089203, PI: Jia Chen).
