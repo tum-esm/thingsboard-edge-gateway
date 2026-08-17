@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - joss-submission
+      - joss-editor-feedback
     paths:
       - joss/**
       - .github/workflows/draft-pdf.yml
