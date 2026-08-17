@@ -29,11 +29,12 @@ authors:
     corresponding: true
     affiliation: 1
 affiliations:
-    - name: Environmental Sensing and Modeling (ESM), Technical University of Munich (TUM), Munich, Germany
+    - name: Professorship of Environmental Sensing and Modeling, Technical University of Munich (TUM), Munich, Germany
       index: 1
 date: 17 August 2026
 bibliography: paper.bib
 ---
+
 
 # Summary
 
