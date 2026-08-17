@@ -2,7 +2,7 @@
 title: 'TEGAT: A Lightweight and Reusable Gateway for Scientific Sensor Networks'
 tags:
   - Gateway
-  - Thingsboard
+  - ThingsBoard
   - IoT
   - Python
   - ACROPOLIS
@@ -46,7 +46,7 @@ focus on application-specific logic while relying on a field-tested software sol
 persistence, and remote management of sensor devices.
 It is designed to be robust against network and power outages, crashes, and other failures, thus reducing the risk of 
 data loss, system downtime, or the need for physical intervention.
-Application-specific and hardware interfacing logic is delegated to a user-provided controller software which is managed 
+Application-specific and hardware interfacing logic is delegated to a user-provided Controller Software which is managed 
 and deployed by TEGAT, thus separating infrastructure and application logic.
 
 # Statement of need
@@ -79,7 +79,7 @@ infrastructure across multiple research projects.
 Other existing solutions already cover a variety of the features provided by the combination of TEGAT and ThingsBoard,
 though there are different tradeoffs and limitations to consider with each approach:
 Some solutions are designed around an on-site centralized "edge" server which collects data from multiple connected 
-sensor devices. Examples include thin-edge.io [@thin-edge] and ThingsBoard's own product Thingsboard Edge [@thingsboard-edge]. 
+sensor devices. Examples include thin-edge.io [@thin-edge] and ThingsBoard's own product ThingsBoard Edge [@thingsboard-edge]. 
 These architectures benefit from sensor network layouts where many sensor devices share a local network, such as large 
 factory or office buildings, but face limitations when sensors are deployed individually in remote locations.
 Some subset of our features can be covered with commercial solutions: For example, Amazon's AWS IoT [@AWS-IoT] and Microsoft
@@ -88,7 +88,7 @@ management and software updates of IoT device fleets similar to TEGAT's OTA and 
 building on top of such products are dependent on their future pricing and availability, and require
 continuous funding.
 Finally, a combination of open source solutions can offer a similar feature set: Examples are the Eclipse Foundation's Kura [@EF-kura] 
-and Kapua [@EF-kapua] projects, as well as the Linux Foundation's Fledge [@fledge] and Kube Edge [@kubeedge] projects. In both cases, these unfortunately lack data visualization dashboards and software maturity. Finally, the Ivy project [@Makowski2025] doesn't separate application and infrastructure logic, making software updates brittle. For example, 
+and Kapua [@EF-kapua] projects, as well as the Linux Foundation's Fledge [@fledge] and KubeEdge [@kubeedge] projects. In both cases, these unfortunately lack data visualization dashboards and software maturity. Finally, the Ivy project [@Makowski2025] doesn't separate application and infrastructure logic, making software updates brittle. For example, 
 any crashes not covered by the test suite may result in permanent downtime requiring on-site fixes.
 
 # Software Architecture
@@ -112,7 +112,7 @@ Finally, the ThingsBoard platform (3) is deployed remotely and acts as a central
 management system. It is built to be highly scalable, both in the number of connected devices and in
 the amount of data received and stored. It is also highly customizable, supporting arbitrary sensor data formats and
 protocols.
-Decoupling TEGAT from the Controller software ensures that corrective actions, such as 
+Decoupling TEGAT from the Controller Software ensures that corrective actions, such as 
 reverting to a stable software version or adjusting configurations, can be performed remotely without risking system 
 connectivity or requiring on-site intervention.
 In case a newly deployed Controller Software version fails to start or contains errors, TEGAT remains operational
@@ -127,12 +127,12 @@ initial setup phase, communication is established with the ThingsBoard platform 
 provisioned in the ThingsBoard platform if needed. The software subsequently enters a steady-state main loop which 
 performs one task per iteration, with higher priority tasks, such as processing incoming MQTT messages, executed first. 
 This design ensures operational reliability and efficiency.
-TEGAT receives telemetry data from the Controller Software via a local sqlite database [@SQLite], which is used to
+TEGAT receives telemetry data from the Controller Software via a local SQLite database [@SQLite], which is used to
 buffer messages between the two software components for additional fault tolerance. TEGAT then forwards the 
 telemetry data to the ThingsBoard platform via MQTT, and stores a copy of the data in a local database for additional 
 redundancy (e.g. to backfill data gaps on-demand).
 TEGAT also manages the deployment of the Controller Software through the host system's Docker daemon: If the Controller 
-Software's docker container is not running or has not provided a recent heartbeat, 
+Software's Docker container is not running or has not provided a recent heartbeat, 
 TEGAT attempts to start it using an exponential backoff strategy.
 Besides managing the Controller Software and forwarding telemetry data, TEGAT provides the following core features: 
 
@@ -146,7 +146,7 @@ on-demand without direct access to the device.
 The OTA update feature (2) enables users to remotely deploy new versions of the Controller Software to the device, for
 example to fix bugs or add new features. By the same mechanism, users can also easily downgrade the Controller Software
 This feature leverages the Git [@git] version control system to manage the software
-version history: Users can specify a specific commit hash or tag. TEGAT then builds a docker image based on the 
+version history: Users can specify a specific commit hash or tag. TEGAT then builds a Docker image based on the 
 corresponding source code.
 TEGAT also provides a mechanism for directly creating, reading, and writing files on the sensor device using the remote file management feature (3). 
 As Linux [@LinuxKernel] systems provide extensive access to operating system functionality through files, 
@@ -156,7 +156,7 @@ system daemons.
 More technical details can be found in the documentation[^1], which is built on Sphinx [@Sphinx].
 To make TEGAT's source code more robust, its codebase is statically typed.
 Developers can perform local type checks using mypy [@mypy], which is also deployed as a continuous integration pipeline using
-GitHub actions.
+GitHub Actions.
 For integration testing, a demo application is provided which deploys a ThingsBoard server alongside TEGAT and an example implementation of the Controller Software. This example implementation also serves as a starting point for developers.
 
 
@@ -169,14 +169,14 @@ TEGAT has been validated in the ACROPOLIS urban CO2 sensor network [@ACROPOLIS20
 
 # Author contributions
 
-LF, PA, designed the software architecture, implemented the software, wrote documentation and user guides, deployed and validated the software as part of the ACROPOLIS sensor network, and wrote the manuscript. JC is the principal investigator and scientific lead of the ICOS cities project in Munich. All authors reviewed the manuscript.
+LF, PA, designed the software architecture, implemented the software, wrote documentation and user guides, deployed and validated the software as part of the ACROPOLIS sensor network, and wrote the manuscript. JC is the principal investigator and scientific lead of the ICOS Cities project in Munich. All authors reviewed the manuscript.
 
 # Acknowledgements and funding
 
 This work has been funded by: PAUL, Pilot Applications in Urban Landscapes – Towards integrated 
 city observatories for greenhouse gases (ICOS Cities), funded by the European Union's Horizon 2020 Research and Innovation 
-Programme (grant agreement no. 101037319). Furthermore, the work is partly supported by the HORIZON EUROPE European Research 
-Council (ERC) consolidator grant CoSense4Climate (grant no. 101089203, PI: Jia Chen).
+Programme (grant agreement no. 101037319). Furthermore, the work is partly supported by the Horizon Europe European Research 
+Council (ERC) Consolidator Grant CoSense4Climate (grant no. 101089203, PI: Jia Chen).
 
 # AI usage disclosure
 
