@@ -96,9 +96,9 @@ any crashes not covered by the test suite may result in permanent downtime requi
 
 The software is based on a three-component architecture (see \autoref{fig:architecture}):
 
-- (1) TEGAT (this software)
-- (2) Controller Software (user provided)
-- (3) ThingsBoard IoT Platform
+1. TEGAT (this software)
+2. Controller Software (user provided)
+3. ThingsBoard IoT Platform
 
 Both TEGAT (1) and the Controller Software (2) are deployed on the same IoT sensor device, with TEGAT 
 acting as an intermediary between the Controller Software and the ThingsBoard platform which runs on a remote server. 
