@@ -131,17 +131,17 @@ This design ensures operational reliability and efficiency.
 TEGAT receives telemetry data from the Controller Software via a local SQLite database [@SQLite], which is used to
 buffer messages between the two software components for additional fault tolerance. TEGAT then forwards the 
 telemetry data to the ThingsBoard platform via MQTT, and stores a copy of the data in a local database for additional 
-redundancy (e.g. to backfill data gaps on demand).
+redundancy (e.g., to backfill data gaps on demand).
 TEGAT also manages the deployment of the Controller Software through the host system's Docker daemon: If the Controller 
 Software's Docker container is not running or has not provided a recent heartbeat, 
 TEGAT attempts to start it using an exponential backoff strategy.
 Besides managing the Controller Software and forwarding telemetry data, TEGAT provides the following core features: 
 
-- (1) Remote procedure calls (RPC)
-- (2) Over-the-air (OTA) updates of the Controller Software
-- (3) Remote file management
+1. Remote procedure calls (RPC)
+2. Over-the-air (OTA) updates of the Controller Software
+3. Remote file management
 
-RPCs (1) enable users to invoke one of several predefined commands on TEGAT, e.g. remotely rebooting the 
+RPCs (1) enable users to invoke one of several predefined commands on TEGAT, e.g., remotely rebooting the 
 sensor device. This mechanism is primarily intended for operational control and diagnostics that must be executed 
 on demand without direct access to the device.
 The OTA update feature (2) enables users to remotely deploy new versions of the Controller Software to the device, for
